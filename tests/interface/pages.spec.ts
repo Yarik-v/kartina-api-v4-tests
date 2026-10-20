@@ -4,7 +4,7 @@ import { operationForPath } from '../../src/spec';
 import type { Page } from '../../src/types';
 
 test.describe('GET /pages/tv', () => {
-  test('lists the TV channel groups, each linking to its own block', async ({ api }) => {
+  test('lists the TV channel groups, each linking to its own block', { tag: '@PAGE-01' }, async ({ api }) => {
     const body = await expectResponse<Page>(await api.getTvPage(), 'getTvPage', 200);
     expect(body.slug).toBe('tv');
     expect(body.items.length).toBeGreaterThan(0);
@@ -14,7 +14,7 @@ test.describe('GET /pages/tv', () => {
     }
   });
 
-  test('the groups together hold every channel of GET /channels', async ({ api, channels }) => {
+  test('the groups together hold every channel of GET /channels', { tag: '@PAGE-02' }, async ({ api, channels }) => {
     const body = await expectResponse<Page>(await api.getTvPage(), 'getTvPage', 200);
     const total = body.items.reduce((sum, block) => sum + (block.count ?? 0), 0);
     expect(total).toBe(channels.count);
@@ -22,7 +22,7 @@ test.describe('GET /pages/tv', () => {
 });
 
 test.describe('GET /pages/radio', () => {
-  test('lists the radio channel group', async ({ api }) => {
+  test('lists the radio channel group', { tag: '@PAGE-03' }, async ({ api }) => {
     const body = await expectResponse<Page>(await api.getRadioPage(), 'getRadioPage', 200);
     expect(body.slug).toBe('radio');
     expect(body.items.map((block) => block.block_url)).toContain('/api/v4/pages/radio/channel-group');
@@ -30,7 +30,7 @@ test.describe('GET /pages/radio', () => {
 });
 
 test.describe('GET /pages/{slug}', () => {
-  test('the dashboard lists its blocks, each linking to a documented block endpoint', async ({ api, dashboard }) => {
+  test('the dashboard lists its blocks, each linking to a documented block endpoint', { tag: '@PAGE-04' }, async ({ api, dashboard }) => {
     await expectResponse<Page>(await api.getPage(dashboard.slug), 'getPage', 200);
     expect(dashboard.slug).toBe('dashboard');
     expect(dashboard.items.length).toBeGreaterThan(0);
@@ -44,7 +44,7 @@ test.describe('GET /pages/{slug}', () => {
     }
   });
 
-  test('an unknown slug answers 404', async ({ api }) => {
+  test('an unknown slug answers 404', { tag: '@PAGE-05' }, async ({ api }) => {
     await expectError(await api.getPage('playwright-no-such-page'), 'getPage', 404);
   });
 });

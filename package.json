@@ -8,6 +8,7 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "report": "node scripts/open-report.mjs",
+    "report:bugs": "node scripts/bug-report.mjs",
     "spec:refresh": "node scripts/fetch-openapi.mjs",
     "typecheck": "tsc --noEmit"
   },

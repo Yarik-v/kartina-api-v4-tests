@@ -23,7 +23,9 @@ run), 2 need live data that isn't always there (they skip themselves otherwise; 
 20.10.2026 the dashboard has no non-playable title and no ivi / start_film block).
 
 All cases run on one shared session of the account in `.env` unless the
-Preconditions say "no session".
+Preconditions say "no session". Every test carries the ID of its case as a tag, so
+`npx playwright test --grep @CNT-11` runs one case, and a run's results map onto this
+catalog case by case (the developer report has that table).
 
 ## 1. Account
 

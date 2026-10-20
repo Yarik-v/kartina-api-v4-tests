@@ -13,7 +13,7 @@ const NO_MOVIE = 'No playable movie of a subscribed service on the dashboard rig
 const NO_SERIES = 'No playable series with episodes of a subscribed service on the dashboard right now';
 
 test.describe('GET /content/{service}/{id}', () => {
-  test('a movie: the card the dashboard links to, with links back to itself', async ({ sampleMovie }) => {
+  test('a movie: the card the dashboard links to, with links back to itself', { tag: '@CNT-01' }, async ({ sampleMovie }) => {
     test.skip(!sampleMovie, NO_MOVIE);
     const { card, details } = sampleMovie!;
     const base = `/api/v4/content/${card.service}/${card.id}`;
@@ -25,14 +25,14 @@ test.describe('GET /content/{service}/{id}', () => {
     expect(details.similar_url).toBe(`${base}/similar`);
   });
 
-  test('the details answer matches its documented schema', async ({ api, sampleMovie, sampleSeries }) => {
+  test('the details answer matches its documented schema', { tag: ['@CNT-01', '@CNT-02'] }, async ({ api, sampleMovie, sampleSeries }) => {
     test.skip(!sampleMovie && !sampleSeries, NO_MOVIE);
     for (const { card } of [sampleMovie, sampleSeries].filter((t) => t !== null)) {
       await expectResponse(await api.getContentDetails(card.service, card.id), 'getContentDetails', 200);
     }
   });
 
-  test('a series: seasons list their episodes, each with its own play link', async ({ sampleSeries }) => {
+  test('a series: seasons list their episodes, each with its own play link', { tag: '@CNT-02' }, async ({ sampleSeries }) => {
     test.skip(!sampleSeries, NO_SERIES);
     const { card, details } = sampleSeries!;
     expect(details.kind).toBe('series');
@@ -48,15 +48,15 @@ test.describe('GET /content/{service}/{id}', () => {
     }
   });
 
-  test('an unknown title answers 404', async ({ api }) => {
+  test('an unknown title answers 404', { tag: '@CNT-03' }, async ({ api }) => {
     await expectError(await api.getContentDetails('mediateka', 'playwright-no-such-title'), 'getContentDetails', 404);
   });
 
-  test('an unknown service answers 404', async ({ api }) => {
+  test('an unknown service answers 404', { tag: '@CNT-04' }, async ({ api }) => {
     await expectError(await api.getContentDetails('playwright-no-such-service', '1'), 'getContentDetails', 404);
   });
 
-  test('dashboard cards link to details of services the spec leaves out of {service} (known docs bug)', async ({
+  test('dashboard cards link to details of services the spec leaves out of {service} (known docs bug)', { tag: '@CNT-05' }, async ({
     api,
     dashboardBlocks,
   }) => {
@@ -77,7 +77,7 @@ test.describe('GET /content/{service}/{id}', () => {
 });
 
 test.describe('GET /content/{service}/{id}/similar', () => {
-  test('returns other titles, not the title itself', async ({ api, sampleMovie }) => {
+  test('returns other titles, not the title itself', { tag: '@CNT-06' }, async ({ api, sampleMovie }) => {
     test.skip(!sampleMovie, NO_MOVIE);
     const { card } = sampleMovie!;
     const body = await expectResponse<CardList<ContentCard>>(
@@ -91,14 +91,14 @@ test.describe('GET /content/{service}/{id}/similar', () => {
 });
 
 test.describe('playback', () => {
-  test('GET .../play of a movie answers with a stream', async ({ api, sampleMovie }) => {
+  test('GET .../play of a movie answers with a stream', { tag: '@CNT-07' }, async ({ api, sampleMovie }) => {
     test.skip(!sampleMovie, NO_MOVIE);
     const { card } = sampleMovie!;
     const body = await expectResponse<PlaybackStream>(await api.playContent(card.service, card.id), 'playContent', 200);
     expect(body.url).toBeTruthy();
   });
 
-  test('GET .../episodes/{episodeId}/play of the first episode answers with a stream', async ({ api, sampleSeries }) => {
+  test('GET .../episodes/{episodeId}/play of the first episode answers with a stream', { tag: '@CNT-08' }, async ({ api, sampleSeries }) => {
     test.skip(!sampleSeries, NO_SERIES);
     const { card, details } = sampleSeries!;
     const season = details.seasons[0];
@@ -107,7 +107,7 @@ test.describe('playback', () => {
     expect(body.url).toBeTruthy();
   });
 
-  test('an unknown episode answers 404', async ({ api, sampleSeries }) => {
+  test('an unknown episode answers 404', { tag: '@CNT-09' }, async ({ api, sampleSeries }) => {
     test.skip(!sampleSeries, NO_SERIES);
     const { card } = sampleSeries!;
     await expectError(
@@ -117,7 +117,7 @@ test.describe('playback', () => {
     );
   });
 
-  test('GET .../trailers/{trailerId}/play answers with the trailer URL only', async ({ api, dashboardBlocks }) => {
+  test('GET .../trailers/{trailerId}/play answers with the trailer URL only', { tag: '@CNT-10' }, async ({ api, dashboardBlocks }) => {
     const card = findCards(dashboardBlocks, (c) => Boolean(c.trailer_url))[0];
     test.skip(!card, 'No card with a trailer on the dashboard');
     const details = await expectResponse<ContentDetails>(await api.getContentDetails(card.service, card.id), 'getContentDetails', 200);
@@ -133,13 +133,13 @@ test.describe('playback', () => {
     expect(Object.keys(body), 'url only: no markers or vmap').toEqual(['url']);
   });
 
-  test('a title the card marks not playable does not play: 403', async ({ api, dashboardBlocks }) => {
+  test('a title the card marks not playable does not play: 403', { tag: '@CNT-12' }, async ({ api, dashboardBlocks }) => {
     const card = findCards(dashboardBlocks, (c) => !c.playable)[0];
     test.skip(!card, 'Every title on the dashboard is playable for this account');
     await expectError(await api.playContent(card.service, card.id), 'playContent', 403);
   });
 
-  test('an unknown trailer id is not answered with the documented 404 (known API bug)', async ({ api, dashboardBlocks }) => {
+  test('an unknown trailer id is not answered with the documented 404 (known API bug)', { tag: '@CNT-11' }, async ({ api, dashboardBlocks }) => {
     // Documented: 404 E_WRONG_ID ("No such content, episode or trailer"). Live, one
     // title per service (a movie where there is one): most answer an undocumented
     // 503, and some answer 200, for some movies with
@@ -169,14 +169,14 @@ test.describe('playback', () => {
     );
   });
 
-  test('an unknown title answers 404', async ({ api }) => {
+  test('an unknown title answers 404', { tag: '@CNT-13' }, async ({ api }) => {
     await expectError(await api.playContent('mediateka', 'playwright-no-such-title'), 'playContent', 404);
   });
 });
 
 test.describe('GET /content/{service}/free/{id}/play', () => {
   // The series is found on the shared session; the play request itself goes without one.
-  test('needs no session: the first episode of a series either plays or is documented as not free', async ({
+  test('needs no session: the first episode of a series either plays or is documented as not free', { tag: '@CNT-14' }, async ({
     api,
     anonApi,
     dashboardBlocks,
@@ -196,7 +196,7 @@ test.describe('GET /content/{service}/free/{id}/play', () => {
     else await expectResponse<PlaybackStream>(res, 'playContentFreeEpisode', 200);
   });
 
-  test('an unknown episode answers 404', { tag: '@no-session' }, async ({ anonApi }) => {
+  test('an unknown episode answers 404', { tag: ['@no-session', '@CNT-15'] }, async ({ anonApi }) => {
     await expectError(
       await anonApi.playContentFreeEpisode('mediateka', 'playwright-no-such-episode'),
       'playContentFreeEpisode',

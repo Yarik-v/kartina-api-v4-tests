@@ -6,7 +6,7 @@ import type { Service } from '../../src/types';
 const CREDENTIAL_SERVICES = parameterEnum('getServiceCredentials', 'service');
 
 test.describe('GET /services', () => {
-  test('lists every service once, with links that point at that service', async ({ api }) => {
+  test('lists every service once, with links that point at that service', { tag: '@SVC-01' }, async ({ api }) => {
     const services = await expectResponse<Service[]>(await api.getServices(), 'getServices', 200);
     expect(services.length).toBeGreaterThan(0);
     expect(new Set(services.map((s) => s.id)).size, 'unique ids').toBe(services.length);
@@ -16,13 +16,13 @@ test.describe('GET /services', () => {
     }
   });
 
-  test('the account is subscribed to at least one service', async ({ subscribedServices }) => {
+  test('the account is subscribed to at least one service', { tag: '@SVC-02' }, async ({ subscribedServices }) => {
     expect(subscribedServices.size).toBeGreaterThan(0);
   });
 });
 
 test.describe('GET /services/{service}/pages', () => {
-  test('answers for every listed service, naming the service it was asked for', async ({ api, services }) => {
+  test('answers for every listed service, naming the service it was asked for', { tag: '@SVC-03' }, async ({ api, services }) => {
     for (const { id } of services) {
       const body = await expectResponse<{ service: string; count: number; pages: unknown[] }>(
         await api.getServicePages(id),
@@ -34,13 +34,13 @@ test.describe('GET /services/{service}/pages', () => {
     }
   });
 
-  test('an unknown service answers 404', async ({ api }) => {
+  test('an unknown service answers 404', { tag: '@SVC-04' }, async ({ api }) => {
     await expectError(await api.getServicePages('playwright-no-such-service'), 'getServicePages', 404);
   });
 });
 
 test.describe('GET /services/{service}/credentials', () => {
-  test('a subscribed service hands out its credentials', async ({ api, subscribedServices }) => {
+  test('a subscribed service hands out its credentials', { tag: '@SVC-05' }, async ({ api, subscribedServices }) => {
     const service = [...subscribedServices].find((id) => CREDENTIAL_SERVICES.includes(id));
     test.skip(!service, 'No subscribed service documents credentials');
     const body = await expectResponse<{ id: string; credentials: object }>(
@@ -51,13 +51,13 @@ test.describe('GET /services/{service}/credentials', () => {
     expect(body.id).toBe(service);
   });
 
-  test('a service the account is not subscribed to answers 503 E_SERVICE_NOT_AVAILABLE', async ({ api, services }) => {
+  test('a service the account is not subscribed to answers 503 E_SERVICE_NOT_AVAILABLE', { tag: '@SVC-06' }, async ({ api, services }) => {
     const service = services.find((s) => s.access.state !== 'subscribed' && CREDENTIAL_SERVICES.includes(s.id));
     test.skip(!service, 'The account is subscribed to every service');
     await expectError(await api.getServiceCredentials(service!.id), 'getServiceCredentials', 503, 'E_SERVICE_NOT_AVAILABLE');
   });
 
-  test('an unknown service answers 404', async ({ api }) => {
+  test('an unknown service answers 404', { tag: '@SVC-07' }, async ({ api }) => {
     await expectError(await api.getServiceCredentials('playwright-no-such-service'), 'getServiceCredentials', 404);
   });
 });

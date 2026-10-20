@@ -12,7 +12,7 @@ const playableChannel = (list: ChannelsList, extra: (c: ChannelListCard) => bool
   list.items.find((c) => c.playable && !c.access.protected && extra(c));
 
 test.describe('GET /channels', () => {
-  test('lists every channel once, with its own play, EPG and favorite links', async ({ api }) => {
+  test('lists every channel once, with its own play, EPG and favorite links', { tag: '@CH-01' }, async ({ api }) => {
     const body = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
     expect(body.count).toBe(body.items.length);
     expect(body.count).toBeGreaterThan(0);
@@ -24,25 +24,25 @@ test.describe('GET /channels', () => {
     }
   });
 
-  test('every group_id is a channel group of the TV page', async ({ api, channels }) => {
+  test('every group_id is a channel group of the TV page', { tag: '@CH-02' }, async ({ api, channels }) => {
     const tv = await expectResponse<Page>(await api.getTvPage(), 'getTvPage', 200);
     const groups = new Set(tv.items.map((block) => block.id));
     const orphans = channels.items.filter((c) => !groups.has(c.group_id));
     expect(orphans.map((c) => `${c.id} (group ${c.group_id})`), 'channels whose group is not on the TV page').toEqual([]);
   });
 
-  test('hidden channels are not listed without show=1', async ({ channels }) => {
+  test('hidden channels are not listed without show=1', { tag: '@CH-03' }, async ({ channels }) => {
     expect(channels.items.filter((c) => c.access.hidden).map((c) => c.id)).toEqual([]);
   });
 
-  test('show=1 without the protect code answers 400 E_NEED_PARAM', async ({ api }) => {
+  test('show=1 without the protect code answers 400 E_NEED_PARAM', { tag: '@CH-04' }, async ({ api }) => {
     const body = await expectError(await api.getChannels({ params: { show: 1 } }), 'getChannels', 400, 'E_NEED_PARAM');
     expect(body.error.details.description).toContain('protect');
   });
 });
 
 test.describe('GET /channels/{id}/epg', () => {
-  test('returns the channel and its programmes in broadcast order, within the documented window', async ({ api, channels }) => {
+  test('returns the channel and its programmes in broadcast order, within the documented window', { tag: '@CH-05' }, async ({ api, channels }) => {
     const channel = playableChannel(channels)!;
     const body = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id), 'getChannelEpg', 200);
 
@@ -58,7 +58,7 @@ test.describe('GET /channels/{id}/epg', () => {
     expect(body.items.at(-1)!.starts_at).toBeLessThanOrEqual(now() + 8 * DAY);
   });
 
-  test('from / to narrow the guide to that window', async ({ api, channels }) => {
+  test('from / to narrow the guide to that window', { tag: '@CH-06' }, async ({ api, channels }) => {
     const channel = playableChannel(channels)!;
     const from = now() - 6 * 60 * 60;
     const to = now();
@@ -70,40 +70,40 @@ test.describe('GET /channels/{id}/epg', () => {
     }
   });
 
-  test('a non-numeric id answers 404', async ({ api }) => {
+  test('a non-numeric id answers 404', { tag: '@CH-07' }, async ({ api }) => {
     await expectError(await api.getChannelEpg('playwright'), 'getChannelEpg', 404);
   });
 
-  test('a channel outside the packet answers 403', async ({ api }) => {
+  test('a channel outside the packet answers 403', { tag: '@CH-08' }, async ({ api }) => {
     await expectError(await api.getChannelEpg(NOT_A_CHANNEL), 'getChannelEpg', 403);
   });
 });
 
 test.describe('GET /channels/{id}/play', () => {
-  test('a playable channel answers with a stream URL', async ({ api, channels }) => {
+  test('a playable channel answers with a stream URL', { tag: '@CH-10' }, async ({ api, channels }) => {
     const channel = playableChannel(channels)!;
     const body = await expectResponse<PlaybackStream>(await api.playChannel(channel.id), 'playChannel', 200);
     expect(body.url).toBeTruthy();
   });
 
-  test('a protected channel without the protect code answers 403 E_CURRENT_PASS_BAD', async ({ api, channels }) => {
+  test('a protected channel without the protect code answers 403 E_CURRENT_PASS_BAD', { tag: '@CH-11' }, async ({ api, channels }) => {
     const channel = channels.items.find((c) => c.access.protected);
     test.skip(!channel, 'No protected channel in the packet');
     await expectError(await api.playChannel(channel!.id), 'playChannel', 403, 'E_CURRENT_PASS_BAD');
   });
 
-  test('a protected channel plays with the protect code', async ({ api, channels }) => {
+  test('a protected channel plays with the protect code', { tag: '@CH-12' }, async ({ api, channels }) => {
     test.skip(!v4ProtectCode, 'V4_PROTECT_CODE is not set in .env');
     const channel = channels.items.find((c) => c.access.protected && c.playable);
     test.skip(!channel, 'No playable protected channel in the packet');
     await expectResponse(await api.playChannel(channel!.id, { protect: v4ProtectCode }), 'playChannel', 200);
   });
 
-  test('a channel outside the packet answers 403 E_NOT_ALLOWED', async ({ api }) => {
+  test('a channel outside the packet answers 403 E_NOT_ALLOWED', { tag: '@CH-13' }, async ({ api }) => {
     await expectError(await api.playChannel(NOT_A_CHANNEL), 'playChannel', 403, 'E_NOT_ALLOWED');
   });
 
-  test('a non-numeric id answers 404', async ({ api }) => {
+  test('a non-numeric id answers 404', { tag: '@CH-14' }, async ({ api }) => {
     await expectError(await api.playChannel('playwright'), 'playChannel', 404);
   });
 });
@@ -111,7 +111,7 @@ test.describe('GET /channels/{id}/play', () => {
 test.describe('archive and teleteka', () => {
   // A past programme's play_url points at the teleteka when there's a recording, at
   // the archive otherwise; the two endpoints never fall back to each other.
-  test('every past programme links to its teleteka recording or its archive', async ({ api, channels }) => {
+  test('every past programme links to its teleteka recording or its archive', { tag: '@CH-15' }, async ({ api, channels }) => {
     const channel = playableChannel(channels)!;
     const epg = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }), 'getChannelEpg', 200);
     for (const programme of epg.items.filter((p) => p.ends_at < now())) {
@@ -120,7 +120,7 @@ test.describe('archive and teleteka', () => {
     }
   });
 
-  test('GET .../archive/{timestamp} of a programme that ended hours ago answers with a stream', async ({ api, channels }) => {
+  test('GET .../archive/{timestamp} of a programme that ended hours ago answers with a stream', { tag: '@CH-16' }, async ({ api, channels }) => {
     const channel = playableChannel(channels, (c) => c.capabilities.archive);
     test.skip(!channel, 'No unprotected archive channel');
     const epg = await expectResponse<ChannelEpg>(
@@ -134,13 +134,13 @@ test.describe('archive and teleteka', () => {
     await expectResponse<PlaybackStream>(await api.playChannelArchive(channel!.id, programme!.starts_at), 'playChannelArchive', 200);
   });
 
-  test('archive of a channel without archive answers 400', async ({ api, channels }) => {
+  test('archive of a channel without archive answers 400', { tag: '@CH-17' }, async ({ api, channels }) => {
     const channel = playableChannel(channels, (c) => !c.capabilities.archive);
     test.skip(!channel, 'Every unprotected channel has an archive');
     await expectError(await api.playChannelArchive(channel!.id, now() - 3 * 60 * 60), 'playChannelArchive', 400);
   });
 
-  test('a teleteka recording plays through its play_url', async ({ api, channels }) => {
+  test('a teleteka recording plays through its play_url', { tag: '@CH-18' }, async ({ api, channels }) => {
     // Teleteka recordings are on some channels only; look through the first ones.
     for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 10)) {
       const epg = await expectResponse<ChannelEpg>(
@@ -156,7 +156,7 @@ test.describe('archive and teleteka', () => {
     test.skip(true, 'No playable teleteka recording on the first channels');
   });
 
-  test('teleteka of a programme without a recording plays a stub instead of the documented 403 (known API bug)', async ({
+  test('teleteka of a programme without a recording plays a stub instead of the documented 403 (known API bug)', { tag: '@CH-19' }, async ({
     api,
     channels,
   }) => {
@@ -186,7 +186,7 @@ test.describe('archive and teleteka', () => {
     test.skip(true, 'Every past programme of the first channels has a teleteka recording');
   });
 
-  test('a timestamp no programme starts at answers 404 E_WRONG_ID', async ({ api, channels }) => {
+  test('a timestamp no programme starts at answers 404 E_WRONG_ID', { tag: '@CH-20' }, async ({ api, channels }) => {
     const channel = playableChannel(channels)!;
     const body = await expectError(await api.playChannelTeleteka(channel.id, 1), 'playChannelTeleteka', 404, 'E_WRONG_ID');
     expect(body.error.details.description).toBe('Program not found');
@@ -198,15 +198,15 @@ test.describe('archive and teleteka', () => {
 test.describe('hidden channels', () => {
   test.describe.configure({ mode: 'default' });
 
-  test('PUT /channels/{id}/hidden without the protect code answers 400', async ({ api, channels }) => {
+  test('PUT /channels/{id}/hidden without the protect code answers 400', { tag: '@CH-22' }, async ({ api, channels }) => {
     await expectError(await api.hideChannel(playableChannel(channels)!.id, {}), 'hideChannel', 400);
   });
 
-  test('DELETE /channels/hidden without the protect code answers 400', async ({ api }) => {
+  test('DELETE /channels/hidden without the protect code answers 400', { tag: '@CH-23' }, async ({ api }) => {
     await expectError(await api.clearHiddenChannels({}), 'clearHiddenChannels', 400);
   });
 
-  test('hide, list with show=1, unhide and reset', async ({ api, channels }) => {
+  test('hide, list with show=1, unhide and reset', { tag: '@CH-24' }, async ({ api, channels }) => {
     test.skip(!v4ProtectCode, 'V4_PROTECT_CODE is not set in .env');
     const withHidden = await expectResponse<ChannelsList>(
       await api.getChannels({ params: { show: 1, protect: v4ProtectCode } }),

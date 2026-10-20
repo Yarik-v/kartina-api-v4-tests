@@ -3,12 +3,12 @@ import { expectError, readBody, recordKnownIssue } from '../../src/assertions';
 import { isStaging } from '../../src/config';
 
 test.describe('error envelope', { tag: '@no-session' }, () => {
-  test('errors are application/problem+json with the code mirrored in headers', async ({ anonApi }) => {
+  test('errors are application/problem+json with the code mirrored in headers', { tag: '@GEN-02' }, async ({ anonApi }) => {
     const body = await expectError(await anonApi.getAccount(), 'getAccount', 403, 'E_AUTH_ERROR');
     expect(body.error.code).toBe(12);
   });
 
-  test('error bodies carry no debug trace, except on staging (known API bug)', async ({ anonApi }) => {
+  test('error bodies carry no debug trace, except on staging (known API bug)', { tag: '@GEN-07' }, async ({ anonApi }) => {
     // The envelope allows `error` only. Staging adds `exception` with the Symfony
     // trace: class names, server paths, internal hosts (collections-dev...), plus
     // X-Debug-Token(-Link) headers on every response. The profiler they link to

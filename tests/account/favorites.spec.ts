@@ -22,13 +22,13 @@ const contains = (list: FavoritesList, id: string, service?: string) =>
 test.describe.configure({ mode: 'default' });
 
 test.describe('GET /favorites', () => {
-  test('lists channels and titles, all marked favorite', async ({ api }) => {
+  test('lists channels and titles, all marked favorite', { tag: '@FAV-01' }, async ({ api }) => {
     const body = await favorites(api);
     expect(body.count).toBe(body.items.length);
     for (const item of body.items) expect(item.favorite, `${item.kind} ${item.id}`).toBe(true);
   });
 
-  test('GET /favorites/channels holds only channels, the same ones GET /favorites lists', async ({ api }) => {
+  test('GET /favorites/channels holds only channels, the same ones GET /favorites lists', { tag: '@FAV-02' }, async ({ api }) => {
     const all = await favorites(api);
     const channels = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
     expect(channels.count).toBe(channels.items.length);
@@ -38,7 +38,7 @@ test.describe('GET /favorites', () => {
     }
   });
 
-  test('GET /favorites/{service} holds only that service\'s titles', async ({ api }) => {
+  test('GET /favorites/{service} holds only that service\'s titles', { tag: '@FAV-03' }, async ({ api }) => {
     const all = await favorites(api);
     const service = LISTABLE_SERVICES.find((id) => id !== 'channels' && all.items.some((item) => item.service === id)) ?? 'mediateka';
     const body = await expectResponse<FavoritesList>(await api.getFavoritesByService(service), 'getFavoritesByService', 200);
@@ -47,13 +47,13 @@ test.describe('GET /favorites', () => {
     expect(body.count).toBe(all.items.filter((item) => item.service === service).length);
   });
 
-  test('GET /favorites/{service} for a service outside the documented list answers 404', async ({ api }) => {
+  test('GET /favorites/{service} for a service outside the documented list answers 404', { tag: '@FAV-04' }, async ({ api }) => {
     await expectError(await api.getFavoritesByService('playwright-no-such-service'), 'getFavoritesByService', 404);
   });
 });
 
 test.describe('VOD title favorites', () => {
-  test('PUT adds a title (201, then 200 when repeated), DELETE removes it (204, then 404)', async ({
+  test('PUT adds a title (201, then 200 when repeated), DELETE removes it (204, then 404)', { tag: '@FAV-05' }, async ({
     api,
     dashboardBlocks,
     sampleMovie,
@@ -87,7 +87,7 @@ test.describe('VOD title favorites', () => {
 });
 
 test.describe('channel favorites', () => {
-  test('PUT adds a channel (201, then 200), DELETE removes it (204, then 404)', async ({
+  test('PUT adds a channel (201, then 200), DELETE removes it (204, then 404)', { tag: '@FAV-06' }, async ({
     api,
     channels,
   }) => {
@@ -116,7 +116,7 @@ test.describe('channel favorites', () => {
     }
   });
 
-  test('the "favorite-channels" block does not follow the favorites (known docs bug)', async ({ api, channels }) => {
+  test('the "favorite-channels" block does not follow the favorites (known docs bug)', { tag: '@BLK-22' }, async ({ api, channels }) => {
     // GET /blocks/client-channels is summarized as "the client's favorite-channels
     // block" (titled «Любимые телеканалы»), but its description, and the server, make
     // it the most-watched channels: a channel just added to the favorites isn't in it.

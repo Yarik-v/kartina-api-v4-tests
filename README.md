@@ -22,6 +22,7 @@ npm run test:ui        # Playwright's UI mode
 npm run report         # open the last HTML report
 npm run typecheck      # tsc --noEmit
 npm run spec:refresh   # re-download spec/openapi.yaml from the docs
+npm run report:bugs    # developer bug report: reports/<date>-api-v4-<env>.html
 ```
 
 `V4_API_HOST=iptv.kartina.tv` points the suite at production. It stays on staging for
@@ -54,14 +55,22 @@ session cookie; a login test's trace also records the password.
   `APIResponse` so tests assert on errors as well as successes.
 - `src/knownIssues.ts` — the schema mismatches the live API is known to have.
 - `src/types.ts` — response types for what the tests read.
-- `reports/` — dated HTML bug reports for the API developers: each finding with
-  steps to reproduce, documented vs actual behavior and the test that pins it.
+- `reports/` — dated HTML bug reports for the API developers: each finding with its
+  requests and responses exactly as sent and received (the password left out),
+  documented vs actual behavior, the test that pins it, and the run's result for every
+  `TEST_CASES.md` case. Built by `npm run report:bugs` (`scripts/bug-report/`): it runs
+  the suite, replays the requests behind every finding on a session of its own
+  (`serial bugreport-<date>`) and renders the page; `--skip-tests` reuses the last
+  run's results. The findings' text lives in `scripts/bug-report/render.mjs`: when a
+  pinned test turns red, the summary marks that finding "не воспроизвелось", and it
+  should be updated or dropped there.
 - `TEST_CASES.md` — the test-case catalog: every case with its priority, expected
   result and the spec that automates it, or why it's a gap.
 - `tests/` mirrors the doc's tag groups: `account/` (Security, Client, Profiles,
   Favorites, Sharing, Registration Prompt), `catalog/` (Channels, Content, Radio,
   Search, Services), `interface/` (Pages, Blocks) and `other/` (Other, plus checks that
-  sweep the whole spec). All 70 operations are covered.
+  sweep the whole spec). All 70 operations are covered. Each test is tagged with
+  the ID of its `TEST_CASES.md` case (`npx playwright test --grep @CNT-11`).
 - `tests/fixtures.ts` — `api` (the shared session), `anonApi` / `newAnonApi` (no
   cookies), and worker-scoped live data fetched once per worker: `account`,
   `services`, `channels`, `dashboard`, `dashboardBlocks` (each loaded from its own

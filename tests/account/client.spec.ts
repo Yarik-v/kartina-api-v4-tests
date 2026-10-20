@@ -14,7 +14,7 @@ function sharedSessionId(): string | undefined {
 }
 
 test.describe('GET /account', () => {
-  test('returns the logged-in client, its packet and this very session', async ({ api }) => {
+  test('returns the logged-in client, its packet and this very session', { tag: '@CLI-01' }, async ({ api }) => {
     const body = await expectResponse<Account>(await api.getAccount(), 'getAccount', 200);
 
     expect(body.login).toBe(Number(v4Login));
@@ -49,7 +49,7 @@ test.describe('client settings', () => {
     expect(current, 'settings restored').toEqual(original);
   }
 
-  test('GET /settings: every choice holds one of its own allowed values', async ({ api }) => {
+  test('GET /settings: every choice holds one of its own allowed values', { tag: '@CLI-02' }, async ({ api }) => {
     const settings = await readSettings(api);
     for (const name of CHOICE_SETTINGS) {
       const allowed = settings[name].allowed.map((option) => option.value);
@@ -58,7 +58,7 @@ test.describe('client settings', () => {
     }
   });
 
-  test('POST /settings changes one setting, answers with all of them, and the change sticks', async ({ api }) => {
+  test('POST /settings changes one setting, answers with all of them, and the change sticks', { tag: '@CLI-03' }, async ({ api }) => {
     const original = await readSettings(api);
     const target = original.server.allowed.find((option) => option.value !== original.server.value);
     test.skip(!target, 'The server setting allows only its current value');
@@ -73,7 +73,7 @@ test.describe('client settings', () => {
     }
   });
 
-  test('POST /settings for standard returns the recalculated settings', async ({ api }) => {
+  test('POST /settings for standard returns the recalculated settings', { tag: '@CLI-04' }, async ({ api }) => {
     const original = await readSettings(api);
     const target = original.standard.allowed.find((option) => option.value !== original.standard.value);
     test.skip(!target, 'The standard setting allows only its current value');
@@ -90,17 +90,17 @@ test.describe('client settings', () => {
     }
   });
 
-  test('POST /settings rejects a value outside the allowed list with 400', async ({ api }) => {
+  test('POST /settings rejects a value outside the allowed list with 400', { tag: '@CLI-05' }, async ({ api }) => {
     const before = await readSettings(api);
     await expectError(await api.changeSetting('server', 'playwright-no-such-server'), 'changeSetting', 400);
     expect((await readSettings(api)).server.value, 'nothing changed').toBe(before.server.value);
   });
 
-  test('POST /settings rejects an unknown setting name with 400', async ({ api }) => {
+  test('POST /settings rejects an unknown setting name with 400', { tag: '@CLI-06' }, async ({ api }) => {
     await expectError(await api.changeSettingRaw({ name: 'playwright', value: 1 }), 'changeSetting', 400);
   });
 
-  test('POST /settings rejects a body without value with 400', async ({ api }) => {
+  test('POST /settings rejects a body without value with 400', { tag: '@CLI-07' }, async ({ api }) => {
     await expectError(await api.changeSettingRaw({ name: 'server' }), 'changeSetting', 400);
   });
 });
@@ -108,11 +108,11 @@ test.describe('client settings', () => {
 // The protect (parental) code is never changed by the suite, and without
 // V4_PROTECT_CODE it never sends a code at all, wrong or right.
 test.describe('protect code', () => {
-  test('POST /protect-code/check without a code answers 400', async ({ api }) => {
+  test('POST /protect-code/check without a code answers 400', { tag: '@CLI-09' }, async ({ api }) => {
     await expectError(await api.checkProtectCode({}), 'checkProtectCode', 400);
   });
 
-  test('POST /protect-code/check accepts the right code', async ({ api }) => {
+  test('POST /protect-code/check accepts the right code', { tag: '@CLI-10' }, async ({ api }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);
     const body = await expectResponse<{ success: boolean }>(
       await api.checkProtectCode({ code: v4ProtectCode }),
@@ -122,16 +122,16 @@ test.describe('protect code', () => {
     expect(body.success).toBe(true);
   });
 
-  test('POST /protect-code/check rejects a wrong code with 403 E_CURRENT_PASS_BAD', async ({ api }) => {
+  test('POST /protect-code/check rejects a wrong code with 403 E_CURRENT_PASS_BAD', { tag: '@CLI-11' }, async ({ api }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);
     await expectError(await api.checkProtectCode({ code: `${v4ProtectCode}0` }), 'checkProtectCode', 403, 'E_CURRENT_PASS_BAD');
   });
 
-  test('POST /protect-code/change without parameters answers 400 and changes nothing', async ({ api }) => {
+  test('POST /protect-code/change without parameters answers 400 and changes nothing', { tag: '@CLI-12' }, async ({ api }) => {
     await expectError(await api.raw('POST', 'protect-code/change', { data: {} }), 'changeProtectCode', 400);
   });
 
-  test('POST /protect-code/change rejects a confirmation that differs from the new code', async ({ api }) => {
+  test('POST /protect-code/change rejects a confirmation that differs from the new code', { tag: '@CLI-13' }, async ({ api }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);
     const candidates = ['1234567', '7654321'];
     const res = await api.raw('POST', 'protect-code/change', { data: { old: v4ProtectCode, new: candidates[0], confirm: candidates[1] } });

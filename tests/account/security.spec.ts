@@ -24,7 +24,7 @@ function sessionCookie(res: { headersArray(): { name: string; value: string }[] 
 }
 
 test.describe('POST /login with valid credentials', () => {
-  test('opens a session: client, packet and session id, also set as the MW_SSID cookie', async ({ anonApi }) => {
+  test('opens a session: client, packet and session id, also set as the MW_SSID cookie', { tag: '@SEC-01' }, async ({ anonApi }) => {
     const res = await anonApi.login(auxCredentials());
     const body = await expectResponse<Account>(res, 'login', 200);
 
@@ -41,7 +41,7 @@ test.describe('POST /login with valid credentials', () => {
     await expectResponse(await anonApi.logout(), 'logout', 204);
   });
 
-  test('the new session authorizes requests and GET /account reports it', async ({ anonApi }) => {
+  test('the new session authorizes requests and GET /account reports it', { tag: '@SEC-02' }, async ({ anonApi }) => {
     const login = await expectResponse<Account>(await anonApi.login(auxCredentials()), 'login', 200);
     const account = await expectResponse<Account>(await anonApi.getAccount(), 'getAccount', 200);
 
@@ -52,7 +52,7 @@ test.describe('POST /login with valid credentials', () => {
     await expectResponse(await anonApi.logout(), 'logout', 204);
   });
 
-  test('accepts the optional push_token', async ({ anonApi }) => {
+  test('accepts the optional push_token', { tag: '@SEC-03' }, async ({ anonApi }) => {
     const res = await anonApi.login({
       ...auxCredentials(),
       push_token: 'a3dda5212a608ed800b14e12d549b59177a9024da271b3330f11c34112f188ea',
@@ -61,7 +61,7 @@ test.describe('POST /login with valid credentials', () => {
     await expectResponse(await anonApi.logout(), 'logout', 204);
   });
 
-  test('a second login of the same device and serial ends the first session', async ({ newAnonApi }) => {
+  test('a second login of the same device and serial ends the first session', { tag: '@SEC-04' }, async ({ newAnonApi }) => {
     // Not in the spec, but every client depends on it: one session per device.
     const first = await newAnonApi();
     const second = await newAnonApi();
@@ -77,7 +77,7 @@ test.describe('POST /login with valid credentials', () => {
 });
 
 test.describe('POST /logout', () => {
-  test('ends the session and expires its cookie', async ({ anonApi }) => {
+  test('ends the session and expires its cookie', { tag: '@SEC-05' }, async ({ anonApi }) => {
     await expectResponse(await anonApi.login(auxCredentials()), 'login', 200);
 
     const res = await anonApi.logout();
@@ -87,7 +87,7 @@ test.describe('POST /logout', () => {
     await expectError(await anonApi.getAccount(), 'getAccount', 403, 'E_AUTH_ERROR');
   });
 
-  test('a session that was logged out stays logged out', async ({ anonApi, newAnonApi }) => {
+  test('a session that was logged out stays logged out', { tag: '@SEC-06' }, async ({ anonApi, newAnonApi }) => {
     const login = await expectResponse<Account>(await anonApi.login(auxCredentials()), 'login', 200);
     await expectResponse(await anonApi.logout(), 'logout', 204);
 
@@ -97,13 +97,13 @@ test.describe('POST /logout', () => {
     await expectError(res, 'getAccount', 403, 'E_AUTH_ERROR');
   });
 
-  test('without a session answers 403 E_AUTH_ERROR', { tag: '@no-session' }, async ({ anonApi }) => {
+  test('without a session answers 403 E_AUTH_ERROR', { tag: ['@no-session', '@SEC-07'] }, async ({ anonApi }) => {
     await expectError(await anonApi.logout(), 'logout', 403, 'E_AUTH_ERROR');
   });
 });
 
 test.describe('POST /login with invalid input', { tag: '@no-session' }, () => {
-  test('an empty body names every missing field', async ({ anonApi }) => {
+  test('an empty body names every missing field', { tag: '@SEC-08' }, async ({ anonApi }) => {
     const body = await expectError(await anonApi.loginRaw({}), 'login', 400, 'E_NEED_PARAM');
     for (const field of ['login', 'password', 'device', 'serial']) {
       expect(body.error.details.description).toContain(`${field}: This value should not be blank.`);
@@ -111,7 +111,7 @@ test.describe('POST /login with invalid input', { tag: '@no-session' }, () => {
   });
 
   for (const field of ['login', 'password', 'device', 'serial'] as const) {
-    test(`a body without ${field} is rejected with 400 naming only ${field}`, async ({ anonApi }) => {
+    test(`a body without ${field} is rejected with 400 naming only ${field}`, { tag: '@SEC-09' }, async ({ anonApi }) => {
       const payload: Record<string, string> = { login: NOT_A_LOGIN, password: 'x', device: v4Device, serial: v4AuxSerial };
       delete payload[field];
       const body = await expectError(await anonApi.loginRaw(payload), 'login', 400, 'E_NEED_PARAM');
@@ -119,13 +119,13 @@ test.describe('POST /login with invalid input', { tag: '@no-session' }, () => {
     });
   }
 
-  test('an unknown device model is rejected with 400', async ({ anonApi }) => {
+  test('an unknown device model is rejected with 400', { tag: '@SEC-10' }, async ({ anonApi }) => {
     const res = await anonApi.loginRaw({ login: NOT_A_LOGIN, password: 'x', device: 'playwright-no-such-model', serial: v4AuxSerial });
     const body = await expectError(res, 'login', 400, 'E_NEED_PARAM');
     expect(body.error.details.description).toBe('Device playwright-no-such-model not found.');
   });
 
-  test('an unknown login is rejected with 403 E_INCORRECT_LOGIN and opens no session', async ({ anonApi }) => {
+  test('an unknown login is rejected with 403 E_INCORRECT_LOGIN and opens no session', { tag: '@SEC-11' }, async ({ anonApi }) => {
     const res = await anonApi.loginRaw({ login: NOT_A_LOGIN, password: 'x', device: v4Device, serial: v4AuxSerial });
     const body = await expectError(res, 'login', 403, 'E_INCORRECT_LOGIN');
     expect(body.error.details.description).toBe('Incorrect login');

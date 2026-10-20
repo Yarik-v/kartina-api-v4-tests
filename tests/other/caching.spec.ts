@@ -3,7 +3,7 @@ import { expectResponse, recordKnownIssue } from '../../src/assertions';
 import { allOperations, documentedHeaders } from '../../src/spec';
 
 test.describe('conditional requests', () => {
-  test('responses that document an ETag come without one (known API bug)', async ({ api }) => {
+  test('responses that document an ETag come without one (known API bug)', { tag: '@GEN-05' }, async ({ api }) => {
     // 19 responses document `ETag`, and `304 Not Modified` for a matching
     // `If-None-Match`, but the server sends no ETag at all (staging and production),
     // so a client can never revalidate. Pinned on a few of them: once ETags show up
@@ -17,7 +17,7 @@ test.describe('conditional requests', () => {
     recordKnownIssue(`etag-not-sent: no response carries the ETag that ${documenting.length} operations document, so 304 never happens`);
   });
 
-  test('X-Clear-Cache is accepted and the answer is the same resource', async ({ api, channels }) => {
+  test('X-Clear-Cache is accepted and the answer is the same resource', { tag: '@GEN-06' }, async ({ api, channels }) => {
     const body = await expectResponse<{ count: number }>(
       await api.getChannels({ headers: { 'X-Clear-Cache': '1' } }),
       'getChannels',

@@ -3,7 +3,7 @@ import { expectResponse } from '../../src/assertions';
 import { operation } from '../../src/spec';
 
 test.describe('GET /servertime', { tag: '@no-session' }, () => {
-  test('needs no session and reports the current time, the same as X-Api-Servertime', async ({ anonApi }) => {
+  test('needs no session and reports the current time, the same as X-Api-Servertime', { tag: '@OTH-01' }, async ({ anonApi }) => {
     expect(operation('getServertime').requiresSession).toBe(false);
     const res = await anonApi.getServertime();
     const body = await expectResponse<{ servertime: number }>(res, 'getServertime', 200);
@@ -13,14 +13,14 @@ test.describe('GET /servertime', { tag: '@no-session' }, () => {
 });
 
 test.describe('GET /screensaver', { tag: '@no-session' }, () => {
-  test('needs no session and counts its own slides', async ({ anonApi }) => {
+  test('needs no session and counts its own slides', { tag: '@OTH-02' }, async ({ anonApi }) => {
     const body = await expectResponse<{ count: number; items: unknown[] }>(await anonApi.getScreensaver(), 'getScreensaver', 200);
     expect(body.count).toBe(body.items.length);
   });
 });
 
 test.describe('GET /speedtest', () => {
-  test('lists the speed test servers', async ({ api }) => {
+  test('lists the speed test servers', { tag: '@OTH-03' }, async ({ api }) => {
     const body = await expectResponse<{ count: number; items: unknown[] }>(await api.getSpeedtest(), 'getSpeedtest', 200);
     expect(body.count).toBe(body.items.length);
     expect(body.count).toBeGreaterThan(0);
