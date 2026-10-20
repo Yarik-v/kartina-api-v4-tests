@@ -133,7 +133,18 @@ test.describe('protect code', () => {
 
   test('POST /protect-code/change rejects a confirmation that differs from the new code', async ({ api }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);
-    const res = await api.raw('POST', 'protect-code/change', { data: { old: v4ProtectCode, new: '1234567', confirm: '7654321' } });
-    await expectError(res, 'changeProtectCode', 400);
+    const candidates = ['1234567', '7654321'];
+    const res = await api.raw('POST', 'protect-code/change', { data: { old: v4ProtectCode, new: candidates[0], confirm: candidates[1] } });
+    try {
+      await expectError(res, 'changeProtectCode', 400);
+    } finally {
+      // Should the server change the code anyway, put the original back before failing.
+      if ((await api.checkProtectCode({ code: v4ProtectCode })).status() !== 200) {
+        for (const code of candidates) {
+          await api.raw('POST', 'protect-code/change', { data: { old: code, new: v4ProtectCode, confirm: v4ProtectCode } });
+        }
+        expect((await api.checkProtectCode({ code: v4ProtectCode })).status(), 'protect code restored').toBe(200);
+      }
+    }
   });
 });
