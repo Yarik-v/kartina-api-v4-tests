@@ -16,10 +16,10 @@ with the exact requests and responses, in
 [`reports/2026-10-20-api-v4-staging.html`](reports/2026-10-20-api-v4-staging.html);
 the **[A1]**-style tags in this catalog are that report's IDs.
 
-**173 cases total, 149 automated, 24 gaps** (`—` in Automated); see "Remaining gaps"
-at the end for the breakdown. Of the automated ones, 7 run only when their
-precondition holds: 5 need `V4_PROTECT_CODE` (set for the account in use, so they
-run), 2 need live data that isn't always there (they skip themselves otherwise; as of
+**176 cases total, 152 automated, 24 gaps** (`—` in Automated); see "Remaining gaps"
+at the end for the breakdown. Of the automated ones, 8 run only when their
+precondition holds: 5 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
+set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
 20.10.2026 the dashboard has no non-playable title and no ivi / start_film block).
 
 All cases run on one shared session of the account in `.env` unless the
@@ -48,6 +48,7 @@ catalog case by case (the developer report has that table).
 | SEC-13 | **Undocumented:** a 4th session evicts the oldest **[U1]** | P1 | 3 sessions of the account open | Log in from a 4th serial; call GET `/account` on the oldest session twice | First call 409 `E_ANOTHER_CLIENT_IN` ("Абонемент используется на другом устройстве"), then 403. The spec documents neither the limit nor the 409 | — (excluded: would knock the account's real devices out) |
 | SEC-14 | `X-Client-Version` doesn't change the answer | P2 | no session | SEC-01 with `X-Client-Version: 20260517` | Same response as without it | — (not automated: trivial) |
 | SEC-15 | `mirror` with geo-routing | P2 | a deployment with geo-routing | POST `/login` | Body carries `mirror` (alternative server) | — (needs a geo-routed deployment) |
+| SEC-16 | The login body shows the prompt only without a personal cabinet | P1 | no session | SEC-01 | `registration_prompt.show == true` only together with `has_personal_account == false` (the `hasPersonalAccount` schema: "The prompt is shown only when false") | `tests/account/security.spec.ts` |
 
 ### 1.2 Client — `GET /account`, `GET`/`POST /settings`, protect code
 
@@ -67,6 +68,8 @@ catalog case by case (the developer report has that table).
 | CLI-12 | Protect-code change without parameters | P2 | none | POST `/protect-code/change` `{}` | 400; nothing changes | `tests/account/client.spec.ts` |
 | CLI-13 | Protect-code change, confirmation mismatch | P1 | `V4_PROTECT_CODE` | POST `{old: <right>, new: A, confirm: B}` | 400; nothing changes | `tests/account/client.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CLI-14 | Protect-code change succeeds | P1 | `V4_PROTECT_CODE` | Change old → new, check, change back | 200 each way; the new code works for `/check` | — (excluded: changes the account's parental code; a failure halfway would leave it changed) |
+| CLI-15 | The account shows the prompt only without a personal cabinet | P1 | none | GET `/account` | `registration_prompt.show` is true only when `has_personal_account` is false; a personal cabinet (or `null`) means no prompt | `tests/account/client.spec.ts` |
+| CLI-16 | An account created in the admin panel has a personal cabinet | P1 | `V4_ADMIN_CREATED_ACCOUNT=1`: the account comes from the admin panel (developers', testers') | GET `/account` | `has_personal_account == true`, `registration_prompt.show == false`. The dev team's rule, not in the spec; until a staging deploy on 20.10.2026 the test account answered `false` and got the prompt | `tests/account/client.spec.ts` (needs `V4_ADMIN_CREATED_ACCOUNT`) |
 
 ### 1.3 Profiles — `/profiles`, `/profiles/current`, `/profiles/{id}`
 

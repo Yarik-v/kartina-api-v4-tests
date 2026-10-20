@@ -195,7 +195,7 @@ test.describe('archive and teleteka', () => {
 
 // Hiding needs the protect code, and DELETE /channels/hidden clears every rule the
 // account has, so the reset runs only when nothing was hidden before.
-test.describe('hidden channels', () => {
+test.describe('hidden channels', { tag: '@mutates' }, () => {
   test.describe.configure({ mode: 'default' });
 
   test('PUT /channels/{id}/hidden without the protect code answers 400', { tag: '@CH-22' }, async ({ api, channels }) => {
@@ -214,7 +214,8 @@ test.describe('hidden channels', () => {
       200,
     );
     test.skip(withHidden.items.some((c) => c.access.hidden), 'The account hides channels of its own; not touching them');
-    const channel = playableChannel(channels)!;
+    // From the end of the list: the read-only tests use the first playable channel.
+    const channel = [...channels.items].reverse().find((c) => c.playable && !c.access.protected)!;
     const code = { code: v4ProtectCode };
 
     let hidden = false;

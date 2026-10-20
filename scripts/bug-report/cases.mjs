@@ -1,17 +1,10 @@
 // Maps a Playwright JSON results file onto the TEST_CASES.md catalog, case by case,
 // through the case-id tags every test carries (`{ tag: '@CNT-11' }`).
 import { readFileSync } from 'node:fs';
+import { esc, md } from './util.mjs';
 
-/** @param {unknown} s */
-export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-/** The little Markdown the catalog cells use: `code`, **bold**, [links](…) and **[A1]** report tags. */
-export const md = (/** @type {string} */ s) =>
-  esc(s)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*\[([A-Z]\d)\]\*\*/g, '<a href="#$1">[$1]</a>')
-    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+/** The projects whose tests carry case tags (setup and teardown don't). */
+const TEST_PROJECTS = ['api-v4', 'api-v4-mutating'];
 
 /** Known-issue annotation (see src/knownIssues.ts and the pinned tests) → finding of the report. */
 const FINDING = /** @type {[RegExp, string][]} */ ([
@@ -53,7 +46,7 @@ export function caseResults(resultsPath, catalogPath) {
   const walk = (suite) => {
     for (const spec of suite.specs ?? []) {
       for (const test of spec.tests) {
-        if (test.projectName !== 'api-v4') continue;
+        if (!TEST_PROJECTS.includes(test.projectName)) continue;
         for (const tag of spec.tags) {
           if (!/^[A-Z]+-\d+$/.test(tag)) continue;
           if (!byCase.has(tag)) byCase.set(tag, []);
@@ -128,7 +121,12 @@ export function caseResults(resultsPath, catalogPath) {
     }
     const skipped = tests.filter((t) => t.status === 'skipped');
     if (skipped.length) {
-      const reasons = [...new Set(skipped.flatMap((t) => t.annotations.filter((a) => a.type === 'skip').map((a) => a.description ?? '')))];
+      // No skip annotation: the test never ran, e.g. api-v4-mutating after a failure in api-v4.
+      const reasons = [
+        ...new Set(
+          skipped.map((t) => t.annotations.find((a) => a.type === 'skip')?.description ?? 'не запускался: упал тест, от которого зависит его проект'),
+        ),
+      ];
       return { status: 'skip', tests: count, note: esc(reasons.join('; ')) };
     }
     const findings = [
@@ -136,7 +134,11 @@ export function caseResults(resultsPath, catalogPath) {
     ];
     if (/\*\*(BUG|DOCS BUG)/.test(row.Title)) {
       const finding = row.Title.match(/\*\*\[([A-Z]\d)\]\*\*/)?.[1] ?? findings[0];
-      return { status: 'bug', tests: count, note: `баг воспроизводится${finding ? ` — <a href="#${finding}">${finding}</a>` : ''}` };
+      const link = finding ? ` — <a href="#${finding}">${finding}</a>` : '';
+      // Every pinned test records its known issue when the bug shows; a green one
+      // without it saw no bug here (e.g. the staging-only debug trace on production).
+      if (!findings.length) return { status: 'pass', tests: count, note: `баг на этом хосте не наблюдался${link}` };
+      return { status: 'bug', tests: count, note: `баг воспроизводится${link}` };
     }
     if (findings.length) {
       const links = findings.map((f) => `<a href="#${f}">${f}</a>`).join(', ');

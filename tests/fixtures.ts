@@ -68,6 +68,8 @@ interface Fixtures {
 interface WorkerFixtures {
   /** Auto: fails every api-v4 test with one clear message if V4_API_HOST isn't allowed. */
   validV4Host: void;
+  /** Whether the setup opened the shared session; read once per worker. */
+  hasSession: boolean;
   workerRequest: APIRequestContext;
   workerApi: V4ApiClient;
   /** GET /account, once per worker. */
@@ -100,9 +102,16 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
     { scope: 'worker', auto: true },
   ],
 
+  hasSession: [
+    async ({}, use) => {
+      await use(hasV4Session());
+    },
+    { scope: 'worker' },
+  ],
+
   sessionGate: [
-    async ({}, use, testInfo) => {
-      testInfo.skip(!testInfo.tags.includes(NO_SESSION_TAG) && !hasV4Session(), NO_SESSION_REASON);
+    async ({ hasSession }, use, testInfo) => {
+      testInfo.skip(!testInfo.tags.includes(NO_SESSION_TAG) && !hasSession, NO_SESSION_REASON);
       await use();
     },
     { auto: true },
@@ -123,11 +132,19 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
       contexts.push(context);
       return new V4ApiClient(context);
     });
-    await Promise.all(contexts.map((context) => context.dispose()));
+    // A test that logged in and failed before its own logout would leave that session
+    // holding one of the account's few slots for the cookie's three days.
+    await Promise.all(
+      contexts.map(async (context) => {
+        const { cookies } = await context.storageState();
+        if (cookies.some((cookie) => cookie.name === 'MW_SSID')) await new V4ApiClient(context).logout();
+        await context.dispose();
+      }),
+    );
   },
 
   workerRequest: [
-    async ({ playwright }, use, workerInfo) => {
+    async ({ playwright, hasSession }, use, workerInfo) => {
       // The request-level options of the project's `use`, the shared session's
       // storage state included, so worker fixtures send what `request` does.
       const { baseURL, extraHTTPHeaders, ignoreHTTPSErrors, proxy, storageState } = workerInfo.project.use;
@@ -136,7 +153,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
         extraHTTPHeaders,
         ignoreHTTPSErrors,
         proxy,
-        storageState: hasV4Session() ? storageState : EMPTY_STORAGE_STATE,
+        storageState: hasSession ? storageState : EMPTY_STORAGE_STATE,
       });
       await use(context);
       await context.dispose();

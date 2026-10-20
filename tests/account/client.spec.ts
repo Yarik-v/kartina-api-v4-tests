@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { test, expect } from '../fixtures';
 import { expectError, expectResponse } from '../../src/assertions';
 import type { V4ApiClient } from '../../src/client';
-import { v4Login, v4ProtectCode } from '../../src/config';
-import { CHOICE_SETTINGS, type Account, type ClientSettings } from '../../src/types';
+import { v4AdminCreatedAccount, v4Login, v4ProtectCode } from '../../src/config';
+import { CHOICE_SETTINGS, type Account, type ApiError, type ClientSettings } from '../../src/types';
 import { V4_SESSION_FILE } from '../session';
 
 const NO_PROTECT_CODE = 'V4_PROTECT_CODE is not set in .env';
@@ -24,12 +24,29 @@ test.describe('GET /account', () => {
     // Unlike the login body, the account carries the sharing link when the packet has one.
     expect([null, '/api/v4/sharing/link']).toContain(body.packet.share_links);
   });
+
+  test('the registration prompt shows only without a personal cabinet', { tag: '@CLI-15' }, async ({ api }) => {
+    // hasPersonalAccount: "The prompt is shown only when false."
+    const body = await expectResponse<Account>(await api.getAccount(), 'getAccount', 200);
+    if (body.registration_prompt.show) expect(body.has_personal_account, 'prompt shown, so no personal cabinet').toBe(false);
+    if (body.has_personal_account !== false) expect(body.registration_prompt.show, 'a personal cabinet, so no prompt').toBe(false);
+  });
+
+  test('an account created in the admin panel has a personal cabinet and no prompt', { tag: '@CLI-16' }, async ({ api }) => {
+    // The dev team's rule, not the spec's: admin-panel accounts (developers', testers')
+    // always have a personal cabinet. Until a staging deploy on 20.10.2026 this account
+    // answered false and was shown the prompt.
+    test.skip(!v4AdminCreatedAccount, 'V4_ADMIN_CREATED_ACCOUNT is not set: the account may not come from the admin panel');
+    const body = await expectResponse<Account>(await api.getAccount(), 'getAccount', 200);
+    expect(body.has_personal_account).toBe(true);
+    expect(body.registration_prompt.show).toBe(false);
+  });
 });
 
 // Settings belong to the device of the shared session (the suite's own serial), not
 // to the account, so changing them can't reach the account's real devices. Each
 // test restores what it changed; the file runs in order so they never overlap.
-test.describe('client settings', () => {
+test.describe('client settings', { tag: '@mutates' }, () => {
   test.describe.configure({ mode: 'default' });
 
   async function readSettings(api: V4ApiClient): Promise<ClientSettings> {
@@ -107,7 +124,7 @@ test.describe('client settings', () => {
 
 // The protect (parental) code is never changed by the suite, and without
 // V4_PROTECT_CODE it never sends a code at all, wrong or right.
-test.describe('protect code', () => {
+test.describe('protect code', { tag: '@mutates' }, () => {
   test('POST /protect-code/check without a code answers 400', { tag: '@CLI-09' }, async ({ api }) => {
     await expectError(await api.checkProtectCode({}), 'checkProtectCode', 400);
   });
@@ -139,7 +156,11 @@ test.describe('protect code', () => {
       await expectError(res, 'changeProtectCode', 400);
     } finally {
       // Should the server change the code anyway, put the original back before failing.
-      if ((await api.checkProtectCode({ code: v4ProtectCode })).status() !== 200) {
+      // Only on a definite "wrong code": a transient error must not trigger change
+      // attempts with guessed old codes against the account's parental code.
+      const check = await api.checkProtectCode({ code: v4ProtectCode });
+      const rejected = check.status() === 403 && ((await check.json()) as ApiError).error.type === 'E_CURRENT_PASS_BAD';
+      if (rejected) {
         for (const code of candidates) {
           await api.raw('POST', 'protect-code/change', { data: { old: code, new: v4ProtectCode, confirm: v4ProtectCode } });
         }

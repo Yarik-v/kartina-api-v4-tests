@@ -97,8 +97,11 @@ model must be one the server knows (`V4_DEVICE`, default `androidtv-yb-005`).
 
 - Settings (they belong to the suite's own device), profiles (prefixed `pw-`, cleaned
   up even after an interrupted run), VOD and channel favorites and hidden channels are
-  changed and put back. Files that touch shared account state run in order
-  (`mode: 'default'`).
+  changed and put back. Tests that change the account are tagged `@mutates` and run
+  in their own project, `api-v4-mutating`: after the read-only `api-v4` project, one
+  at a time, so no read races a change. Like any Playwright dependency, a failure in
+  `api-v4` leaves `api-v4-mutating` unrun (the report marks those cases "не
+  запускался"). Anonymous clients that end a test still logged in are logged out.
 - Never called: changing the protect code, `POST /sharing/code` / `POST /sharing/account`
   / `DELETE /sharing/friends/…` (they send codes or change the friend subscription),
   clearing the search history, answering the registration prompt. They're still
@@ -108,6 +111,10 @@ model must be one the server knows (`V4_DEVICE`, default `androidtv-yb-005`).
   account (a long number like `99999999999` can be someone else's account).
 - `V4_PROTECT_CODE` (optional) enables the protect-code and hidden-channel tests;
   without it the suite never sends a protect code at all.
+- `V4_ADMIN_CREATED_ACCOUNT=1` (optional) says the account comes from the admin panel,
+  i.e. it's a developer's or tester's account. Those always have a personal cabinet
+  (`has_personal_account: true`), which CLI-16 then checks; it's the dev team's rule,
+  not the spec's, so it stays off for other accounts.
 
 ### Known API bugs are pinned, not skipped
 

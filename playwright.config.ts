@@ -1,7 +1,13 @@
 import { defineConfig } from '@playwright/test';
 import 'dotenv/config';
 import { v4BaseURL } from './src/config';
-import { V4_SESSION_FILE } from './tests/session';
+import { MUTATES_TAG, V4_SESSION_FILE } from './tests/session';
+
+const v4Use = {
+  baseURL: v4BaseURL,
+  storageState: V4_SESSION_FILE,
+  extraHTTPHeaders: { Accept: 'application/json' },
+};
 
 export default defineConfig({
   fullyParallel: true,
@@ -36,11 +42,21 @@ export default defineConfig({
     {
       name: 'api-v4',
       dependencies: ['api-v4-setup'],
-      use: {
-        baseURL: v4BaseURL,
-        storageState: V4_SESSION_FILE,
-        extraHTTPHeaders: { Accept: 'application/json' },
-      },
+      grepInvert: new RegExp(MUTATES_TAG),
+      use: v4Use,
+    },
+    // Tests that change the account (settings, profiles, favorites, hidden channels,
+    // the search history) run after the read-only ones, one at a time: in parallel
+    // they would race every read of the same state (a hidden channel missing from
+    // a count, a recalculated setting under a playback test). As with any dependency,
+    // a failure in api-v4 leaves this project unrun.
+    {
+      name: 'api-v4-mutating',
+      dependencies: ['api-v4'],
+      grep: new RegExp(MUTATES_TAG),
+      fullyParallel: false,
+      workers: 1,
+      use: v4Use,
     },
   ],
   testDir: './tests',

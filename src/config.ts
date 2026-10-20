@@ -19,6 +19,12 @@ export const v4Login = process.env.V4_LOGIN ?? '';
 export const v4Password = process.env.V4_PASSWORD ?? '';
 /** Needed only by the protect-code and hidden-channel tests; they skip without it. */
 export const v4ProtectCode = process.env.V4_PROTECT_CODE ?? '';
+/**
+ * Set (`1`) when the account was created in the admin panel: those are the
+ * developers' and testers' accounts, and they always have a personal cabinet
+ * (`has_personal_account: true`). Not in the spec; the dev team's rule.
+ */
+export const v4AdminCreatedAccount = process.env.V4_ADMIN_CREATED_ACCOUNT === '1';
 
 // The server only accepts device models it knows (`Device ... not found.`), so this is
 // a real one, taken from the spec's own example.

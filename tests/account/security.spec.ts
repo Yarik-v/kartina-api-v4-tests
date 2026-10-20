@@ -24,7 +24,7 @@ function sessionCookie(res: { headersArray(): { name: string; value: string }[] 
 }
 
 test.describe('POST /login with valid credentials', () => {
-  test('opens a session: client, packet and session id, also set as the MW_SSID cookie', { tag: '@SEC-01' }, async ({ anonApi }) => {
+  test('opens a session: client, packet and session id, also set as the MW_SSID cookie', { tag: ['@SEC-01', '@SEC-16'] }, async ({ anonApi }) => {
     const res = await anonApi.login(auxCredentials());
     const body = await expectResponse<Account>(res, 'login', 200);
 
@@ -33,6 +33,8 @@ test.describe('POST /login with valid credentials', () => {
     expect(body.services).toBe('/api/v4/services');
     expect(body.settings).toBe('/api/v4/settings');
     expect(body.packet.share_links, 'always null in the login body, see GET /account').toBeNull();
+    // Documented: the registration prompt is shown only when there's no personal cabinet.
+    if (body.registration_prompt.show) expect(body.has_personal_account, 'prompt shown, so no personal cabinet').toBe(false);
     expect(sessionCookie(res)).toMatch(new RegExp(`^MW_SSID=${body.security};`));
     // Documented as an encrypted token, explicitly not the session id.
     expect(res.headers()['x-token']).toBeTruthy();

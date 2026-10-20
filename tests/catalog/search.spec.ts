@@ -28,9 +28,13 @@ test.describe('GET /search/services', () => {
     expect(second.prev_url, 'the second page links back').toBeTruthy();
   });
 
-  test('service narrows the results to that service', { tag: '@SRCH-03' }, async ({ api, subscribedServices }) => {
-    const service = [...subscribedServices][0];
-    const body = await expectResponse<SearchResults>(await api.searchServices({ service, limit: 10 }), 'searchServices', 200);
+  test('service narrows the results to that service', { tag: '@SRCH-03' }, async ({ api }) => {
+    // A service the unfiltered search does return, so the filtered one can't pass empty.
+    const unfiltered = await expectResponse<SearchResults>(await api.searchServices({ query: QUERY, limit: 20 }), 'searchServices', 200);
+    const service = unfiltered.items[0]?.service;
+    test.skip(!service, 'The search returned nothing to filter');
+    const body = await expectResponse<SearchResults>(await api.searchServices({ query: QUERY, service, limit: 10 }), 'searchServices', 200);
+    expect(body.count, `results of ${service}`).toBeGreaterThan(0);
     for (const item of body.items) expect(item.service).toBe(service);
   });
 
@@ -100,7 +104,7 @@ test.describe('search facets', () => {
 // query. It only re-records the query already on top, which by the docs ("a repeat
 // moves to the top") leaves the list as it was. Not even a blank query is sent: if
 // the server stored it by mistake, only clearing the whole history would undo that.
-test.describe('search history', () => {
+test.describe('search history', { tag: '@mutates' }, () => {
   test.describe.configure({ mode: 'default' });
 
   test('GET /search/history lists the recent queries, lowercased', { tag: '@SRCH-13' }, async ({ api }) => {

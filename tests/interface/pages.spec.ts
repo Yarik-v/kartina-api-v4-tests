@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures';
 import { expectError, expectResponse } from '../../src/assertions';
 import { operationForPath } from '../../src/spec';
-import type { Page } from '../../src/types';
+import type { ChannelsList, Page } from '../../src/types';
 
 test.describe('GET /pages/tv', () => {
   test('lists the TV channel groups, each linking to its own block', { tag: '@PAGE-01' }, async ({ api }) => {
@@ -14,9 +14,13 @@ test.describe('GET /pages/tv', () => {
     }
   });
 
-  test('the groups together hold every channel of GET /channels', { tag: '@PAGE-02' }, async ({ api, channels }) => {
-    const body = await expectResponse<Page>(await api.getTvPage(), 'getTvPage', 200);
-    const total = body.items.reduce((sum, block) => sum + (block.count ?? 0), 0);
+  test('the groups together hold every channel of GET /channels', { tag: '@PAGE-02' }, async ({ api }) => {
+    // Both fetched now: the worker's `channels` snapshot can be older than the TV page.
+    const [tv, channels] = await Promise.all([
+      expectResponse<Page>(await api.getTvPage(), 'getTvPage', 200),
+      expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200),
+    ]);
+    const total = tv.items.reduce((sum, block) => sum + (block.count ?? 0), 0);
     expect(total).toBe(channels.count);
   });
 });

@@ -7,7 +7,7 @@
 // `--skip-tests` reuses the results of the last such run instead of step 1.
 import 'dotenv/config';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capture } from './bug-report/capture.mjs';
@@ -25,9 +25,12 @@ const password = process.env.V4_PASSWORD ?? '';
 if (!login || !password) throw new Error('Set V4_LOGIN and V4_PASSWORD in .env');
 
 if (!process.argv.includes('--skip-tests')) {
-  // Playwright empties test-results/ when a run starts, so the results land there
-  // only after it; the capture below writes nothing of its own to disk.
-  const run = spawnSync('npx', ['playwright', 'test', '--reporter=json,./src/reporters/failuresOnly.ts'], {
+  // Removed up front: a run that dies before Playwright cleans test-results/ (a
+  // config or load error) must not leave the previous results to be reported as new.
+  rmSync(RESULTS, { force: true });
+  // The usual reporters too, so `npm run report` still has this run's HTML report.
+  const reporters = ['json', './src/reporters/failuresOnly.ts', './src/reporters/htmlReport.ts'].join(',');
+  const run = spawnSync('npx', ['playwright', 'test', `--reporter=${reporters}`], {
     cwd: ROOT,
     stdio: ['ignore', 'inherit', 'inherit'],
     env: { ...process.env, PLAYWRIGHT_JSON_OUTPUT_NAME: RESULTS },

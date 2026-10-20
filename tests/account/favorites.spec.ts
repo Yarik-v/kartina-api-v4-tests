@@ -16,12 +16,13 @@ async function favorites(api: V4ApiClient): Promise<FavoritesList> {
 const contains = (list: FavoritesList, id: string, service?: string) =>
   list.items.some((item) => item.id === id && (!service || item.service === service));
 
-// Favorites are the account's own list, so the file runs in order and every test
-// takes back exactly what it added: it only adds a title or channel that wasn't a
-// favorite before, and removes it again even when an assertion fails halfway.
+// Favorites are the account's own list: these tests run in the api-v4-mutating
+// project, and every test takes back exactly what it added: it only adds a title or
+// channel that wasn't a favorite before, and removes it again even when an assertion
+// fails halfway.
 test.describe.configure({ mode: 'default' });
 
-test.describe('GET /favorites', () => {
+test.describe('GET /favorites', { tag: '@mutates' }, () => {
   test('lists channels and titles, all marked favorite', { tag: '@FAV-01' }, async ({ api }) => {
     const body = await favorites(api);
     expect(body.count).toBe(body.items.length);
@@ -38,13 +39,29 @@ test.describe('GET /favorites', () => {
     }
   });
 
-  test('GET /favorites/{service} holds only that service\'s titles', { tag: '@FAV-03' }, async ({ api }) => {
-    const all = await favorites(api);
-    const service = LISTABLE_SERVICES.find((id) => id !== 'channels' && all.items.some((item) => item.service === id)) ?? 'mediateka';
-    const body = await expectResponse<FavoritesList>(await api.getFavoritesByService(service), 'getFavoritesByService', 200);
-    expect(body.count).toBe(body.items.length);
-    for (const item of body.items) expect(item.service).toBe(service);
-    expect(body.count).toBe(all.items.filter((item) => item.service === service).length);
+  test('GET /favorites/{service} holds only that service\'s titles', { tag: '@FAV-03' }, async ({ api, dashboardBlocks }) => {
+    const listable = (service: string) => service !== 'channels' && LISTABLE_SERVICES.includes(service);
+    let all = await favorites(api);
+    // With no favorite of a service this endpoint lists, the check below would hold
+    // trivially (0 == 0); a title is added for the test then, and taken back.
+    let added: { service: string; id: string } | null = null;
+    if (!all.items.some((item) => item.service && listable(item.service))) {
+      const card = findCards(dashboardBlocks, (c) => !c.favorite && listable(c.service)).pop();
+      test.skip(!card, 'No title of a service GET /favorites/{service} lists, favorite or not');
+      await expectResponse(await api.addContentFavorite(card!.service, card!.id), 'addContentFavorite', 201);
+      added = { service: card!.service, id: card!.id };
+      all = await favorites(api);
+    }
+    try {
+      const service = all.items.find((item) => item.service && listable(item.service))!.service!;
+      const body = await expectResponse<FavoritesList>(await api.getFavoritesByService(service), 'getFavoritesByService', 200);
+      expect(body.count, service).toBeGreaterThan(0);
+      expect(body.count).toBe(body.items.length);
+      for (const item of body.items) expect(item.service).toBe(service);
+      expect(body.count).toBe(all.items.filter((item) => item.service === service).length);
+    } finally {
+      if (added) await api.removeContentFavorite(added.service, added.id);
+    }
   });
 
   test('GET /favorites/{service} for a service outside the documented list answers 404', { tag: '@FAV-04' }, async ({ api }) => {
@@ -52,7 +69,7 @@ test.describe('GET /favorites', () => {
   });
 });
 
-test.describe('VOD title favorites', () => {
+test.describe('VOD title favorites', { tag: '@mutates' }, () => {
   test('PUT adds a title (201, then 200 when repeated), DELETE removes it (204, then 404)', { tag: '@FAV-05' }, async ({
     api,
     dashboardBlocks,
@@ -86,7 +103,7 @@ test.describe('VOD title favorites', () => {
   });
 });
 
-test.describe('channel favorites', () => {
+test.describe('channel favorites', { tag: '@mutates' }, () => {
   test('PUT adds a channel (201, then 200), DELETE removes it (204, then 404)', { tag: '@FAV-06' }, async ({
     api,
     channels,

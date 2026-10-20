@@ -3,7 +3,7 @@
 // test run. When a pinned test turns red (the bug looks fixed), its finding shows
 // "не воспроизвелось" in the summary; update or drop the finding here then.
 import { readFileSync } from 'node:fs';
-import { esc, md } from './cases.mjs';
+import { esc, md, streamFile } from './util.mjs';
 
 /**
  * @typedef {import('./capture.mjs').Exchange} Exchange
@@ -103,8 +103,8 @@ export function render({ capture, cases, hostLabel }) {
       const what =
         r.trailerStatus === 200
           ? r.sameFile
-            ? `<b>тот же файл, что <code>…/play</code></b> (№${r.play}): <code>${esc(new URL(r.trailerUrl).pathname)}</code>`
-            : `поток <code>${esc(new URL(r.trailerUrl).pathname)}</code>; <code>…/play</code> (№${r.play}) отдаёт другой URL — по имени это сам фильм, не трейлер`
+            ? `<b>тот же файл, что <code>…/play</code></b> (№${r.play}): <code>${esc(streamFile(r.trailerUrl))}</code>`
+            : `поток <code>${esc(streamFile(r.trailerUrl))}</code>; <code>…/play</code> (№${r.play}) отдаёт другой URL — по имени это сам фильм, не трейлер`
           : `<code>${esc(r.trailerError?.type)}</code>, request_id <code>${esc(r.trailerError?.request_id)}</code>${r.trailerStatus === 404 ? ' — как в документации' : ''}`;
       return `<tr><td>${esc(r.service)}</td><td>${esc(r.title)} (${esc(r.kind)})</td><td>№${r.trailer}</td><td>${r.trailerStatus}</td><td>${what}</td></tr>`;
     })
@@ -113,6 +113,8 @@ export function render({ capture, cases, hostLabel }) {
   const blockCause = bodyOf(out.unknownBlock)?.exception?.message ?? '';
   const internalHost = blockCause.match(/https?:\/\/[^/\s"]+/)?.[0];
   const anonTrace = ownFrame(out.debugAnon);
+  /** Whether this host's error bodies carry the debug trace (S1). */
+  const stagingTrace = Boolean(bodyOf(out.debugAnon)?.exception);
   const tele = out.teleteka;
   /** @type {{ id: string, title: string, kind: string, play_url: string }[]} */
   const wrongKind = out.radioGroupWrongKind;
@@ -145,7 +147,7 @@ export function render({ capture, cases, hostLabel }) {
       title: 'Staging отдаёт отладочный стектрейс в каждой ошибке',
       body: `<dt>Где</dt><dd>Любой ответ с ошибкой на <code>rustvt.kartina.tv</code> — смотрите поле <code>exception</code> в ответах этого отчёта. Production <code>iptv.kartina.tv</code> этого не делает.</dd>
     <dt>По документации</dt><dd>Тело ошибки — только <code>{"error": {…}}</code> (<code>additionalProperties: false</code>).</dd>
-    <dt>Фактически</dt><dd>Рядом с <code>error</code> приходит <code>exception</code>: класс, сообщение, трейс с путями на сервере${anonTrace ? ` (<code>${esc(anonTrace)}</code>, №${out.debugAnon})` : ''}${internalHost ? `, внутренние хосты (<code>${esc(internalHost)}</code>, №${out.unknownBlock})` : ''}, причины падений (№${out.countries}). Каждый ответ несёт <code>X-Debug-Token</code>, <code>X-Debug-Token-Link</code>, <code>X-Powered-By</code> (№${out.debugServertime}).${out.profiler ? ` Ссылка на профайлер отвечает ${ex(out.profiler).status} (№${out.profiler}).` : ''}</dd>
+    <dt>Фактически</dt><dd>${stagingTrace ? '' : `<b>На ${esc(new URL(base).host)} в этом прогоне не воспроизводится:</b> тело ошибки (№${out.debugAnon}) без <code>exception</code>. Описание ниже — по staging. `}Рядом с <code>error</code> приходит <code>exception</code>: класс, сообщение, трейс с путями на сервере${anonTrace ? ` (<code>${esc(anonTrace)}</code>, №${out.debugAnon})` : ''}${internalHost ? `, внутренние хосты (<code>${esc(internalHost)}</code>, №${out.unknownBlock})` : ''}, причины падений (№${out.countries}). Каждый ответ несёт <code>X-Debug-Token</code>, <code>X-Debug-Token-Link</code>, <code>X-Powered-By</code> (№${out.debugServertime}).${out.profiler ? ` Ссылка на профайлер отвечает ${ex(out.profiler).status} (№${out.profiler}).` : ''}</dd>
     <dt>Почему важно</dt><dd>Staging доступен из интернета: структура кода, версии и внутренние адреса видны любому. Либо закрыть staging по IP, либо выключить <code>APP_DEBUG</code> и убрать заголовки.</dd>
     <dt>Автотест</dt><dd><code>other/errors.spec.ts</code> › «error bodies carry no debug trace, except on staging (known API bug)»</dd>`,
       exchanges: [[out.debugAnon, { open: true, label: 'без сессии' }], [out.debugServertime, { label: 'заголовки X-Debug-*' }], ...(out.profiler ? [/** @type {ExchangeRef} */ ([out.profiler, { label: 'ссылка на профайлер' }])] : [])],
@@ -157,7 +159,7 @@ export function render({ capture, cases, hostLabel }) {
       title: 'Телетека программы без записи отдаёт ролик-заглушку',
       body: `<dt>Эндпоинт</dt><dd><code>GET /channels/{id}/teleteka/{timestamp}</code></dd>
     <dt>По документации</dt><dd>Нет записи: <code>403 E_ARCHIVE_NOT_AVAILABLE</code> («nothing recorded this moment»). Заглушка с извинением описана только для провайдера в режиме сбоя.</dd>
-    <dt>Фактически</dt><dd>${tele ? `EPG канала ${esc(tele.channel)} «${esc(tele.channelTitle)}» (№${tele.epg}) помечает программу «${esc(tele.programme.title)}» (<code>starts_at ${tele.programme.starts_at}</code>) как <code>teleteka: false</code> с <code>play_url ${esc(tele.programme.play_url)}</code>. Телетека этой программы (№${tele.call}) отвечает ${ex(tele.call).status}: <code>${esc(filePathOf(bodyOf(tele.call)?.url))}</code>.` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
+    <dt>Фактически</dt><dd>${tele ? `EPG канала ${esc(tele.channel)} «${esc(tele.channelTitle)}» (№${tele.epg}) помечает программу «${esc(tele.programme.title)}» (<code>starts_at ${tele.programme.starts_at}</code>) как <code>teleteka: false</code> с <code>play_url ${esc(tele.programme.play_url)}</code>. Телетека этой программы (№${tele.call}) отвечает ${ex(tele.call).status}: <code>${esc(streamFile(bodyOf(tele.call)?.url))}</code>.` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
     <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения.</dd>
     <dt>Автотест</dt><dd><code>catalog/channels.spec.ts</code> › «teleteka of a programme without a recording plays a stub instead of the documented 403 (known API bug)»</dd>`,
       exchanges: tele ? [tele.epg, [tele.call, { open: true }]] : [],
@@ -302,12 +304,16 @@ x-api-error-code: 11
 
   // Whether the pinned case of each finding still reproduces it in this run.
   const caseById = new Map(cases.all.map((row) => [row.ID, row]));
+  const unknownCases = findings.flatMap((f) => f.cases.filter((id) => !caseById.has(id)).map((id) => `${f.id} → ${id}`));
+  if (unknownCases.length) throw new Error(`Findings refer to cases TEST_CASES.md doesn't have: ${unknownCases.join(', ')}`);
   /** @param {Finding} f */
   const reproduces = (f) => {
+    if (f.id === 'S1' && !stagingTrace) return '<span class="rs ok">на этом хосте нет</span>';
     const statuses = f.cases.map((id) => caseById.get(id)?.result.status);
     if (statuses.some((s) => s === 'fail')) return '<span class="rs fail">не воспроизвелось — проверить</span>';
     if (statuses.every((s) => s === 'gap')) return '<span class="rs gap">не автоматизирован</span>';
     if (statuses.some((s) => s === 'skip')) return '<span class="rs skip">не проверено</span>';
+    if (statuses.every((s) => s === 'pass')) return '<span class="rs ok">не наблюдалось</span>';
     return '<span class="rs bugrep">воспроизводится</span>';
   };
   /** @param {Finding} f */
@@ -425,7 +431,7 @@ ${caseTables}
 <h2>Что проверено и что нет</h2>
 <ul>
   <li><b>Покрытие:</b> все 70 операций спецификации; ${runTotal} автотестов по ${cases.all.length} тест-кейсам (<a href="#cases">результаты</a>), каталог — <code>TEST_CASES.md</code> в репозитории тестов.</li>
-  <li><b>Production</b> (<code>iptv.kartina.tv</code>) проверялся 20.10.2026 только на чтение: A3, A5, A7, A8, D1 воспроизводятся там же, S1 — нет. A1 и A2 на production не проверялись.</li>
+  <li><b>Production</b> (<code>iptv.kartina.tv</code>), разовая проверка 20.10.2026, не из этого прогона: только чтение; A3, A5, A7, A8, D1 воспроизводились там же, S1 — нет. A1 и A2 на production не проверялись.</li>
   <li><b>Не проверено:</b> пропускает ли эндпоинт трейлера (A1) проверки подписки и гео — у тестового аккаунта всё оплачено.</li>
   <li><b>Сознательно не тестировалось</b> (меняет реальный аккаунт или затрагивает других): отправка кодов и создание аккаунтов sharing, смена protect-кода, очистка истории поиска, ответ на registration prompt, вытеснение сессий, неверный пароль реального аккаунта.</li>
 </ul>
@@ -434,10 +440,4 @@ ${caseTables}
 </body>
 </html>
 `;
-}
-
-/** @param {unknown} url */
-function filePathOf(url) {
-  if (typeof url !== 'string') return '';
-  return URL.canParse(url) ? new URL(url).pathname : url.split('?')[0];
 }

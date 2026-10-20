@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures';
 import { expectError, expectResponse } from '../../src/assertions';
 import { V4ApiClient } from '../../src/client';
 import type { Profile, ProfilePayload } from '../../src/types';
-import { NO_SESSION_REASON, hasV4Session } from '../session';
+import { NO_SESSION_REASON } from '../session';
 
 interface ProfileList {
   count: number;
@@ -28,20 +28,21 @@ async function deleteSuiteProfiles(api: V4ApiClient): Promise<void> {
   }
 }
 
-// The account's profile list is shared state, so the file runs in order and every
-// test deletes what it created. Switching the current profile applies to the shared
-// session only and is always switched back.
+// The account's profile list is shared state: these tests run in the api-v4-mutating
+// project (one at a time, after the read-only ones), and every test deletes what it
+// created. Switching the current profile applies to the shared session only and is
+// always switched back.
 test.describe.configure({ mode: 'default' });
 
-test.beforeAll(async ({ playwright }) => {
-  test.skip(!hasV4Session(), NO_SESSION_REASON);
+test.beforeAll(async ({ playwright, hasSession }) => {
+  test.skip(!hasSession, NO_SESSION_REASON);
   // On the shared session: the project's storage state applies to this context too.
   const context = await playwright.request.newContext();
   await deleteSuiteProfiles(new V4ApiClient(context));
   await context.dispose();
 });
 
-test.describe('GET /profiles', () => {
+test.describe('GET /profiles', { tag: '@mutates' }, () => {
   test('lists the profiles with exactly one main profile', { tag: '@PRF-01' }, async ({ api }) => {
     const body = await listProfiles(api);
     expect(body.count).toBe(body.items.length);
@@ -66,7 +67,7 @@ test.describe('GET /profiles', () => {
   });
 });
 
-test.describe('profile lifecycle', () => {
+test.describe('profile lifecycle', { tag: '@mutates' }, () => {
   test('create, read, replace, update, switch to and delete an additional profile', { tag: '@PRF-05' }, async ({ api }) => {
     const created = await createProfile(api, { name: `${PREFIX}kids`, avatar: 'avatar_2', age_band: 12 });
     try {
@@ -137,7 +138,7 @@ test.describe('profile lifecycle', () => {
   });
 });
 
-test.describe('invalid profile requests', () => {
+test.describe('invalid profile requests', { tag: '@mutates' }, () => {
   test('POST /profiles with an age band outside 0/7/12/16 answers 400', { tag: '@PRF-09' }, async ({ api }) => {
     const res = await api.createProfile({ name: `${PREFIX}invalid`, age_band: 5 });
     if (res.status() === 201) await api.deleteProfile((await res.json()).id);

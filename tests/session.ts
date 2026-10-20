@@ -14,6 +14,9 @@ export const NO_SESSION_REASON = 'No API v4 session: set V4_LOGIN and V4_PASSWOR
 /** Tag for tests that run without a session; every other api-v4 test needs one. */
 export const NO_SESSION_TAG = '@no-session';
 
+/** Tag for tests that change the account; they run in the api-v4-mutating project. */
+export const MUTATES_TAG = '@mutates';
+
 export function hasV4Session(): boolean {
   if (!existsSync(V4_SESSION_FILE)) return false;
   const state = JSON.parse(readFileSync(V4_SESSION_FILE, 'utf8')) as { cookies?: { name: string }[] };
