@@ -6,6 +6,9 @@ import type { CardList, ContentCard, ContentDetails, PlaybackStream } from '../.
 const DETAILS_SERVICES = parameterEnum('getContentDetails', 'service');
 const FREE_EPISODE_SERVICES = parameterEnum('playContentFreeEpisode', 'service');
 
+/** The file a stream URL points at: the same file is served from different streamer hosts. */
+const streamFile = (url: string) => (URL.canParse(url) ? new URL(url).pathname : url.split('?')[0]);
+
 const NO_MOVIE = 'No playable movie of a subscribed service on the dashboard right now';
 const NO_SERIES = 'No playable series with episodes of a subscribed service on the dashboard right now';
 
@@ -140,7 +143,7 @@ test.describe('playback', () => {
     // Documented: 404 E_WRONG_ID ("No such content, episode or trailer"). Live, one
     // title per service (a movie where there is one): most answer an undocumented
     // 503, and some answer 200, for some movies with
-    // the stream of the title itself, the very URL GET .../play hands out. So the
+    // the stream of the title itself, the very file GET .../play hands out. So the
     // trailer endpoint ignores the trailer id; whether it also skips the checks of
     // GET .../play is worth a look on the API side. Pinned: once no service answers
     // 200 for a made-up trailer this fails.
@@ -156,9 +159,9 @@ test.describe('playback', () => {
       const res = await api.playContentTrailer(card.service, card.id, 'playwright-no-such-trailer');
       outcomes.push(`${card.service}: ${res.status()}`);
       if (res.status() !== 200) continue;
-      const trailerUrl = ((await res.json()) as { url: string }).url.split('?')[0];
+      const trailerFile = streamFile(((await res.json()) as { url: string }).url);
       const play = await api.playContent(card.service, card.id);
-      if (play.ok() && ((await play.json()) as PlaybackStream).url.split('?')[0] === trailerUrl) servingTheTitle.push(card.service);
+      if (play.ok() && streamFile(((await play.json()) as PlaybackStream).url) === trailerFile) servingTheTitle.push(card.service);
     }
     expect(outcomes.some((outcome) => outcome.endsWith(': 200')), outcomes.join(', ')).toBe(true);
     recordKnownIssue(

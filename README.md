@@ -54,6 +54,8 @@ session cookie; a login test's trace also records the password.
   `APIResponse` so tests assert on errors as well as successes.
 - `src/knownIssues.ts` — the schema mismatches the live API is known to have.
 - `src/types.ts` — response types for what the tests read.
+- `reports/` — dated HTML bug reports for the API developers: each finding with
+  steps to reproduce, documented vs actual behavior and the test that pins it.
 - `TEST_CASES.md` — the test-case catalog: every case with its priority, expected
   result and the spec that automates it, or why it's a gap.
 - `tests/` mirrors the doc's tag groups: `account/` (Security, Client, Profiles,
