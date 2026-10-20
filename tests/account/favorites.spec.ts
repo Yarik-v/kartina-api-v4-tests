@@ -1,8 +1,8 @@
 import { test, expect, findCards } from '../fixtures';
-import { expectError, expectResponse } from '../../src/assertions';
+import { expectError, expectResponse, recordKnownIssue } from '../../src/assertions';
 import type { V4ApiClient } from '../../src/client';
-import { parameterEnum } from '../../src/spec';
-import type { ContentDetails, FavoritesList } from '../../src/types';
+import { operation, parameterEnum } from '../../src/spec';
+import type { CardList, ChannelCard, ContentDetails, FavoritesList } from '../../src/types';
 
 // Services each favorites operation documents (GET by service has no startru / iviru,
 // PUT has; they're the spec's own enums, not guesses).
@@ -111,6 +111,28 @@ test.describe('channel favorites', () => {
       await expectError(await api.removeChannelFavorite(id), 'removeChannelFavorite', 404);
       const after = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
       expect(contains(after, id), 'gone from GET /favorites/channels').toBe(false);
+    } finally {
+      if (added) await api.removeChannelFavorite(id);
+    }
+  });
+
+  test('the "favorite-channels" block does not follow the favorites (known docs bug)', async ({ api, channels }) => {
+    // GET /blocks/client-channels is summarized as "the client's favorite-channels
+    // block" (titled «Любимые телеканалы»), but its description, and the server, make
+    // it the most-watched channels: a channel just added to the favorites isn't in it.
+    // Pinned on the summary: once the docs stop calling it favorites this fails.
+    expect(operation('getClientChannelsBlock').summary).toContain('favorite-channels');
+    const channel = [...channels.items].reverse().find((c) => !c.favorite && c.playable && !c.access.protected);
+    test.skip(!channel, 'Every channel is a favorite already');
+    const { id } = channel!;
+
+    let added = false;
+    try {
+      await expectResponse(await api.addChannelFavorite(id), 'addChannelFavorite', 201);
+      added = true;
+      const block = await expectResponse<CardList<ChannelCard>>(await api.getClientChannelsBlock(), 'getClientChannelsBlock', 200);
+      expect(block.items.map((item) => item.id), 'a fresh favorite in the block').not.toContain(id);
+      recordKnownIssue('client-channels-summary: GET /blocks/client-channels is summarized as favorite channels, but holds the most-watched ones');
     } finally {
       if (added) await api.removeChannelFavorite(id);
     }

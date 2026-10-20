@@ -33,6 +33,7 @@ interface ParameterObject {
 
 interface OperationObject {
   operationId?: string;
+  summary?: string;
   deprecated?: boolean;
   security?: unknown[];
   parameters?: ParameterObject[];
@@ -65,6 +66,7 @@ export interface Operation {
   /** Whether the operation needs a session (the global `cookie_auth` unless it sets `security: []`). */
   requiresSession: boolean;
   deprecated: boolean;
+  summary: string;
   parameters: ParameterObject[];
   responses: Record<string, DocumentedResponse>;
 }
@@ -98,6 +100,7 @@ for (const [pathTemplate, pathItem] of Object.entries(v4Spec.paths)) {
       path: pathTemplate,
       requiresSession: (op.security ?? v4Spec.security ?? []).length > 0,
       deprecated: Boolean(op.deprecated),
+      summary: op.summary ?? '',
       // Path-level parameters (e.g. `{id}` of /profiles/{id}) apply to every operation under it.
       parameters: [...(pathItem.parameters ?? []), ...(op.parameters ?? [])].map(
         (p) => resolve(p, '', v4Spec.components.parameters).item,

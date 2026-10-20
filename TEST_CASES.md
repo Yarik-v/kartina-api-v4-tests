@@ -11,12 +11,16 @@ codes, evicting devices), or it needs something a black-box client doesn't contr
 Legend: **P0** = blocks release if broken, **P1** = should work, **P2** = nice to have covered.
 **BUG** / **DOCS BUG** = the live API (or the spec itself) contradicts the documentation;
 the case pins the current behavior so that a fix turns its test red (see README,
-"Known API bugs are pinned, not skipped").
+"Known API bugs are pinned, not skipped"). The bugs are written up for the developers,
+with the exact requests and responses, in
+[`reports/2026-10-20-api-v4-staging.html`](reports/2026-10-20-api-v4-staging.html);
+the **[A1]**-style tags in this catalog are that report's IDs.
 
-**172 cases total, 148 automated, 24 gaps** (`—` in Automated); see "Remaining gaps"
+**173 cases total, 149 automated, 24 gaps** (`—` in Automated); see "Remaining gaps"
 at the end for the breakdown. Of the automated ones, 7 run only when their
-precondition holds: 5 need `V4_PROTECT_CODE`, 2 need live data that isn't always
-there (they skip themselves otherwise).
+precondition holds: 5 need `V4_PROTECT_CODE` (set for the account in use, so they
+run), 2 need live data that isn't always there (they skip themselves otherwise; as of
+20.10.2026 the dashboard has no non-playable title and no ivi / start_film block).
 
 All cases run on one shared session of the account in `.env` unless the
 Preconditions say "no session".
@@ -39,7 +43,7 @@ Preconditions say "no session".
 | SEC-10 | Unknown device model | P1 | no session | POST `/login` with a `device` the server doesn't know | 400 `E_NEED_PARAM`, `Device … not found.` (this text isn't among the spec's examples) | `tests/account/security.spec.ts` |
 | SEC-11 | Unknown login | P0 | no session | POST `/login` with login `not-a-login` | 403 `E_INCORRECT_LOGIN`, `Incorrect login`; no session opened (GET `/account` 403) | `tests/account/security.spec.ts` |
 | SEC-12 | Wrong password for an existing login | P1 | no session | POST `/login` with the real login and a wrong password | 403 `E_INCORRECT_LOGIN`, `Wrong password` | — (excluded: repeated runs could lock the real account) |
-| SEC-13 | **Undocumented:** a 4th session evicts the oldest | P1 | 3 sessions of the account open | Log in from a 4th serial; call GET `/account` on the oldest session twice | First call 409 `E_ANOTHER_CLIENT_IN` ("Абонемент используется на другом устройстве"), then 403. The spec documents neither the limit nor the 409 | — (excluded: would knock the account's real devices out) |
+| SEC-13 | **Undocumented:** a 4th session evicts the oldest **[U1]** | P1 | 3 sessions of the account open | Log in from a 4th serial; call GET `/account` on the oldest session twice | First call 409 `E_ANOTHER_CLIENT_IN` ("Абонемент используется на другом устройстве"), then 403. The spec documents neither the limit nor the 409 | — (excluded: would knock the account's real devices out) |
 | SEC-14 | `X-Client-Version` doesn't change the answer | P2 | no session | SEC-01 with `X-Client-Version: 20260517` | Same response as without it | — (not automated: trivial) |
 | SEC-15 | `mirror` with geo-routing | P2 | a deployment with geo-routing | POST `/login` | Body carries `mirror` (alternative server) | — (needs a geo-routed deployment) |
 
@@ -140,7 +144,7 @@ Preconditions say "no session".
 | CH-16 | Play from the archive | P0 | an unprotected channel with `capabilities.archive` | GET `…/archive/{starts_at}` of a programme that ended 3+ hours ago | 200; stream | `tests/catalog/channels.spec.ts` |
 | CH-17 | Archive of a channel without archive | P1 | such a channel | GET `…/archive/{ts}` | 400 | `tests/catalog/channels.spec.ts` |
 | CH-18 | Play a teleteka recording | P0 | a programme with `teleteka: true` | GET its `play_url` | 200; stream | `tests/catalog/channels.spec.ts` |
-| CH-19 | **BUG:** teleteka of a programme without a recording | P1 | a past programme with `teleteka: false` | GET `…/teleteka/{starts_at}` | Docs: 403 `E_ARCHIVE_NOT_AVAILABLE`. Actually 200 with a stub clip (`…/zaglushka/…`) | `tests/catalog/channels.spec.ts` (pinned) |
+| CH-19 | **BUG:** teleteka of a programme without a recording **[A2]** | P1 | a past programme with `teleteka: false` | GET `…/teleteka/{starts_at}` | Docs: 403 `E_ARCHIVE_NOT_AVAILABLE`. Actually 200 with a stub clip (`…/zaglushka/…`) | `tests/catalog/channels.spec.ts` (pinned) |
 | CH-20 | Teleteka at a timestamp no programme starts at | P2 | none | GET `…/teleteka/1` | 404 `E_WRONG_ID`, `Program not found` | `tests/catalog/channels.spec.ts` |
 | CH-21 | Archive / teleteka of a protected channel | P2 | `V4_PROTECT_CODE`, a protected archive channel | Without and with `protect` | 403 `E_CURRENT_PASS_BAD`, then 200 | — (not automated yet) |
 | CH-22 | Hide without the protect code | P1 | none | PUT `/channels/{id}/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` |
@@ -155,13 +159,13 @@ Preconditions say "no session".
 | CNT-02 | Series details | P0 | a playable series with episodes | Same | 200; schema; `episode_count == episodes.length` per season; episode `play_url` is `…/seasons/{n}/episodes/{episodeId}/play` | `tests/catalog/content.spec.ts` |
 | CNT-03 | Unknown title | P1 | none | GET `/content/mediateka/playwright-no-such-title` | 404 | `tests/catalog/content.spec.ts` |
 | CNT-04 | Unknown service | P1 | none | GET `/content/playwright-no-such-service/1` | 404 | `tests/catalog/content.spec.ts` |
-| CNT-05 | **DOCS BUG:** services missing from the `{service}` enum | P2 | none | GET details of a dashboard card from `startru` / `iviru` | 200 — but the path parameter's enum doesn't list these services | `tests/catalog/content.spec.ts` (pinned) |
+| CNT-05 | **DOCS BUG:** services missing from the `{service}` enum **[D2]** | P2 | none | GET details of a dashboard card from `startru` / `iviru` | 200 — but the path parameter's enum doesn't list these services | `tests/catalog/content.spec.ts` (pinned) |
 | CNT-06 | Similar titles | P1 | CNT-01 | GET `…/similar` | 200; schema; `count == items.length`; the title itself isn't among them | `tests/catalog/content.spec.ts` |
 | CNT-07 | Play a movie | P0 | CNT-01 | GET `…/play` | 200; stream | `tests/catalog/content.spec.ts` |
 | CNT-08 | Play an episode | P0 | CNT-02 | GET `…/seasons/{n}/episodes/{episodeId}/play` | 200; stream | `tests/catalog/content.spec.ts` |
 | CNT-09 | Unknown episode | P1 | CNT-02 | Same with a made-up `episodeId` | 404 | `tests/catalog/content.spec.ts` |
 | CNT-10 | Play a trailer | P1 | a card with `trailer_url` | GET details, then `…/trailers/{trailerId}/play` | The card's `trailer_url` is one of the details' trailers; 200 with `url` only (no `markers` / `vmap`) | `tests/catalog/content.spec.ts` |
-| CNT-11 | **BUG:** made-up trailer id | P0 | one playable title per service | GET `…/trailers/playwright-no-such-trailer/play` | Docs: 404 `E_WRONG_ID`. Actually 200 for some services (for some movies with the stream of the full title, the same URL `…/play` gives), 503 for most others, 404 only for unicoplaycom. Possible paywall bypass if the trailer route also skips `…/play`'s checks | `tests/catalog/content.spec.ts` (pinned) |
+| CNT-11 | **BUG:** made-up trailer id **[A1]** | P0 | one playable title per service | GET `…/trailers/playwright-no-such-trailer/play` | Docs: 404 `E_WRONG_ID`. Actually 200 for startru, mediateka and moretv; for the mediateka and moretv movies it's the very file `…/play` serves (the full title), for startru another stream named after the film. premierone and souzmultru answer 503 `E_SYSTEM_ERROR` (503 is documented only as `E_SERVICE_NOT_AVAILABLE`), only unicoplaycom the documented 404. Possible paywall bypass if the trailer route also skips `…/play`'s checks | `tests/catalog/content.spec.ts` (pinned) |
 | CNT-12 | Title the card marks not playable | P1 | a card with `playable: false` | GET `…/play` | 403 | `tests/catalog/content.spec.ts` (skips: every title is playable for this account right now) |
 | CNT-13 | Play an unknown title | P1 | none | GET `/content/mediateka/playwright-no-such-title/play` | 404 | `tests/catalog/content.spec.ts` |
 | CNT-14 | Free episode without a session | P1 | a series of a service with free episodes | GET `/content/{service}/free/{episodeId}/play` with no cookie | 200 with a stream, or the documented 403 for an episode that isn't free | `tests/catalog/content.spec.ts` |
@@ -175,8 +179,8 @@ Preconditions say "no session".
 | ID | Title | Prio | Preconditions | Steps | Expected result | Automated |
 |----|-------|------|----------------|-------|------------------|-----------|
 | RAD-01 | Station list | P1 | none | GET `/radio` | 200; unique ids; `_links.play` is `{method: GET, path: /api/v4/radio/{id}}` | `tests/catalog/radio.spec.ts` |
-| RAD-02 | **BUG:** play links without `title` | P2 | none | GET `/radio` | Docs: `link` requires `title`. Actually missing on every station | `tests/catalog/radio.spec.ts` (pinned) |
-| RAD-03 | **BUG:** `description: null` | P2 | none | GET `/radio` | Docs: a string. Actually null on some stations | `tests/catalog/radio.spec.ts` (pinned) |
+| RAD-02 | **BUG:** play links without `title` **[A8]** | P2 | none | GET `/radio` | Docs: `link` requires `title`. Actually missing on every station | `tests/catalog/radio.spec.ts` (pinned) |
+| RAD-03 | **BUG:** `description: null` **[A8]** | P2 | none | GET `/radio` | Docs: a string. Actually null on some stations | `tests/catalog/radio.spec.ts` (pinned) |
 | RAD-04 | Play a station | P1 | none | GET the `_links.play.path` | 200 `{url}` | `tests/catalog/radio.spec.ts` |
 
 ### 2.4 Search — `/search/services`, facets, history
@@ -193,8 +197,8 @@ Preconditions say "no session".
 | SRCH-08 | Other filters | P2 | none | `genre`, `country`, `director`, `actor`, `from_year`/`to_year`, rating thresholds | Results match each filter | — (only `genre` is automated, SRCH-10) |
 | SRCH-09 | Genre facets | P1 | none | GET `/search/services/genres` | 200; `count == items.length`; every `count > 0`; `search_url` has `{genre}` | `tests/catalog/search.spec.ts` |
 | SRCH-10 | A facet's `search_url` filters the search | P1 | SRCH-09 | Fill `{genre}` with a listed genre, follow it | 200; `total > 0` | `tests/catalog/search.spec.ts` |
-| SRCH-11 | **DOCS BUG:** `search_url` vs its declared format | P2 | none | Validate `search_url` | A URI template (`{genre}`, `{query}`), as the spec's examples show, but declared `format: uri-reference`, which braces break | `tests/catalog/search.spec.ts` (pinned) |
-| SRCH-12 | **BUG:** country facets | P1 | none | GET `/search/services/countries` | Docs: 200 with the countries. Actually 503 `E_SYSTEM_ERROR`, a status the operation doesn't document | `tests/catalog/search.spec.ts` (pinned) |
+| SRCH-11 | **DOCS BUG:** `search_url` vs its declared format **[D1]** | P2 | none | Validate `search_url` | A URI template (`{genre}`, `{query}`), as the spec's examples show, but declared `format: uri-reference`, which braces break | `tests/catalog/search.spec.ts` (pinned) |
+| SRCH-12 | **BUG:** country facets **[A3]** | P1 | none | GET `/search/services/countries` | Docs: 200 with the countries. Actually 503 `E_SYSTEM_ERROR`, a status the operation doesn't document. Cause, from the staging trace: the search service returns a country with an empty `title`, and the schema check in `Search/Base.php:120` (`Client::countries()`) fails the whole list | `tests/catalog/search.spec.ts` (pinned) |
 | SRCH-13 | Search history | P1 | none | GET `/search/history` | 200; `count == items.length`; every query lowercased; `history_url` / `search_url` (`{query}`) | `tests/catalog/search.spec.ts` |
 | SRCH-14 | A repeat moves to the top, lowercased | P1 | non-empty history | POST the top query in capitals; GET | 201; the history is exactly as before | `tests/catalog/search.spec.ts` |
 | SRCH-15 | Record without a query | P2 | none | POST `{}` | 400 | `tests/catalog/search.spec.ts` |
@@ -231,25 +235,26 @@ Preconditions say "no session".
 |----|-------|------|----------------|-------|------------------|-----------|
 | BLK-01 | Every dashboard block loads from its `block_url` | P0 | none | GET each `block_url` of `/pages/dashboard` | 200; matches the schema of the operation the URL belongs to; `count == items.length` | `tests/interface/blocks.spec.ts` |
 | BLK-02 | A page block is the one the page lists | P1 | none | Compare page-block answers with the page's summaries | Same `id` and `type` | `tests/interface/blocks.spec.ts` |
-| BLK-03 | **BUG:** unknown page block | P1 | none | GET `/pages/dashboard/blocks/playwright-no-such-block` | Docs: 404. Actually 503 `E_SYSTEM_ERROR` | `tests/interface/blocks.spec.ts` (pinned) |
+| BLK-03 | **BUG:** unknown page block **[A4]** | P1 | none | GET `/pages/dashboard/blocks/playwright-no-such-block` | Docs: 404. Actually 503 `E_SYSTEM_ERROR` | `tests/interface/blocks.spec.ts` (pinned) |
 | BLK-04 | Block of an unknown page | P2 | none | GET `/pages/playwright-no-such-page/blocks/{id}` | 404 | `tests/interface/blocks.spec.ts` |
 | BLK-05 | Follow a block link | P1 | an `ivi` / `start_film` block on the dashboard | GET `…/blocks/{id}/fetch` without following redirects | 302; `Location` carries the block's `title` and `type` | `tests/interface/blocks.spec.ts` (skips: no such block on the dashboard right now) |
 | BLK-06 | Unknown link of a block | P2 | none | GET `…/blocks/{id}/playwright-no-such-link` | 404 `E_WRONG_ID` | `tests/interface/blocks.spec.ts` |
-| BLK-07 | **BUG:** link of an unknown block | P2 | none | GET `…/blocks/playwright-no-such-block/fetch` | Docs: 404 `E_SYSTEM_ERROR`. Actually 503 | `tests/interface/blocks.spec.ts` (pinned) |
+| BLK-07 | **BUG:** link of an unknown block **[A4]** | P2 | none | GET `…/blocks/playwright-no-such-block/fetch` | Docs: 404 `E_SYSTEM_ERROR`. Actually 503 | `tests/interface/blocks.spec.ts` (pinned) |
 | BLK-08 | Continue-watching block | P0 | none | GET `/blocks/playback` | 200; `id`/`type` `playback`; `count == items.length` ≤ 20; every item has a `play_url` | `tests/interface/blocks.spec.ts` |
 | BLK-09 | `limit` and `title` of the playback block | P1 | none | `?limit=1&title=Playwright` | `title` echoed; `count ≤ 1` | `tests/interface/blocks.spec.ts` |
-| BLK-10 | **BUG:** playback `limit` outside 1–100 | P2 | none | `?limit=0`, `?limit=101` | Docs: 1–100, 400 for invalid input. Actually 200 | `tests/interface/blocks.spec.ts` (pinned) |
+| BLK-10 | **BUG:** playback `limit` outside 1–100 **[A6]** | P2 | none | `?limit=0`, `?limit=101` | Docs: 1–100, 400 for invalid input. Actually 200 | `tests/interface/blocks.spec.ts` (pinned) |
 | BLK-11 | Playback block of TV | P1 | none | GET `/blocks/playback/channels` | Only `kind: program`, `service: channels` | `tests/interface/blocks.spec.ts` |
 | BLK-12 | Playback block of a VOD service | P1 | none | GET `/blocks/playback/premierone` | Only that service's titles | `tests/interface/blocks.spec.ts` |
 | BLK-13 | Unknown playback origin | P2 | none | GET `/blocks/playback/playwright-no-such-origin` | 404 | `tests/interface/blocks.spec.ts` |
 | BLK-14 | Playback block rules | P2 | controlled viewing history | Watch under 90 s, past 95 %, finish an episode, wait 14 days | Short and nearly-finished entries skipped; a finished episode yields the next; nothing older than 14 days | — (needs real viewing) |
 | BLK-15 | Personal blocks (×4) | P1 | none | GET `/blocks/watching-now`, `/recommendations`, `/client-channels`, `/last-news` | 200; schema; `count == items.length` | `tests/interface/blocks.spec.ts` |
 | BLK-16 | Watching-now size | P2 | none | GET `/blocks/watching-now` | At most 25 titles | `tests/interface/blocks.spec.ts` |
-| BLK-17 | Client-channels size | P2 | none | GET `/blocks/client-channels` | At most 20 channels (the most watched, not the favorites) | `tests/interface/blocks.spec.ts` |
+| BLK-17 | Client-channels size | P2 | none | GET `/blocks/client-channels` | At most 20 channels | `tests/interface/blocks.spec.ts` |
 | BLK-18 | TV channel groups | P0 | none | GET each `/pages/tv/channel-groups/{id}` | 200; `id` matches; `count == items.length` == the TV page's count for it | `tests/interface/blocks.spec.ts` |
 | BLK-19 | Unknown TV channel group | P2 | none | GET `/pages/tv/channel-groups/999999` | 404 | `tests/interface/blocks.spec.ts` |
 | BLK-20 | Radio channel group | P1 | none | GET `/pages/radio/channel-group` | 200; `count == items.length`; at least one playable station | `tests/interface/blocks.spec.ts` |
-| BLK-21 | **BUG:** radio stations with `kind: "channel"` | P2 | none | Inspect the radio group's items | Docs: `radioCard.kind` is always `"radio"`. Actually `"channel"` for some | `tests/interface/blocks.spec.ts` (pinned) |
+| BLK-21 | **BUG:** radio stations with `kind: "channel"` **[A7]** | P2 | none | Inspect the radio group's items | Docs: `radioCard.kind` is always `"radio"`. Actually `"channel"` for some | `tests/interface/blocks.spec.ts` (pinned) |
+| BLK-22 | **DOCS BUG:** the "favorite-channels" block isn't the favorites **[D3]** | P2 | a channel that isn't a favorite | Add it to the favorites, GET `/blocks/client-channels`; remove it again | The summary says "the client's favorite-channels block" (titled «Любимые телеканалы»), the description and the server say most-watched: the fresh favorite isn't in it | `tests/account/favorites.spec.ts` (pinned) |
 
 ## 4. Other — `/servertime`, `/screensaver`, `/speedtest`
 
@@ -267,12 +272,12 @@ Preconditions say "no session".
 | GEN-02 | Error envelope | P0 | Any documented error | `application/problem+json` `{error: {type, code, message, request_id, details}}`; `X-Api-Error-Code` equals `error.code`; `X-Api-Error-Message` set; `request_id` is a UUID v7 | Every `expectError` call; `tests/other/errors.spec.ts` |
 | GEN-03 | Every operation that needs a session refuses an anonymous caller (×65) | P0 | Call each secured operation without a cookie, path parameters from the spec's examples | 403 `E_AUTH_ERROR` | `tests/other/auth-required.spec.ts` |
 | GEN-04 | Operations open without a session | P1 | `/login`, `/servertime`, `/screensaver`, `/content/{service}/free/{id}/play`, `/sharing/redeem` without a cookie | Answer by their own logic, not 403 `E_AUTH_ERROR` | SEC-08…11, OTH-01/02, CNT-14/15, SHR-04 |
-| GEN-05 | **BUG:** no `ETag`, so no `304` | P1 | GET a response that documents `ETag`, then repeat with `If-None-Match` | Docs: `ETag` on 19 responses, 304 on a match. Actually no response carries an ETag | `tests/other/caching.spec.ts` (pinned) |
+| GEN-05 | **BUG:** no `ETag`, so no `304` **[A5]** | P1 | GET a response that documents `ETag`, then repeat with `If-None-Match` | Docs: `ETag` on 19 responses, 304 on a match. Actually no response carries an ETag | `tests/other/caching.spec.ts` (pinned) |
 | GEN-06 | `X-Clear-Cache` | P2 | GET `/channels` with `X-Clear-Cache: 1` | 200; same resource | `tests/other/caching.spec.ts` |
-| GEN-07 | **BUG:** staging leaks its debug trace | P1 | Any error on staging | Docs: `error` only. Staging adds `exception` (Symfony trace: classes, server paths, internal hosts) and `X-Debug-Token(-Link)` headers; production doesn't | `tests/other/errors.spec.ts` (pinned) |
+| GEN-07 | **BUG:** staging leaks its debug trace **[S1]** | P1 | Any error on staging | Docs: `error` only. Staging adds `exception` (Symfony trace: classes, server paths, internal hosts) and `X-Debug-Token(-Link)` headers; production doesn't | `tests/other/errors.spec.ts` (pinned) |
 | GEN-08 | Documented examples match their schemas (×235) | P1 | Validate every `example` / `examples` entry against the schema it illustrates | All valid | `tests/other/spec-examples.spec.ts` |
-| GEN-09 | **DOCS BUG:** four examples break their own schema | P2 | Same as GEN-08 | `next_url` with unencoded Cyrillic (`searchServices`), `search_url` templates (countries, genres, history) aren't `format: uri-reference` | `tests/other/spec-examples.spec.ts` (pinned) |
-| GEN-10 | **DOCS BUG:** operations without an `operationId` | P2 | Inspect the spec | Every other operation has one; `GET /radio` and `GET /radio/{id}` don't | `tests/other/spec-examples.spec.ts` (pinned) |
+| GEN-09 | **DOCS BUG:** four examples break their own schema **[D1]** | P2 | Same as GEN-08 | `next_url` with unencoded Cyrillic (`searchServices`), `search_url` templates (countries, genres, history) aren't `format: uri-reference` | `tests/other/spec-examples.spec.ts` (pinned) |
+| GEN-10 | **DOCS BUG:** operations without an `operationId` **[D4]** | P2 | Inspect the spec | Every other operation has one; `GET /radio` and `GET /radio/{id}` don't | `tests/other/spec-examples.spec.ts` (pinned) |
 
 ## Remaining gaps
 
