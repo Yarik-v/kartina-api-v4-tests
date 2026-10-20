@@ -1,0 +1,118 @@
+import { test, expect, findCards } from '../fixtures';
+import { expectError, expectResponse } from '../../src/assertions';
+import type { V4ApiClient } from '../../src/client';
+import { parameterEnum } from '../../src/spec';
+import type { ContentDetails, FavoritesList } from '../../src/types';
+
+// Services each favorites operation documents (GET by service has no startru / iviru,
+// PUT has; they're the spec's own enums, not guesses).
+const LISTABLE_SERVICES = parameterEnum('getFavoritesByService', 'service');
+const FAVORABLE_SERVICES = parameterEnum('addContentFavorite', 'service');
+
+async function favorites(api: V4ApiClient): Promise<FavoritesList> {
+  return expectResponse<FavoritesList>(await api.getFavorites(), 'getFavorites', 200);
+}
+
+const contains = (list: FavoritesList, id: string, service?: string) =>
+  list.items.some((item) => item.id === id && (!service || item.service === service));
+
+// Favorites are the account's own list, so the file runs in order and every test
+// takes back exactly what it added: it only adds a title or channel that wasn't a
+// favorite before, and removes it again even when an assertion fails halfway.
+test.describe.configure({ mode: 'default' });
+
+test.describe('GET /favorites', () => {
+  test('lists channels and titles, all marked favorite', async ({ api }) => {
+    const body = await favorites(api);
+    expect(body.count).toBe(body.items.length);
+    for (const item of body.items) expect(item.favorite, `${item.kind} ${item.id}`).toBe(true);
+  });
+
+  test('GET /favorites/channels holds only channels, the same ones GET /favorites lists', async ({ api }) => {
+    const all = await favorites(api);
+    const channels = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
+    expect(channels.count).toBe(channels.items.length);
+    for (const item of channels.items) {
+      expect(['channel', 'playlist', 'radio']).toContain(item.kind);
+      expect(contains(all, item.id), `channel ${item.id} in GET /favorites`).toBe(true);
+    }
+  });
+
+  test('GET /favorites/{service} holds only that service\'s titles', async ({ api }) => {
+    const all = await favorites(api);
+    const service = LISTABLE_SERVICES.find((id) => id !== 'channels' && all.items.some((item) => item.service === id)) ?? 'mediateka';
+    const body = await expectResponse<FavoritesList>(await api.getFavoritesByService(service), 'getFavoritesByService', 200);
+    expect(body.count).toBe(body.items.length);
+    for (const item of body.items) expect(item.service).toBe(service);
+    expect(body.count).toBe(all.items.filter((item) => item.service === service).length);
+  });
+
+  test('GET /favorites/{service} for a service outside the documented list answers 404', async ({ api }) => {
+    await expectError(await api.getFavoritesByService('playwright-no-such-service'), 'getFavoritesByService', 404);
+  });
+});
+
+test.describe('VOD title favorites', () => {
+  test('PUT adds a title (201, then 200 when repeated), DELETE removes it (204, then 404)', async ({
+    api,
+    dashboardBlocks,
+    sampleMovie,
+    sampleSeries,
+  }) => {
+    const taken = new Set([sampleMovie?.card.id, sampleSeries?.card.id]);
+    // From the far end of the dashboard, away from the titles other files read.
+    const card = findCards(dashboardBlocks, (c) => !c.favorite && FAVORABLE_SERVICES.includes(c.service) && !taken.has(c.id)).pop();
+    test.skip(!card, 'No non-favorite title on the dashboard right now');
+    const { service, id } = card!;
+    expect(contains(await favorites(api), id, service), 'not a favorite before the test').toBe(false);
+
+    let added = false;
+    try {
+      await expectResponse(await api.addContentFavorite(service, id), 'addContentFavorite', 201);
+      added = true;
+      await expectResponse(await api.addContentFavorite(service, id), 'addContentFavorite', 200);
+
+      expect(contains(await favorites(api), id, service), 'listed in GET /favorites').toBe(true);
+      const details = await expectResponse<ContentDetails>(await api.getContentDetails(service, id), 'getContentDetails', 200);
+      expect(details.favorite, 'details.favorite').toBe(true);
+
+      await expectResponse(await api.removeContentFavorite(service, id), 'removeContentFavorite', 204);
+      added = false;
+      await expectError(await api.removeContentFavorite(service, id), 'removeContentFavorite', 404);
+      expect(contains(await favorites(api), id, service), 'gone from GET /favorites').toBe(false);
+    } finally {
+      if (added) await api.removeContentFavorite(service, id);
+    }
+  });
+});
+
+test.describe('channel favorites', () => {
+  test('PUT adds a channel (201, then 200), DELETE removes it (204, then 404)', async ({
+    api,
+    channels,
+  }) => {
+    const channel = [...channels.items].reverse().find((c) => !c.favorite && c.playable && !c.access.protected);
+    test.skip(!channel, 'Every channel is a favorite already');
+    const { id } = channel!;
+
+    let added = false;
+    try {
+      await expectResponse(await api.addChannelFavorite(id), 'addChannelFavorite', 201);
+      added = true;
+      await expectResponse(await api.addChannelFavorite(id), 'addChannelFavorite', 200);
+
+      const listed = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
+      expect(contains(listed, id), 'listed in GET /favorites/channels').toBe(true);
+      const card = listed.items.find((item) => item.id === id)!;
+      expect(card.favorite).toBe(true);
+
+      await expectResponse(await api.removeChannelFavorite(id), 'removeChannelFavorite', 204);
+      added = false;
+      await expectError(await api.removeChannelFavorite(id), 'removeChannelFavorite', 404);
+      const after = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
+      expect(contains(after, id), 'gone from GET /favorites/channels').toBe(false);
+    } finally {
+      if (added) await api.removeChannelFavorite(id);
+    }
+  });
+});

@@ -1,0 +1,36 @@
+name: Typecheck
+
+# Type-checks the suite only. A live run needs a real subscriber login (it would
+# have to live in repository secrets) and an allowed network: the Free API suite
+# found every Kartina.TV endpoint answering 403 to GitHub-hosted runners, and the v4
+# hosts are probably behind the same protection (not confirmed). So running the tests
+# stays a local `npm test` for now (see README.md, "CI").
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck

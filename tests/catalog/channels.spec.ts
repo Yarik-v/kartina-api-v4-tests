@@ -1,0 +1,250 @@
+import { test, expect } from '../fixtures';
+import { expectError, expectResponse, recordKnownIssue } from '../../src/assertions';
+import { apiPath } from '../../src/client';
+import { v4ProtectCode } from '../../src/config';
+import type { ChannelEpg, ChannelListCard, ChannelsList, Page, PlaybackStream } from '../../src/types';
+
+const DAY = 24 * 60 * 60;
+const now = () => Math.floor(Date.now() / 1000);
+const NOT_A_CHANNEL = 999999999;
+
+const playableChannel = (list: ChannelsList, extra: (c: ChannelListCard) => boolean = () => true) =>
+  list.items.find((c) => c.playable && !c.access.protected && extra(c));
+
+test.describe('GET /channels', () => {
+  test('lists every channel once, with its own play, EPG and favorite links', async ({ api }) => {
+    const body = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+    expect(body.count).toBe(body.items.length);
+    expect(body.count).toBeGreaterThan(0);
+    expect(new Set(body.items.map((c) => c.id)).size, 'unique ids').toBe(body.count);
+    for (const channel of body.items) {
+      expect(channel.play_url).toBe(`/api/v4/channels/${channel.id}/play`);
+      expect(channel.epg_url).toBe(`/api/v4/channels/${channel.id}/epg`);
+      if (channel.favorite_url) expect(channel.favorite_url).toBe(`/api/v4/channels/${channel.id}/favorite`);
+    }
+  });
+
+  test('every group_id is a channel group of the TV page', async ({ api, channels }) => {
+    const tv = await expectResponse<Page>(await api.getTvPage(), 'getTvPage', 200);
+    const groups = new Set(tv.items.map((block) => block.id));
+    const orphans = channels.items.filter((c) => !groups.has(c.group_id));
+    expect(orphans.map((c) => `${c.id} (group ${c.group_id})`), 'channels whose group is not on the TV page').toEqual([]);
+  });
+
+  test('hidden channels are not listed without show=1', async ({ channels }) => {
+    expect(channels.items.filter((c) => c.access.hidden).map((c) => c.id)).toEqual([]);
+  });
+
+  test('show=1 without the protect code answers 400 E_NEED_PARAM', async ({ api }) => {
+    const body = await expectError(await api.getChannels({ params: { show: 1 } }), 'getChannels', 400, 'E_NEED_PARAM');
+    expect(body.error.details.description).toContain('protect');
+  });
+});
+
+test.describe('GET /channels/{id}/epg', () => {
+  test('returns the channel and its programmes in broadcast order, within the documented window', async ({ api, channels }) => {
+    const channel = playableChannel(channels)!;
+    const body = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id), 'getChannelEpg', 200);
+
+    expect(body.channel.id).toBe(channel.id);
+    expect(body.count).toBe(body.items.length);
+    expect(body.count).toBeGreaterThan(0);
+    for (const [i, programme] of body.items.entries()) {
+      expect(programme.ends_at, `programme ${i} ends after it starts`).toBeGreaterThan(programme.starts_at);
+      if (i > 0) expect(programme.starts_at, `programme ${i} in order`).toBeGreaterThanOrEqual(body.items[i - 1].starts_at);
+    }
+    // At most now − 14 days … now + 8 days, per the docs.
+    expect(body.items[0].starts_at).toBeGreaterThanOrEqual(now() - 15 * DAY);
+    expect(body.items.at(-1)!.starts_at).toBeLessThanOrEqual(now() + 8 * DAY);
+  });
+
+  test('from / to narrow the guide to that window', async ({ api, channels }) => {
+    const channel = playableChannel(channels)!;
+    const from = now() - 6 * 60 * 60;
+    const to = now();
+    const body = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, { from, to }), 'getChannelEpg', 200);
+    expect(body.count).toBeGreaterThan(0);
+    for (const programme of body.items) {
+      expect(programme.ends_at, 'ends after `from`').toBeGreaterThan(from);
+      expect(programme.starts_at, 'starts before `to`').toBeLessThanOrEqual(to);
+    }
+  });
+
+  test('a non-numeric id answers 404', async ({ api }) => {
+    await expectError(await api.getChannelEpg('playwright'), 'getChannelEpg', 404);
+  });
+
+  test('a channel outside the packet answers 403', async ({ api }) => {
+    await expectError(await api.getChannelEpg(NOT_A_CHANNEL), 'getChannelEpg', 403);
+  });
+});
+
+test.describe('GET /channels/{id}/play', () => {
+  test('a playable channel answers with a stream URL', async ({ api, channels }) => {
+    const channel = playableChannel(channels)!;
+    const body = await expectResponse<PlaybackStream>(await api.playChannel(channel.id), 'playChannel', 200);
+    expect(body.url).toBeTruthy();
+  });
+
+  test('a protected channel without the protect code answers 403 E_CURRENT_PASS_BAD', async ({ api, channels }) => {
+    const channel = channels.items.find((c) => c.access.protected);
+    test.skip(!channel, 'No protected channel in the packet');
+    await expectError(await api.playChannel(channel!.id), 'playChannel', 403, 'E_CURRENT_PASS_BAD');
+  });
+
+  test('a protected channel plays with the protect code', async ({ api, channels }) => {
+    test.skip(!v4ProtectCode, 'V4_PROTECT_CODE is not set in .env');
+    const channel = channels.items.find((c) => c.access.protected && c.playable);
+    test.skip(!channel, 'No playable protected channel in the packet');
+    await expectResponse(await api.playChannel(channel!.id, { protect: v4ProtectCode }), 'playChannel', 200);
+  });
+
+  test('a channel outside the packet answers 403 E_NOT_ALLOWED', async ({ api }) => {
+    await expectError(await api.playChannel(NOT_A_CHANNEL), 'playChannel', 403, 'E_NOT_ALLOWED');
+  });
+
+  test('a non-numeric id answers 404', async ({ api }) => {
+    await expectError(await api.playChannel('playwright'), 'playChannel', 404);
+  });
+});
+
+test.describe('archive and teleteka', () => {
+  // A past programme's play_url points at the teleteka when there's a recording, at
+  // the archive otherwise; the two endpoints never fall back to each other.
+  test('every past programme links to its teleteka recording or its archive', async ({ api, channels }) => {
+    const channel = playableChannel(channels)!;
+    const epg = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }), 'getChannelEpg', 200);
+    for (const programme of epg.items.filter((p) => p.ends_at < now())) {
+      const kind = programme.teleteka ? 'teleteka' : 'archive';
+      expect(programme.play_url).toBe(`/api/v4/channels/${channel.id}/${kind}/${programme.starts_at}`);
+    }
+  });
+
+  test('GET .../archive/{timestamp} of a programme that ended hours ago answers with a stream', async ({ api, channels }) => {
+    const channel = playableChannel(channels, (c) => c.capabilities.archive);
+    test.skip(!channel, 'No unprotected archive channel');
+    const epg = await expectResponse<ChannelEpg>(
+      await api.getChannelEpg(channel!.id, { from: now() - DAY, to: now() - 3 * 60 * 60 }),
+      'getChannelEpg',
+      200,
+    );
+    // Hours, not minutes, ago: a programme enters the archive only after `catchup.delay`.
+    const programme = epg.items.find((p) => p.ends_at < now() - 3 * 60 * 60);
+    test.skip(!programme, 'No programme in the archive window');
+    await expectResponse<PlaybackStream>(await api.playChannelArchive(channel!.id, programme!.starts_at), 'playChannelArchive', 200);
+  });
+
+  test('archive of a channel without archive answers 400', async ({ api, channels }) => {
+    const channel = playableChannel(channels, (c) => !c.capabilities.archive);
+    test.skip(!channel, 'Every unprotected channel has an archive');
+    await expectError(await api.playChannelArchive(channel!.id, now() - 3 * 60 * 60), 'playChannelArchive', 400);
+  });
+
+  test('a teleteka recording plays through its play_url', async ({ api, channels }) => {
+    // Teleteka recordings are on some channels only; look through the first ones.
+    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 10)) {
+      const epg = await expectResponse<ChannelEpg>(
+        await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }),
+        'getChannelEpg',
+        200,
+      );
+      const programme = epg.items.find((p) => p.teleteka && p.playable && p.ends_at < now());
+      if (!programme) continue;
+      await expectResponse(await api.raw('GET', apiPath(programme.play_url)), 'playChannelTeleteka', 200);
+      return;
+    }
+    test.skip(true, 'No playable teleteka recording on the first channels');
+  });
+
+  test('teleteka of a programme without a recording plays a stub instead of the documented 403 (known API bug)', async ({
+    api,
+    channels,
+  }) => {
+    // Documented: 403 E_ARCHIVE_NOT_AVAILABLE ("nothing recorded this moment"). The
+    // server answers 200 with a placeholder clip (`.../zaglushka/...`), so a client
+    // plays a stub for a programme the EPG itself marks `teleteka: false`. Pinned: a
+    // fix turns this red; then assert the 403 with expectError instead.
+    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 20)) {
+      const epg = await expectResponse<ChannelEpg>(
+        await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }),
+        'getChannelEpg',
+        200,
+      );
+      const programme = epg.items.find((p) => !p.teleteka && p.ends_at < now());
+      if (!programme) continue;
+      const body = await expectResponse<PlaybackStream>(
+        await api.playChannelTeleteka(channel.id, programme.starts_at),
+        'playChannelTeleteka',
+        200,
+      );
+      expect(body.url).toContain('/zaglushka/');
+      recordKnownIssue(
+        'teleteka-stub: GET /channels/{id}/teleteka/{timestamp} of a programme without a recording answers 200 with a stub clip, not 403 E_ARCHIVE_NOT_AVAILABLE',
+      );
+      return;
+    }
+    test.skip(true, 'Every past programme of the first channels has a teleteka recording');
+  });
+
+  test('a timestamp no programme starts at answers 404 E_WRONG_ID', async ({ api, channels }) => {
+    const channel = playableChannel(channels)!;
+    const body = await expectError(await api.playChannelTeleteka(channel.id, 1), 'playChannelTeleteka', 404, 'E_WRONG_ID');
+    expect(body.error.details.description).toBe('Program not found');
+  });
+});
+
+// Hiding needs the protect code, and DELETE /channels/hidden clears every rule the
+// account has, so the reset runs only when nothing was hidden before.
+test.describe('hidden channels', () => {
+  test.describe.configure({ mode: 'default' });
+
+  test('PUT /channels/{id}/hidden without the protect code answers 400', async ({ api, channels }) => {
+    await expectError(await api.hideChannel(playableChannel(channels)!.id, {}), 'hideChannel', 400);
+  });
+
+  test('DELETE /channels/hidden without the protect code answers 400', async ({ api }) => {
+    await expectError(await api.clearHiddenChannels({}), 'clearHiddenChannels', 400);
+  });
+
+  test('hide, list with show=1, unhide and reset', async ({ api, channels }) => {
+    test.skip(!v4ProtectCode, 'V4_PROTECT_CODE is not set in .env');
+    const withHidden = await expectResponse<ChannelsList>(
+      await api.getChannels({ params: { show: 1, protect: v4ProtectCode } }),
+      'getChannels',
+      200,
+    );
+    test.skip(withHidden.items.some((c) => c.access.hidden), 'The account hides channels of its own; not touching them');
+    const channel = playableChannel(channels)!;
+    const code = { code: v4ProtectCode };
+
+    let hidden = false;
+    try {
+      await expectResponse(await api.hideChannel(channel.id, code), 'hideChannel', 204);
+      hidden = true;
+      await expectResponse(await api.hideChannel(channel.id, code), 'hideChannel', 204);
+
+      const visible = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+      expect(visible.items.map((c) => c.id), 'gone from the plain list').not.toContain(channel.id);
+      const all = await expectResponse<ChannelsList>(
+        await api.getChannels({ params: { show: 1, protect: v4ProtectCode } }),
+        'getChannels',
+        200,
+      );
+      expect(all.items.find((c) => c.id === channel.id)?.access.hidden, 'listed as hidden with show=1').toBe(true);
+
+      await expectResponse(await api.unhideChannel(channel.id, code), 'unhideChannel', 204);
+      hidden = false;
+      const again = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+      expect(again.items.map((c) => c.id), 'back in the plain list').toContain(channel.id);
+
+      await expectResponse(await api.hideChannel(channel.id, code), 'hideChannel', 204);
+      hidden = true;
+      await expectResponse(await api.clearHiddenChannels(code), 'clearHiddenChannels', 204);
+      hidden = false;
+      const reset = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+      expect(reset.items.map((c) => c.id), 'back after the reset').toContain(channel.id);
+    } finally {
+      if (hidden) await api.unhideChannel(channel.id, code);
+    }
+  });
+});
