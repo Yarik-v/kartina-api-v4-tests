@@ -127,7 +127,7 @@ the entry and flip the test to the documented behavior. Found so far (staging):
 | Area | What the server does | Documented |
 |------|----------------------|------------|
 | Trailers | a made-up `trailerId` answers `200` (for some movies with the title's own stream) or `503` | `404 E_WRONG_ID` |
-| Teleteka | a programme without a recording plays a stub clip (`200`) | `403 E_ARCHIVE_NOT_AVAILABLE` |
+| Teleteka | a programme without a recording plays a stub clip (`200`); partly fixed by the 21.10.2026 deploy, some programmes now get the 403 | `403 E_ARCHIVE_NOT_AVAILABLE` |
 | Blocks | an unknown block answers `503` (`GET .../blocks/{id}` and `.../{link}`) | `404` |
 | Search | `GET /search/services/countries` answers `503` | `200` |
 | Caching | no response carries an `ETag`, so `304` never happens | ETag on 19 responses |

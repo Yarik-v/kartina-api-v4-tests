@@ -116,6 +116,13 @@ export function render({ capture, cases, hostLabel }) {
   /** Whether this host's error bodies carry the debug trace (S1). */
   const stagingTrace = Boolean(bodyOf(out.debugAnon)?.exception);
   const tele = out.teleteka;
+  /** @type {{ channel: string, channelTitle: string, title: string, startsAt: number, call: number, status: number, stub: boolean, errorType: string | null }[]} */
+  const teleProgrammes = tele.programmes;
+  const teleStubs = teleProgrammes.filter((p) => p.stub);
+  /** Channels where some programmes get the stub and others the 403. */
+  const teleMixed = [...new Set(teleProgrammes.map((p) => p.channelTitle))].filter(
+    (title) => teleProgrammes.some((p) => p.channelTitle === title && p.stub) && teleProgrammes.some((p) => p.channelTitle === title && !p.stub),
+  );
   /** @type {{ id: string, title: string, kind: string, play_url: string }[]} */
   const wrongKind = out.radioGroupWrongKind;
   /** @type {{ id: number, title: string }[]} */
@@ -155,14 +162,18 @@ export function render({ capture, cases, hostLabel }) {
     {
       id: 'A2', sev: 'mid', cases: ['CH-19'],
       area: '<code>GET /channels/{id}/teleteka/{timestamp}</code>',
-      short: 'Программа без записи: ролик-заглушка (200) вместо 403',
-      title: 'Телетека программы без записи отдаёт ролик-заглушку',
+      short: 'Программа без записи: ролик-заглушка (200) вместо 403 — исправлено частично',
+      title: 'Телетека программы без записи отдаёт ролик-заглушку (исправлено частично)',
       body: `<dt>Эндпоинт</dt><dd><code>GET /channels/{id}/teleteka/{timestamp}</code></dd>
     <dt>По документации</dt><dd>Нет записи: <code>403 E_ARCHIVE_NOT_AVAILABLE</code> («nothing recorded this moment»). Заглушка с извинением описана только для провайдера в режиме сбоя.</dd>
-    <dt>Фактически</dt><dd>${tele ? `EPG канала ${esc(tele.channel)} «${esc(tele.channelTitle)}» (№${tele.epg}) помечает программу «${esc(tele.programme.title)}» (<code>starts_at ${tele.programme.starts_at}</code>) как <code>teleteka: false</code> с <code>play_url ${esc(tele.programme.play_url)}</code>. Телетека этой программы (№${tele.call}) отвечает ${ex(tele.call).status}: <code>${esc(streamFile(bodyOf(tele.call)?.url))}</code>.` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
-    <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения.</dd>
-    <dt>Автотест</dt><dd><code>catalog/channels.spec.ts</code> › «teleteka of a programme without a recording plays a stub instead of the documented 403 (known API bug)»</dd>`,
-      exchanges: tele ? [tele.epg, [tele.call, { open: true }]] : [],
+    <dt>Фактически</dt><dd>До деплоя staging 21.10.2026 любая прошедшая программа, которую EPG помечает <code>teleteka: false</code>, получала 200 с роликом-заглушкой (<code>…/zaglushka/index.m3u8</code>). После деплоя поведение разное${teleProgrammes.length ? `: из ${teleProgrammes.length} проверенных программ ${teleStubs.length} по-прежнему получают заглушку, ${teleProgrammes.length - teleStubs.length} — документированный <code>403 E_ARCHIVE_NOT_AVAILABLE</code>${teleMixed.length ? `; на ${teleMixed.map((c) => `«${esc(c)}»`).join(', ')} — и то и другое в пределах одного канала` : ''}. Программы взяты из EPG (пример — №${tele.epg})` : ''}:
+      ${teleProgrammes.length ? `<div class="table-wrap"><table><thead><tr><th>Канал</th><th>Программа</th><th><code>starts_at</code></th><th>Запрос</th><th>Ответ</th></tr></thead><tbody>${teleProgrammes.map((p) => `<tr><td>${esc(p.channel)} «${esc(p.channelTitle)}»</td><td>${esc(p.title)}</td><td>${p.startsAt}</td><td>№${p.call}</td><td>${p.stub ? '<b>200, заглушка</b>' : `${p.status} <code>${esc(p.errorType ?? '')}</code>`}</td></tr>`).join('')}</tbody></table></div>` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
+    <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения; теперь ещё и по-разному для разных программ.</dd>
+    <dt>Автотест</dt><dd><code>catalog/channels.spec.ts</code> › «teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)»: зелёный, пока заглушку получает хоть одна программа; упадёт, когда исправят полностью.</dd>`,
+      exchanges: [
+        ...(tele.epg ? [tele.epg] : []),
+        ...teleProgrammes.map((p, i) => /** @type {ExchangeRef} */ ([p.call, { open: i === teleProgrammes.findIndex((q) => q.stub), label: `${p.channelTitle}: ${p.stub ? 'заглушка' : p.status}` }])),
+      ],
     },
     {
       id: 'A3', sev: 'mid', cases: ['SRCH-12'],

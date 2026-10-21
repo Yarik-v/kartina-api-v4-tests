@@ -120,18 +120,34 @@ export async function capture({ base, login, password, device, serial }) {
       });
     }
 
-    // A2: the teleteka of a past programme the EPG marks `teleteka: false`.
-    for (const channel of channels.slice(0, 20)) {
+    // A2: the teleteka of past programmes the EPG marks `teleteka: false`, up to 12 of
+    // them (two per channel): since 21.10.2026 some answer the documented 403, some
+    // still the stub.
+    out.teleteka = { epg: null, programmes: [] };
+    for (const channel of channels.slice(0, 40)) {
       const epg = await call('GET', `/channels/${channel.id}/epg?from=${now - 86400}&to=${now}`, { keep: false });
-      const programme = epg.json.items.find(/** @param {any} p */ (p) => !p.teleteka && p.ends_at < now);
-      if (!programme) continue;
-      const epgN = record(epg.exchange, {
-        body: JSON.stringify({ channel: { id: epg.json.channel.id, title: epg.json.channel.title }, count: epg.json.count, items: ['…', programme, '…'] }, null, 1),
-        note: 'тело сокращено до программы, о которой речь',
-      });
-      const teleteka = await call('GET', `/channels/${channel.id}/teleteka/${programme.starts_at}`);
-      out.teleteka = { channel: channel.id, channelTitle: channel.title, programme, epg: epgN, call: teleteka.exchange.n };
-      break;
+      const programmes = epg.json.items.filter(/** @param {any} p */ (p) => !p.teleteka && p.ends_at < now).slice(0, 2);
+      if (!programmes.length) continue;
+      if (out.teleteka.epg === null) {
+        out.teleteka.epg = record(epg.exchange, {
+          body: JSON.stringify({ channel: { id: epg.json.channel.id, title: epg.json.channel.title }, count: epg.json.count, items: ['…', ...programmes, '…'] }, null, 1),
+          note: 'тело сокращено до программ, о которых речь',
+        });
+      }
+      for (const programme of programmes) {
+        const teleteka = await call('GET', `/channels/${channel.id}/teleteka/${programme.starts_at}`);
+        out.teleteka.programmes.push({
+          channel: channel.id,
+          channelTitle: channel.title,
+          title: programme.title,
+          startsAt: programme.starts_at,
+          call: teleteka.exchange.n,
+          status: teleteka.exchange.status,
+          stub: String(teleteka.json?.url ?? '').includes('/zaglushka/'),
+          errorType: teleteka.json?.error?.type ?? null,
+        });
+      }
+      if (out.teleteka.programmes.length >= 12) break;
     }
 
     // A3, A4

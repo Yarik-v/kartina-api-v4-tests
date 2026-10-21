@@ -156,34 +156,44 @@ test.describe('archive and teleteka', () => {
     test.skip(true, 'No playable teleteka recording on the first channels');
   });
 
-  test('teleteka of a programme without a recording plays a stub instead of the documented 403 (known API bug)', { tag: '@CH-19' }, async ({
+  test('teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)', { tag: '@CH-19' }, async ({
     api,
     channels,
   }) => {
-    // Documented: 403 E_ARCHIVE_NOT_AVAILABLE ("nothing recorded this moment"). The
-    // server answers 200 with a placeholder clip (`.../zaglushka/...`), so a client
-    // plays a stub for a programme the EPG itself marks `teleteka: false`. Pinned: a
-    // fix turns this red; then assert the 403 with expectError instead.
-    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 20)) {
+    // Documented: 403 E_ARCHIVE_NOT_AVAILABLE ("nothing recorded this moment"). Until
+    // the staging deploy of 21.10.2026 every such programme got 200 with a placeholder
+    // clip (`.../zaglushka/...`); since then some answer the documented 403 and some
+    // still the stub, even on the same channel. So this looks at up to 12 programmes
+    // the EPG marks `teleteka: false`: a 403 must be the documented one, and the test
+    // stays green while any of them still plays the stub. Once none does, it fails:
+    // then assert the 403 for all of them instead.
+    const outcomes: { channel: string; startsAt: number; stub: boolean }[] = [];
+    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 40)) {
       const epg = await expectResponse<ChannelEpg>(
         await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }),
         'getChannelEpg',
         200,
       );
-      const programme = epg.items.find((p) => !p.teleteka && p.ends_at < now());
-      if (!programme) continue;
-      const body = await expectResponse<PlaybackStream>(
-        await api.playChannelTeleteka(channel.id, programme.starts_at),
-        'playChannelTeleteka',
-        200,
-      );
-      expect(body.url).toContain('/zaglushka/');
-      recordKnownIssue(
-        'teleteka-stub: GET /channels/{id}/teleteka/{timestamp} of a programme without a recording answers 200 with a stub clip, not 403 E_ARCHIVE_NOT_AVAILABLE',
-      );
-      return;
+      for (const programme of epg.items.filter((p) => !p.teleteka && p.ends_at < now()).slice(0, 2)) {
+        const res = await api.playChannelTeleteka(channel.id, programme.starts_at);
+        if (res.status() === 403) {
+          await expectError(res, 'playChannelTeleteka', 403, 'E_ARCHIVE_NOT_AVAILABLE');
+          outcomes.push({ channel: channel.title, startsAt: programme.starts_at, stub: false });
+        } else {
+          const body = await expectResponse<PlaybackStream>(res, 'playChannelTeleteka', 200);
+          expect(body.url, `a 200 for ${channel.title} ${programme.starts_at} is the stub`).toContain('/zaglushka/');
+          outcomes.push({ channel: channel.title, startsAt: programme.starts_at, stub: true });
+        }
+      }
+      if (outcomes.length >= 12) break;
     }
-    test.skip(true, 'Every past programme of the first channels has a teleteka recording');
+    test.skip(outcomes.length === 0, 'No past programme without a recording on the first channels');
+
+    const stubs = outcomes.filter((o) => o.stub);
+    expect(stubs.length, `the stub is gone for all ${outcomes.length} programmes: the bug is fixed`).toBeGreaterThan(0);
+    recordKnownIssue(
+      `teleteka-stub: ${stubs.length} of ${outcomes.length} programmes without a recording still get a 200 stub clip instead of 403 E_ARCHIVE_NOT_AVAILABLE (${[...new Set(stubs.map((o) => o.channel))].join(', ')})`,
+    );
   });
 
   test('a timestamp no programme starts at answers 404 E_WRONG_ID', { tag: '@CH-20' }, async ({ api, channels }) => {
