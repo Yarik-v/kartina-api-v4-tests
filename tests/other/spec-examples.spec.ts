@@ -23,7 +23,7 @@ test.describe('documented examples match their schemas', { tag: '@no-session' },
     const key = `${example.operationId} ${example.status} ${example.name}`;
     const knownProblem = KNOWN_INVALID[key];
 
-    test(`${key}${knownProblem ? ' (known docs bug)' : ''}`, { tag: knownProblem ? '@GEN-09' : '@GEN-08' }, () => {
+    test(`${key}${knownProblem ? ' (known docs bug)' : ''}`, { tag: knownProblem ? ['@GEN-09', '@pinned'] : '@GEN-08' }, () => {
       const errors = checkExample(example);
       if (knownProblem) {
         expect(errors.length, `${key} is valid now: remove it from KNOWN_INVALID`).toBeGreaterThan(0);
@@ -35,7 +35,7 @@ test.describe('documented examples match their schemas', { tag: '@no-session' },
   }
 });
 
-test('only the deprecated radio operations have no operationId (known docs gap)', { tag: ['@no-session', '@GEN-10'] }, () => {
+test('only the deprecated radio operations have no operationId (known docs gap)', { tag: ['@no-session', '@GEN-10', '@pinned'] }, () => {
   // Every other operation names itself; generated clients fall back to made-up names
   // for these two. Pinned: once they get ids this fails (and the suite can use them).
   const unnamed = allOperations().filter((op) => op.id === `${op.method.toUpperCase()} ${op.path}`);

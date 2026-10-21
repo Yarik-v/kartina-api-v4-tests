@@ -17,6 +17,9 @@ export const NO_SESSION_TAG = '@no-session';
 /** Tag for tests that change the account; they run in the api-v4-mutating project. */
 export const MUTATES_TAG = '@mutates';
 
+/** Tag for read-only tests that pin a known API bug; they run in the api-v4-pinned project. */
+export const PINNED_TAG = '@pinned';
+
 export function hasV4Session(): boolean {
   if (!existsSync(V4_SESSION_FILE)) return false;
   const state = JSON.parse(readFileSync(V4_SESSION_FILE, 'utf8')) as { cookies?: { name: string }[] };

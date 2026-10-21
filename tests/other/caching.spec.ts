@@ -3,7 +3,7 @@ import { expectResponse, recordKnownIssue } from '../../src/assertions';
 import { allOperations, documentedHeaders } from '../../src/spec';
 
 test.describe('conditional requests', () => {
-  test('responses that document an ETag come without one (known API bug)', { tag: '@GEN-05' }, async ({ api }) => {
+  test('responses that document an ETag come without one (known API bug)', { tag: ['@GEN-05', '@pinned'] }, async ({ api }) => {
     // 19 responses document `ETag`, and `304 Not Modified` for a matching
     // `If-None-Match`, but the server sends no ETag at all (staging and production),
     // so a client can never revalidate. Pinned on a few of them: once ETags show up

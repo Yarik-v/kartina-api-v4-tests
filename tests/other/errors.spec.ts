@@ -8,7 +8,7 @@ test.describe('error envelope', { tag: '@no-session' }, () => {
     expect(body.error.code).toBe(12);
   });
 
-  test('error bodies carry no debug trace, except on staging (known API bug)', { tag: '@GEN-07' }, async ({ anonApi }) => {
+  test('error bodies carry no debug trace, except on staging (known API bug)', { tag: ['@GEN-07', '@pinned'] }, async ({ anonApi }) => {
     // The envelope allows `error` only. Staging adds `exception` with the Symfony
     // trace: class names, server paths, internal hosts (collections-dev...), plus
     // X-Debug-Token(-Link) headers on every response. The profiler they link to

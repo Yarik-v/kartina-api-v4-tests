@@ -23,6 +23,7 @@ const STATUS = {
   'pass-known': ['okk', 'пройден*'],
   bug: ['bugrep', 'баг воспроизводится'],
   skip: ['skip', 'пропущен'],
+  notrun: ['notrun', 'не запускался'],
   gap: ['gap', 'не автоматизирован'],
   fail: ['fail', 'упал'],
 };
@@ -119,13 +120,16 @@ export function render({ capture, cases, hostLabel }) {
   /** @type {{ channel: string, channelTitle: string, title: string, startsAt: number, call: number, status: number, stub: boolean, errorType: string | null }[]} */
   const teleProgrammes = tele.programmes;
   const teleStubs = teleProgrammes.filter((p) => p.stub);
-  /** Channels where some programmes get the stub and others the 403. */
+  /** The documented answer; every other non-stub outcome is counted apart, with its status. */
+  const teleDocumented = teleProgrammes.filter((p) => !p.stub && p.status === 403 && p.errorType === 'E_ARCHIVE_NOT_AVAILABLE');
+  const teleOther = teleProgrammes.filter((p) => !p.stub && !teleDocumented.includes(p));
+  /** Channels where some programmes get the stub and others the documented 403. */
   const teleMixed = [...new Set(teleProgrammes.map((p) => p.channelTitle))].filter(
-    (title) => teleProgrammes.some((p) => p.channelTitle === title && p.stub) && teleProgrammes.some((p) => p.channelTitle === title && !p.stub),
+    (title) => teleStubs.some((p) => p.channelTitle === title) && teleDocumented.some((p) => p.channelTitle === title),
   );
-  /** @type {{ id: string, title: string, kind: string, play_url: string }[]} */
+  /** `null` when the request itself failed during the capture. @type {{ id: string, title: string, kind: string, play_url: string }[] | null} */
   const wrongKind = out.radioGroupWrongKind;
-  /** @type {{ id: number, title: string }[]} */
+  /** @type {{ id: number, title: string }[] | null} */
   const nullDescription = out.radioNullDescription;
   const station = (/** @type {{ id: string | number, title: string }} */ s) => `<code>${esc(s.id)} «${esc(s.title)}»</code>`;
 
@@ -166,7 +170,7 @@ export function render({ capture, cases, hostLabel }) {
       title: 'Телетека программы без записи отдаёт ролик-заглушку (исправлено частично)',
       body: `<dt>Эндпоинт</dt><dd><code>GET /channels/{id}/teleteka/{timestamp}</code></dd>
     <dt>По документации</dt><dd>Нет записи: <code>403 E_ARCHIVE_NOT_AVAILABLE</code> («nothing recorded this moment»). Заглушка с извинением описана только для провайдера в режиме сбоя.</dd>
-    <dt>Фактически</dt><dd>До деплоя staging 21.10.2026 любая прошедшая программа, которую EPG помечает <code>teleteka: false</code>, получала 200 с роликом-заглушкой (<code>…/zaglushka/index.m3u8</code>). После деплоя поведение разное${teleProgrammes.length ? `: из ${teleProgrammes.length} проверенных программ ${teleStubs.length} по-прежнему получают заглушку, ${teleProgrammes.length - teleStubs.length} — документированный <code>403 E_ARCHIVE_NOT_AVAILABLE</code>${teleMixed.length ? `; на ${teleMixed.map((c) => `«${esc(c)}»`).join(', ')} — и то и другое в пределах одного канала` : ''}. Программы взяты из EPG (пример — №${tele.epg})` : ''}:
+    <dt>Фактически</dt><dd>До деплоя staging 21.10.2026 любая прошедшая программа, которую EPG помечает <code>teleteka: false</code>, получала 200 с роликом-заглушкой (<code>…/zaglushka/index.m3u8</code>). После деплоя поведение разное${teleProgrammes.length ? `: из ${teleProgrammes.length} проверенных программ ${teleStubs.length} по-прежнему получают заглушку, ${teleDocumented.length} — документированный <code>403 E_ARCHIVE_NOT_AVAILABLE</code>${teleOther.length ? `, ${teleOther.length} — другой ответ (${teleOther.map((p) => `${p.status}${p.errorType ? ` ${esc(p.errorType)}` : ''}`).join(', ')})` : ''}${teleMixed.length ? `; на ${teleMixed.map((c) => `«${esc(c)}»`).join(', ')} — и то и другое в пределах одного канала` : ''}. Программы взяты из EPG (пример — №${tele.epg})` : ''}:
       ${teleProgrammes.length ? `<div class="table-wrap"><table><thead><tr><th>Канал</th><th>Программа</th><th><code>starts_at</code></th><th>Запрос</th><th>Ответ</th></tr></thead><tbody>${teleProgrammes.map((p) => `<tr><td>${esc(p.channel)} «${esc(p.channelTitle)}»</td><td>${esc(p.title)}</td><td>${p.startsAt}</td><td>№${p.call}</td><td>${p.stub ? '<b>200, заглушка</b>' : `${p.status} <code>${esc(p.errorType ?? '')}</code>`}</td></tr>`).join('')}</tbody></table></div>` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
     <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения; теперь ещё и по-разному для разных программ.</dd>
     <dt>Автотест</dt><dd><code>catalog/channels.spec.ts</code> › «teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)»: зелёный, пока заглушку получает хоть одна программа; упадёт, когда исправят полностью.</dd>`,
@@ -249,7 +253,7 @@ x-api-error-code: 11
       short: 'Станция с <code>kind: "channel"</code> вместо <code>"radio"</code>',
       title: 'Радиостанция в группе с kind: "channel"',
       body: `<dt>По документации</dt><dd>Элементы — <code>radioCard</code>, у которого <code>kind</code> всегда <code>"radio"</code> (const).</dd>
-    <dt>Фактически</dt><dd>${wrongKind.length ? `${wrongKind.map((s) => `${station(s)} приходит с <code>kind: "${esc(s.kind)}"</code> и <code>play_url ${esc(s.play_url)}</code>`).join('; ')}; остальные — <code>"radio"</code>.` : 'Сейчас у всех станций <code>"radio"</code>.'} То же на production.</dd>
+    <dt>Фактически</dt><dd>${wrongKind === null ? `Запрос при сборе отчёта не удался (№${out.radioGroup}, ответ ${ex(out.radioGroup).status}).` : wrongKind.length ? `${wrongKind.map((s) => `${station(s)} приходит с <code>kind: "${esc(s.kind)}"</code> и <code>play_url ${esc(s.play_url)}</code>`).join('; ')}; остальные — <code>"radio"</code>.` : 'Сейчас у всех станций <code>"radio"</code>.'} То же на production.</dd>
     <dt>Почему важно</dt><dd>Клиент, ветвящийся по <code>kind</code>, покажет станцию как ТВ-канал.</dd>
     <dt>Автотест</dt><dd><code>interface/blocks.spec.ts</code> › «radio stations come with kind "channel" (known API bug)»</dd>`,
       exchanges: [[out.radioGroup, { open: true }]],
@@ -260,7 +264,7 @@ x-api-error-code: 11
       short: 'Нет обязательного <code>_links.play.title</code>, <code>description: null</code>',
       title: 'Список радио (deprecated) не соответствует схеме',
       body: `<dt>По документации</dt><dd><code>_links.play</code> — схема <code>link</code> с обязательными <code>title</code> и <code>method</code>; <code>description</code> — строка.</dd>
-    <dt>Фактически</dt><dd>У ${out.radioNoTitle} из ${out.radioTotal} станций <code>_links.play</code> без <code>title</code>; ${nullDescription.length ? `<code>description: null</code> у ${nullDescription.map(station).join(', ')}` : '<code>description: null</code> сейчас нет'}. То же на production.</dd>
+    <dt>Фактически</dt><dd>${nullDescription === null ? `Запрос при сборе отчёта не удался (№${out.radio}, ответ ${ex(out.radio).status}).` : `У ${out.radioNoTitle} из ${out.radioTotal} станций <code>_links.play</code> без <code>title</code>; ${nullDescription.length ? `<code>description: null</code> у ${nullDescription.map(station).join(', ')}` : '<code>description: null</code> сейчас нет'}. То же на production.`}</dd>
     <dt>Автотесты</dt><dd><code>catalog/radio.spec.ts</code> › «play links have no title», «some stations have a null description»</dd>`,
       exchanges: [[out.radio, { open: true }]],
     },
@@ -319,10 +323,12 @@ x-api-error-code: 11
   if (unknownCases.length) throw new Error(`Findings refer to cases TEST_CASES.md doesn't have: ${unknownCases.join(', ')}`);
   /** @param {Finding} f */
   const reproduces = (f) => {
-    if (f.id === 'S1' && !stagingTrace) return '<span class="rs ok">на этом хосте нет</span>';
     const statuses = f.cases.map((id) => caseById.get(id)?.result.status);
+    // A red pinned test comes first: it's the cue that the bug looks fixed.
     if (statuses.some((s) => s === 'fail')) return '<span class="rs fail">не воспроизвелось — проверить</span>';
+    if (f.id === 'S1' && !stagingTrace) return '<span class="rs ok">на этом хосте нет</span>';
     if (statuses.every((s) => s === 'gap')) return '<span class="rs gap">не автоматизирован</span>';
+    if (statuses.some((s) => s === 'notrun')) return '<span class="rs notrun">не проверено: тест не запускался</span>';
     if (statuses.some((s) => s === 'skip')) return '<span class="rs skip">не проверено</span>';
     if (statuses.every((s) => s === 'pass')) return '<span class="rs ok">не наблюдалось</span>';
     return '<span class="rs bugrep">воспроизводится</span>';
@@ -386,7 +392,7 @@ ${CSS}</style>
   <div class="fact"><b>${findings.length}</b><span>находок</span></div>
   <div class="fact"><b>${sevCount('high')}</b><span>высокая серьёзность</span></div>
   <div class="fact"><b>${sevCount('mid')}</b><span>средняя</span></div>
-  <div class="fact"><b>${cases.all.length}</b><span>тест-кейсов: <a href="#cases">${passedCases} пройдены, ${tally.bug ?? 0} — баг воспроизводится, ${tally.skip ?? 0} пропущены, ${tally.gap ?? 0} не автоматизированы${tally.fail ? `, ${tally.fail} упали` : ''}</a></span></div>
+  <div class="fact"><b>${cases.all.length}</b><span>тест-кейсов: <a href="#cases">${passedCases} пройдены, ${tally.bug ?? 0} — баг воспроизводится, ${tally.skip ?? 0} пропущены${tally.notrun ? `, ${tally.notrun} не запускались` : ''}, ${tally.gap ?? 0} не автоматизированы${tally.fail ? `, ${tally.fail} упали` : ''}</a></span></div>
   <div class="fact"><b>${runTotal}</b><span>автотестов: ${stats.expected} прошли, ${stats.skipped} пропущены, ${stats.unexpected} упали</span></div>
 </div>
 
@@ -394,7 +400,7 @@ ${CSS}</style>
 когда его исправят. Ниже у каждой находки — <b>все запросы ровно в том виде, в каком они
 отправлялись</b> (готовые <code>curl</code>; пароль в отчёт не включён), и полные ответы сервера с
 заголовками; по <code>request_id</code> и времени их можно найти в логах. Все запросы шли в одной
-сессии (№${out.login}), закрытой в конце (№${out.logout}, №${out.after}).</p>
+сессии (№${out.login}), закрытой в конце: logout №${out.logout}, после него сервер её уже не принимает (№${out.after}).</p>
 
 <h2>Сводка</h2>
 <div class="table-wrap">
@@ -410,7 +416,7 @@ ${summaryRows}
 <dl class="bug session">
   <dt>Абонемент</dt><dd><code>${esc(out.meta.login)}</code> (пароль в отчёт не включён)</dd>
   <dt>Устройство</dt><dd><code>device ${esc(out.meta.device)}</code>, <code>serial ${esc(out.meta.serial)}</code></dd>
-  <dt>MW_SSID</dt><dd><code>${esc(out.meta.ssid)}</code> (закрыта в №${out.logout})</dd>
+  <dt>MW_SSID</dt><dd><code>${esc(out.meta.ssid)}</code> (${out.sessionClosed ? `закрыта: №${out.logout}, проверено в №${out.after}` : '<b>НЕ ЗАКРЫТА</b>'})</dd>
 </dl>
 ${exchanges([[out.login, { open: true, label: 'логин' }], [out.logout, { label: 'logout в конце' }], [out.after, { label: 'сессия больше не действует' }]])}
 
@@ -426,17 +432,18 @@ ${cards(['D1', 'D2', 'D3', 'D4'])}
 <h2 id="cases">Результаты прогона тест-кейсов</h2>
 <p class="meta">Прогон ${esc(utc(stats.startTime))}, ${Math.round(stats.duration / 1000)} с, ${esc(base)}.
 ${runTotal} автотестов: ${stats.expected} прошли, ${stats.skipped} пропущены, ${stats.unexpected} упали${stats.flaky ? `, ${stats.flaky} нестабильны` : ''}.
-Кейсы и причины пробелов — из <code>TEST_CASES.md</code> репозитория тестов; тест относится к кейсу по тегу (<code>npx playwright test --grep @CNT-11</code> прогоняет один кейс).</p>
+Кейсы и причины пробелов — из <code>TEST_CASES.md</code> репозитория тестов; тест относится к кейсу по тегу: <code>npx playwright test --grep @CNT-11</code> прогоняет один кейс, для кейса, меняющего аккаунт, — <code>V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05</code>.</p>
 <div class="facts">
   <div class="fact"><b>${cases.all.length}</b><span>тест-кейсов</span></div>
   <div class="fact"><b>${passedCases}</b><span>пройдены (из них ${tally['pass-known'] ?? 0} с допущенным известным расхождением)</span></div>
   <div class="fact"><b>${tally.bug ?? 0}</b><span>закреплённых багов воспроизводятся</span></div>
   <div class="fact"><b>${tally.skip ?? 0}</b><span>пропущены (нет нужных данных)</span></div>
+  <div class="fact"><b>${tally.notrun ?? 0}</b><span>не запускались (упал тест, от которого они зависят, или прогон прерван)</span></div>
   <div class="fact"><b>${tally.gap ?? 0}</b><span>не автоматизированы</span></div>
   <div class="fact"><b>${tally.fail ?? 0}</b><span>упали</span></div>
 </div>
 <p class="legend">${badge('pass')} всё как в документации · ${badge('pass-known')} кейс выполнен, но в ответах есть известное расхождение из этого отчёта (на нём кейс не падает) ·
-${badge('bug')} кейс закрепляет баг: тест зелёный, пока баг есть · ${badge('skip')} нужных данных сейчас нет · ${badge('gap')} причина в примечании</p>
+${badge('bug')} кейс закрепляет баг: тест зелёный, пока баг есть · ${badge('skip')} нужных данных сейчас нет · ${badge('notrun')} тест не запускался, причина в примечании · ${badge('gap')} причина в примечании</p>
 ${caseTables}
 
 <h2>Что проверено и что нет</h2>

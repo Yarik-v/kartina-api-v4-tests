@@ -105,44 +105,13 @@ details.ex summary code { background: none; padding: 0; word-break: break-all; }
 .cap { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .03em; margin: 10px 0 2px; }
 .table-wrap { margin-top: 8px; }
 pre { max-height: 520px; }
-
-.exs { display: grid; gap: 6px; margin-top: 6px; }
-details.ex { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
-details.ex > summary { cursor: pointer; padding: 8px 12px; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
-details.ex > summary::-webkit-details-marker { display: none; }
-details.ex > summary::before { content: '▸'; color: var(--muted); }
-details.ex[open] > summary::before { content: '▾'; }
-details.ex summary code { background: none; padding: 0; word-break: break-all; }
-.exbody { padding: 0 12px 10px; }
-.n { font: 600 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
-.st { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
-.st.s2 { color: var(--ok); } .st.s3 { color: var(--doc); } .st.s4 { color: var(--mid); } .st.s5 { color: var(--high); }
-.lbl { color: var(--muted); font-size: 13px; }
-.cap { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .03em; margin: 10px 0 2px; }
-.table-wrap { margin-top: 8px; }
-pre { max-height: 520px; }
-
-.exs { display: grid; gap: 6px; margin-top: 6px; }
-details.ex { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
-details.ex > summary { cursor: pointer; padding: 8px 12px; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
-details.ex > summary::-webkit-details-marker { display: none; }
-details.ex > summary::before { content: '▸'; color: var(--muted); }
-details.ex[open] > summary::before { content: '▾'; }
-details.ex summary code { background: none; padding: 0; word-break: break-all; }
-.exbody { padding: 0 12px 10px; }
-.n { font: 600 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
-.st { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
-.st.s2 { color: var(--ok); } .st.s3 { color: var(--doc); } .st.s4 { color: var(--mid); } .st.s5 { color: var(--high); }
-.lbl { color: var(--muted); font-size: 13px; }
-.cap { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .03em; margin: 10px 0 2px; }
-.table-wrap { margin-top: 8px; }
-pre { max-height: 520px; }
 .rs { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
 .rs.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
 .rs.okk { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); outline: 1px dashed var(--ok); outline-offset: -1px; }
 .rs.bugrep { color: var(--high); background: var(--high-bg); }
 .rs.skip { color: var(--mid); background: var(--mid-bg); }
 .rs.gap { color: var(--low); background: var(--low-bg); }
+.rs.notrun { color: var(--mid); background: var(--mid-bg); outline: 1px dashed var(--mid); outline-offset: -1px; }
 .rs.fail { color: #fff; background: var(--high); }
 h3.sect { font-size: 15px; margin: 22px 0 8px; }
 table.cases td.cid { font: 600 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
@@ -161,8 +130,8 @@ dl.bug.session { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px;
 
 <h1>API v4: расхождения с документацией</h1>
 <p class="meta">
-  Staging <code>https://rustvt.kartina.tv/api/v4</code> · запросы 2026-10-21 07:24:47 UTC – 07:25:44 UTC ·
-  прогон тестов 2026-10-21 07:22:48 UTC ·
+  Staging <code>https://rustvt.kartina.tv/api/v4</code> · запросы 2026-10-21 12:08:14 UTC – 12:09:13 UTC ·
+  прогон тестов 2026-10-21 12:03:52 UTC ·
   спецификация <a href="https://pages.kartina.tv/middleware/docs/v4/">middleware/docs/v4</a> ·
   автотесты: репозиторий <code>kartina-api-v4-tests</code>
 </p>
@@ -171,15 +140,15 @@ dl.bug.session { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px;
   <div class="fact"><b>14</b><span>находок</span></div>
   <div class="fact"><b>1</b><span>высокая серьёзность</span></div>
   <div class="fact"><b>5</b><span>средняя</span></div>
-  <div class="fact"><b>176</b><span>тест-кейсов: <a href="#cases">134 пройдены, 16 — баг воспроизводится, 2 пропущены, 24 не автоматизированы</a></span></div>
-  <div class="fact"><b>455</b><span>автотестов: 453 прошли, 2 пропущены, 0 упали</span></div>
+  <div class="fact"><b>176</b><span>тест-кейсов: <a href="#cases">133 пройдены, 16 — баг воспроизводится, 2 пропущены, 25 не автоматизированы</a></span></div>
+  <div class="fact"><b>452</b><span>автотестов: 450 прошли, 2 пропущены, 0 упали</span></div>
 </div>
 
 <p>Каждая находка закреплена автотестом: тест проверяет текущее (неверное) поведение и упадёт,
 когда его исправят. Ниже у каждой находки — <b>все запросы ровно в том виде, в каком они
 отправлялись</b> (готовые <code>curl</code>; пароль в отчёт не включён), и полные ответы сервера с
 заголовками; по <code>request_id</code> и времени их можно найти в логах. Все запросы шли в одной
-сессии (№1), закрытой в конце (№49, №50).</p>
+сессии (№1), закрытой в конце: logout №49, после него сервер её уже не принимает (№50).</p>
 
 <h2>Сводка</h2>
 <div class="table-wrap">
@@ -208,12 +177,12 @@ dl.bug.session { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px;
 <dl class="bug session">
   <dt>Абонемент</dt><dd><code>543813</code> (пароль в отчёт не включён)</dd>
   <dt>Устройство</dt><dd><code>device androidtv-yb-005</code>, <code>serial bugreport-2026-10-21</code></dd>
-  <dt>MW_SSID</dt><dd><code>94ca325cf2dfca2aeed12d0f740f5421</code> (закрыта в №49)</dd>
+  <dt>MW_SSID</dt><dd><code>7d79bf1aca63af59baff493d239fd314</code> (закрыта: №49, проверено в №50)</dd>
 </dl>
 <div class="exs"><details class="ex" open>
   <summary><span class="n">№1</span> <code>POST /login</code> → <b class="st s2">200</b> <span class="lbl">логин</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:24:47 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:14 UTC</div>
     <pre><code>curl -i -X POST 'https://rustvt.kartina.tv/api/v4/login' \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
@@ -224,20 +193,20 @@ cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:24:48 GMT
+date: Wed, 21 Oct 2026 12:08:14 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:24:48 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:14 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567488
+x-api-servertime: 1792584494
 x-api-version: 4
-x-debug-token: 6a81b8
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/6a81b8
+x-debug-token: 5a0d25
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/5a0d25
 x-powered-by: PHP/8.5.10
-x-token: JRO1zUgF3u90E4N7Ok0L464BmGY4dyX2RGYuh3IVCsJYntBbzUtbe0MkBazgXM5SVhDl70xMX8hqNb5yfb51aRrymUOfGC2ZGQVUqxFr9j3D3irx9ExvPQRhh1YQ0oi9/JK3giZpIdXCBZV/AnPJ840kMBd2CCgyNwb1+usezdTTL9SWGSlLP2EiE96jU3zK
+x-token: 0eMzYQWGQu1dkgoIsifHhUlSclOBFJOrJxy8DEWiF1btlh9bupx1mS99gN7ueIro2zCeIH8qb5F78ubRt63Q4oIYk8v5yb0M+U+E3Nd/FLlLJ/N4pdT8z2XeXiP/q/uBD+v1qXLvqQRQoiJbDeEO8MIlxjmPV8jO1hSvLQMU2OLm4bqhzYe1xPHrq6+KhXcX
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
@@ -250,7 +219,7 @@ x-token52-rem-addr: 185.146.250.95
     "type": "general",
     "share_links": null
   },
-  "security": "94ca325cf2dfca2aeed12d0f740f5421",
+  "security": "7d79bf1aca63af59baff493d239fd314",
   "services": "/api/v4/services",
   "settings": "/api/v4/settings",
   "has_personal_account": true,
@@ -264,25 +233,25 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№49</span> <code>POST /logout</code> → <b class="st s2">204</b> <span class="lbl">logout в конце</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:43 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:12 UTC</div>
     <pre><code>curl -i -X POST 'https://rustvt.kartina.tv/api/v4/logout' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 204
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
-date: Wed, 21 Oct 2026 07:25:43 GMT
+date: Wed, 21 Oct 2026 12:09:13 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=deleted; expires=Tue, 21 Oct 2025 07:25:42 GMT; Max-Age=0; path=/
+set-cookie: MW_SSID=deleted; expires=Tue, 21 Oct 2025 12:09:12 GMT; Max-Age=0; path=/
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567543
+x-api-servertime: 1792584553
 x-api-version: 4
-x-debug-token: 090f22
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/090f22
+x-debug-token: 91ff11
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/91ff11
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -293,29 +262,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№50</span> <code>GET /account</code> → <b class="st s4">403</b> <span class="lbl">сессия больше не действует</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:44 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:13 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/account' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1132
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:44 GMT
+date: Wed, 21 Oct 2026 12:09:13 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:44 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:13 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 12
 x-api-error-message: Authentication error
 x-api-messages: 0
-x-api-servertime: 1792567544
+x-api-servertime: 1792584553
 x-api-version: 4
-x-debug-token: aff11f
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/aff11f
+x-debug-token: 15e780
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/15e780
 x-powered-by: PHP/8.5.10
 
 {
@@ -323,7 +292,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_AUTH_ERROR",
     "code": 12,
     "message": "Ошибка авторизации.",
-    "request_id": "01a15d5a-0ad5-77fc-b19b-0c32bbb916d6",
+    "request_id": "01a15e5d-9512-7d3e-82ef-e39e25b1fa06",
     "details": {
       "title": null,
       "description": "Wrong session. Client is not authorized"
@@ -373,76 +342,76 @@ x-powered-by: PHP/8.5.10
       <div class="table-wrap"><table><thead><tr><th>Сервис</th><th>Тайтл</th><th>Запрос</th><th>Ответ</th><th>Что отдаётся</th></tr></thead><tbody><tr><td>startru</td><td>Мошенники. Фильм (movie)</td><td>№2</td><td>200</td><td>поток <code>/vod/tv/movie/moshenniki-film</code>; <code>…/play</code> (№3) отдаёт другой URL — по имени это сам фильм, не трейлер</td></tr>
 <tr><td>mediateka</td><td>Джон Уик 4 (movie)</td><td>№4</td><td>200</td><td><b>тот же файл, что <code>…/play</code></b> (№5): <code>/teleteka-ktv/hls/259/2025/06/12/1749747600/teleteka_259_1749747600_2_index.m3u8</code></td></tr>
 <tr><td>moretv</td><td>Трудно быть богом. Серия 1 (movie)</td><td>№6</td><td>200</td><td><b>тот же файл, что <code>…/play</code></b> (№7): <code>/vod/hls/videoteka/moretv/Wink-originals-Trudno-byt-bogom/Wink-originals-Trudno-byt-bogom_s1e1/index.m3u8</code></td></tr>
-<tr><td>unicoplaycom</td><td>Таргет (series)</td><td>№8</td><td>404</td><td><code>E_WRONG_ID</code>, request_id <code>01a15d59-90a1-75ac-857e-97e85d63215d</code> — как в документации</td></tr>
-<tr><td>premierone</td><td>За закрытыми глазами (series)</td><td>№10</td><td>503</td><td><code>E_SYSTEM_ERROR</code>, request_id <code>01a15d59-96a6-79f7-b361-4135ac27bfa2</code></td></tr>
-<tr><td>souzmultru</td><td>Оранжевая корова (series)</td><td>№12</td><td>503</td><td><code>E_SYSTEM_ERROR</code>, request_id <code>01a15d59-9b4e-7d7c-b098-d280abd80701</code></td></tr></tbody></table></div></dd>
+<tr><td>unicoplaycom</td><td>Таргет (series)</td><td>№8</td><td>404</td><td><code>E_WRONG_ID</code>, request_id <code>01a15e5d-1327-70c2-a417-43fc4fabb8a0</code> — как в документации</td></tr>
+<tr><td>premierone</td><td>За закрытыми глазами (series)</td><td>№10</td><td>503</td><td><code>E_SYSTEM_ERROR</code>, request_id <code>01a15e5d-18fb-776b-9cdd-a8ef4cca6a09</code></td></tr>
+<tr><td>souzmultru</td><td>Оранжевая корова (series)</td><td>№12</td><td>503</td><td><code>E_SYSTEM_ERROR</code>, request_id <code>01a15e5d-1d53-735b-847a-99c704e4d066</code></td></tr></tbody></table></div></dd>
     <dt>Почему важно</dt><dd>Эндпоинт трейлера отдаёт полный контент по любому <code>trailerId</code>. Если он проверяет доступ слабее, чем <code>…/play</code> (подписка, гео, «трейлеры доступны всем»), это обход платного доступа. У аккаунта всё оплачено, поэтому <b>это не проверено</b> — нужно посмотреть на стороне бэкенда. <code>503 E_SYSTEM_ERROR</code> у остальных сервисов заставляет клиента повторять запрос, хотя ресурса просто нет.</dd>
     <dt>Автотест</dt><dd><code>catalog/content.spec.ts</code> › «an unknown trailer id is not answered with the documented 404 (known API bug)»</dd></dl>
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex">
   <summary><span class="n">№2</span> <code>GET /content/startru/05688f4e-4219-4b1c-a758-5db94774d892/trailers/playwright-no-such-trailer/play</code> → <b class="st s2">200</b> <span class="lbl">startru: подставной трейлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:09 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:35 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/startru/05688f4e-4219-4b1c-a758-5db94774d892/trailers/playwright-no-such-trailer/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:09 GMT
+date: Wed, 21 Oct 2026 12:08:36 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:09 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:36 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567509
+x-api-servertime: 1792584516
 x-api-version: 4
-x-debug-token: dd7131
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/dd7131
+x-debug-token: 616201
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/616201
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b2.kartina.stream:8200/vod/tv/movie/moshenniki-film?ticket=DCclcDoH1evwt3PG72rcaON%2BV5oR56Ok9m%2Bd2l7UefBEfjF%2FynXC2%2FDQOt30ceWSMGK%2BnGoMYOAD0FKan4Flz%2BAROz3ZR3RUy9RYHLbu%2FoybPd6O%2F27mVTsYDzaH3RYbacf5x6%2BnqNx7WKV9Iha0%2BUTp7DUQXLeGqrc5%2B1cPeCgr%2BczJYNp8qf2CwterrwONH96ipzd7wNjmXehXoXRvY2VGBQFI3%2F4H6evVnSlODKsAWFysZFg6PNnkxH7XqYJUyF%2BuraT75AaR%2BL%2FXaJwgvMPYG38ILVR8p7Buzko9TN39L17gAwpLRmmDQTGT8VsFqMbxSqMFBuDwQyYwNTFjyg%3D%3D&amp;device-id=androidtv-yb-005"
+  "url": "http://streamer-fra-c4-b6.kartina.stream:8200/vod/tv/movie/moshenniki-film?ticket=NCQjRnaKRMxqJc4tKuN3qY570t%2BE2WfRFB5JTzh4cwihvLXZ7%2BpHc0r54I1OA9KbQB9gcMEC%2FguU704VRSYOQu%2BdM6rOWwugHG6b0gQPNz1NN7KUyPXXbWEEAX1DSk%2By2oiuBLFWdFyhubg7pFJqb3AxF4k5KlJc7yNKf6YimBYkFW4oM6EKIZuC9VNqemgoa2QlvxgMDoupzb1UjH3wM5q495thJMDiyQiVSaZfQvkMygfy2QVIhVIdBKsZDqdT5MAaKOwsDHpbawu7ouai2P3tpOAoYozxRQYmNX%2BbWbHq5mD6nM4DEO00%2Bs5BRGclrRoMsWvEYdjxRDhgZ7kbDA%3D%3D&amp;device-id=androidtv-yb-005"
 }</code></pre>
   </div>
 </details>
 <details class="ex">
   <summary><span class="n">№3</span> <code>GET /content/startru/05688f4e-4219-4b1c-a758-5db94774d892/play</code> → <b class="st s2">200</b> <span class="lbl">startru: /play для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:09 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:36 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/startru/05688f4e-4219-4b1c-a758-5db94774d892/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:10 GMT
+date: Wed, 21 Oct 2026 12:08:37 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:10 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:37 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567510
+x-api-servertime: 1792584517
 x-api-version: 4
-x-debug-token: 47aed8
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/47aed8
+x-debug-token: f3f073
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/f3f073
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "https://startfilm-storage1.kartina.stream/1/hlsjs/2/0f/cda9459b-30c0-451c-a03f-c65cd85fc0f2/fhd__nosubs/master.m3u8?token=fd46-c581-b043-5132-cacf-aa5d-c3d8-05b0&amp;expires=1792653910&amp;cli_serial=bugreport-2026-10-21",
+  "url": "https://startfilm-storage1.kartina.stream/1/hlsjs/2/0f/cda9459b-30c0-451c-a03f-c65cd85fc0f2/fhd__nosubs/master.m3u8?token=fd46-c581-b043-5132-cacf-aa5d-c3d8-05b0&amp;expires=1792670917&amp;cli_serial=bugreport-2026-10-21",
   "markers": null,
   "vmap": null
 }</code></pre>
@@ -451,68 +420,68 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex" open>
   <summary><span class="n">№4</span> <code>GET /content/mediateka/66859bb7d9ab86aec0050005/trailers/playwright-no-such-trailer/play</code> → <b class="st s2">200</b> <span class="lbl">mediateka: подставной трейлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:10 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:37 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/mediateka/66859bb7d9ab86aec0050005/trailers/playwright-no-such-trailer/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:11 GMT
+date: Wed, 21 Oct 2026 12:08:38 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:11 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:38 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567511
+x-api-servertime: 1792584518
 x-api-version: 4
-x-debug-token: c78d19
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/c78d19
+x-debug-token: 863c4e
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/863c4e
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-am-c1-b9.kartina.stream:8200/teleteka-ktv/hls/259/2025/06/12/1749747600/teleteka_259_1749747600_2_index.m3u8?ticket=vXLTbtRnEcvpVEzxZ0d2qDOja%2B5WQSGdvddRZcLCitDiaftdK2sI3zanWKiRG1WDNLnLvMGRuskrppMHsgbvx%2FTmhRZbq30pu4hADMrvfoLgEgi3c1Zsmny%2FOiO3sVLvr%2BWEkL0yo6tl65O%2FynGCkqpgQ%2FK01C5WziKwDJDZkEw%2BDyMLRB5QV9iHRAIOwDP%2BbUhpkza3RA4NxwvWzu146BlWk84W4P7Vay40GFurhZjXwP6vBq9YWsJXvXjbVUoJJZ5H4JWKERQ7iZg73hC2mZG5DHqbMlT%2FeDv8Au4tQbWeM%2B2BpYkqEFfX5CoPJctVx9Mw5aHx0kfDSXZHhuSRsw%3D%3D&amp;device-id=androidtv-yb-005"
+  "url": "http://streamer-am-c3-b7.kartina.stream:8200/teleteka-ktv/hls/259/2025/06/12/1749747600/teleteka_259_1749747600_2_index.m3u8?ticket=C5aV%2BEkpbiy7qqcOzhdyDyirJ6KwYY%2FhiKFGweuPkIRO0ohZDwT7%2FGI7n68pJIBJ0dpBP2RwD7BOG6sRJ6LNUOHn2XgBisM4Nkw%2FlW%2FW83ylQzx9YEJIX1t1SQJthonRva1dTGQ1NU9Hy3ZjC%2FCFdczUj22zzdpNNPwUpuHhIJ6t7ZcZQgAbiO5ntXN%2BP7jLhQvuYugwVOfV99WlcJ197fMJ5dB0uR31%2BizrvI3LIxwdCeTxbIsx9hMrqCzGP9Ja9ozxDipdCAtsxs%2FJ2fM6q5Yr0hgKawpZwkoGyxuc1mA4YEE%2F8LDDgoU%2F735fatNvyrQO1dC1CVpV9Kc2X6MCWA%3D%3D&amp;device-id=androidtv-yb-005"
 }</code></pre>
   </div>
 </details>
 <details class="ex">
   <summary><span class="n">№5</span> <code>GET /content/mediateka/66859bb7d9ab86aec0050005/play</code> → <b class="st s2">200</b> <span class="lbl">mediateka: /play для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:11 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:38 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/mediateka/66859bb7d9ab86aec0050005/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:11 GMT
+date: Wed, 21 Oct 2026 12:08:38 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:11 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:38 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567511
+x-api-servertime: 1792584518
 x-api-version: 4
-x-debug-token: 24c257
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/24c257
+x-debug-token: ceab3e
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/ceab3e
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-am-c1-b9.kartina.stream:8200/teleteka-ktv/hls/259/2025/06/12/1749747600/teleteka_259_1749747600_2_index.m3u8?ticket=NKW34JdkBCXOwRKwK6cu2UkRFGb%2FIObtNxqKbNuf9rmPWSk55VGf5hyltb9sRrO0kSfgFFiZHv%2FOZ%2BBrzEjwO%2BWq5DsOgg8T3sYeIdQ2Ns1NBP1YhCUuWqwCYTg2zBQUppira%2B36OydnVs0piRsdRycArIpmELv4ehCCJaJ8MzUOpcT9Zi37GKT6f5XTp0d3je9l9VVvyEfyum%2Bs2Amv8v6kJpPl2pb%2BjIAjFxrLY384iFXEE9RZHBkWXFJ2WkkvqfUvflgbZU9nZGcs2k7czZ6KLjTZlYs%2B8H5RXrPWINUBhrYTuURyRGfBm7gbbrVDFiAhivad0fli6PTtm0K2OQ%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-am-c1-b11.kartina.stream:8200/teleteka-ktv/hls/259/2025/06/12/1749747600/teleteka_259_1749747600_2_index.m3u8?ticket=AqLOBPyxjokZinkpcs55NKQBjcYBxoRAUSEpBPM4FnZr1KcF34Yhae8CysccIVcBXlVWP2AVh1sE2n44XoZc%2B1CPSWxgCdsln6ZeWvrKsXp18BthTInRETu8TAU%2FMASsfIdyI1L%2Bgbt417t07iRrVduIMQVWuCeJGqpqZq1H1WYNfnFXRBS%2FxvvtZk7pNxWWRRHdQpMx9nKW%2B4L8xgcGBZEqItZC%2BUH8o7zH2e%2FGvFDhJ5i985ucdYvzg7EsPROOexEcpRSDRs1yajiiLSlqV6DZ4lFsxpvlMJIaAhcr6AshGH2khUb08QrV9AMW%2FN6G1BnOtQHk78LwnJ9sZG7V7g%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": {
     "closing_credits": {
       "start": 0,
@@ -534,68 +503,68 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex" open>
   <summary><span class="n">№6</span> <code>GET /content/moretv/5ef5e248ddd2c028b26e2616/trailers/playwright-no-such-trailer/play</code> → <b class="st s2">200</b> <span class="lbl">moretv: подставной трейлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:11 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:38 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/moretv/5ef5e248ddd2c028b26e2616/trailers/playwright-no-such-trailer/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:12 GMT
+date: Wed, 21 Oct 2026 12:08:39 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:12 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:39 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567512
+x-api-servertime: 1792584519
 x-api-version: 4
-x-debug-token: 5f1afa
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/5f1afa
+x-debug-token: a2074c
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/a2074c
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-am-c1-b16.kartina.stream:8200/vod/hls/videoteka/moretv/Wink-originals-Trudno-byt-bogom/Wink-originals-Trudno-byt-bogom_s1e1/index.m3u8?ticket=vHPvg7tPpUNu91UIOkHDKWxe3JEhEbiE7p1OvGOPaALKI0mZkUDQuNDiw0OedacPQb9CGQk0GXftvfCk%2F16CZOuwsfyo%2BDJ0SegeHUnrg6LCa6yiDguE7AAfyBCftMLyEua8QVMyLKmXoi1zW9MixGJtLpgkCl3jB68Lg6BTOrl5nsPouYWuGqu0r5j0E1Pmg1C1Z8k0ZSR4he%2FgKFaqxvs%2BKPy%2FIf7PRuNLT7%2BbLc0IgyqxL1A6KXkRPi3Gy7HdY3H9asLdVje3mXPjZV88zWraWwsgBbAxFZMT%2BUm2KLBq9hWY%2BxGv68QByaI9i6M%2FogAO0h23PCyFsNUmmuIMqA%3D%3D&amp;device-id=androidtv-yb-005"
+  "url": "http://streamer-fra-c4-b8.kartina.stream:8200/vod/hls/videoteka/moretv/Wink-originals-Trudno-byt-bogom/Wink-originals-Trudno-byt-bogom_s1e1/index.m3u8?ticket=EewUqj1EyBj0hY%2FqpI1rhj7r2eBJrhnHEPC7VVgUzidFi3%2BwPzVv2MERal7xmr6GL3u8j09fPLDtThmWi%2BJ15C64e6Cw8dsQkRMuvaYyGBOgRUvT8WO4QglEWIgWZ6CLGRAC9pOaltjIBALpugybpnFr3roVCJsC6wi%2BZWwsS%2BwS2ODkrKKqW8jZlADukUvaks9SCFNPSLNpODO4p%2BL2vn3p0n9U6do%2FrQpq6lBumSOTXrKNxy1Yy%2FkEUqqTdVralX7RXfD06i8iXtfTGRx7j6%2BNSOx43G%2F4M64BF1u0fl16GKmwqZhyWE6zNnskenltE%2BBIHTpJd2kcTwiLcShlpA%3D%3D&amp;device-id=androidtv-yb-005"
 }</code></pre>
   </div>
 </details>
 <details class="ex">
   <summary><span class="n">№7</span> <code>GET /content/moretv/5ef5e248ddd2c028b26e2616/play</code> → <b class="st s2">200</b> <span class="lbl">moretv: /play для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:12 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:39 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/moretv/5ef5e248ddd2c028b26e2616/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:12 GMT
+date: Wed, 21 Oct 2026 12:08:40 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:12 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:39 GMT; Max-Age=259199; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567512
+x-api-servertime: 1792584519
 x-api-version: 4
-x-debug-token: e8a524
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/e8a524
+x-debug-token: 49d9ad
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/49d9ad
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-am-c1-b16.kartina.stream:8200/vod/hls/videoteka/moretv/Wink-originals-Trudno-byt-bogom/Wink-originals-Trudno-byt-bogom_s1e1/index.m3u8?ticket=cD95%2FH7Yu%2BoE%2FgworKNMcVTlm5WZziqgS3KUAiCf0dIsmT2lxkf0FiQRp2K%2Bz8ueMNPontD%2BGBdzpvGKjPs8lf%2FlRbBs%2BCp5BhpQBUMlYxuStaO2s6F0y8GakJKxCMvyni9Ji50Wv0Fs8ooJXQ7uZb9CtpzXLC0e5mcm2o9yrRUrMg1b1t0D8SO6I5QWdVGh5Xt%2F0UxCZGMaPz2Ku2DoPcIGaHAu6ZyY6tPe0r9n76KtxIzcnlroYM%2FOGSLzBUgtuKRbWIrNVkE8yOadMRu9Q96yQGVlQtiqPAo3mRF5vUn5usoEtAQqwQBb5ME1WkZxk6V%2FtAWeNupTeQP7A9BeFQ%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-am-c3-b16.kartina.stream:8200/vod/hls/videoteka/moretv/Wink-originals-Trudno-byt-bogom/Wink-originals-Trudno-byt-bogom_s1e1/index.m3u8?ticket=tW%2BGqcMeHOKtaEjIb9vBLhTjwNEyrZ92Hlqjd9%2BGu2H7oPGlr%2BFmcgGBUW%2FeWbv3%2BepD6nmAh%2Fy0pdKLBuP%2BnW67r269Uue5GoeV9K2UkVhS3Gu7GDxQoXobH2kSSRj9r32dkRoUoatyXka3hFHWPSyU3F3ZMqU2%2FyV38YlcQraPNwlFbHKBXevk5pBlNv%2BaQ9xWLJMvRdIWgKQxe0wM%2BnyoKrsNx2mA5wPIeE6EgkujhwKZUFqy7zNiEN2OVpycUdhXFa7A7hGdvSZgBuHDGh%2FjLOGua69yv9Uhl2ySjBAe2qzZlMZ6o57%2Fqn4bp0N3q0%2BMZsHdq3tkjGWws0%2FH%2BQ%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": {
     "closing_credits": {
       "start": 0,
@@ -617,29 +586,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№8</span> <code>GET /content/unicoplaycom/306060aa-6579-4e2b-bbd7-2a1fd1d526ef/trailers/playwright-no-such-trailer/play</code> → <b class="st s4">404</b> <span class="lbl">unicoplaycom: подставной трейлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:12 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:40 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/unicoplaycom/306060aa-6579-4e2b-bbd7-2a1fd1d526ef/trailers/playwright-no-such-trailer/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 404
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 964
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:13 GMT
+date: Wed, 21 Oct 2026 12:08:40 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:13 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:40 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 39
 x-api-error-message: This ID is wrong
 x-api-messages: 0
-x-api-servertime: 1792567513
+x-api-servertime: 1792584520
 x-api-version: 4
-x-debug-token: 0ee18d
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/0ee18d
+x-debug-token: 042867
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/042867
 x-powered-by: PHP/8.5.10
 
 {
@@ -647,7 +616,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_WRONG_ID",
     "code": 39,
     "message": "Неверный ID",
-    "request_id": "01a15d59-90a1-75ac-857e-97e85d63215d",
+    "request_id": "01a15e5d-1327-70c2-a417-43fc4fabb8a0",
     "details": {
       "title": null,
       "description": null
@@ -690,34 +659,34 @@ x-powered-by: PHP/8.5.10
 <details class="ex">
   <summary><span class="n">№9</span> <code>GET /content/unicoplaycom/306060aa-6579-4e2b-bbd7-2a1fd1d526ef/play</code> → <b class="st s2">200</b> <span class="lbl">unicoplaycom: /play для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:13 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:40 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/unicoplaycom/306060aa-6579-4e2b-bbd7-2a1fd1d526ef/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:14 GMT
+date: Wed, 21 Oct 2026 12:08:41 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:14 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:41 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567514
+x-api-servertime: 1792584521
 x-api-version: 4
-x-debug-token: 269d81
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/269d81
+x-debug-token: b0323b
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/b0323b
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "https://edge.unicocdn.com/storage1/15/hlsjs/1/b1/755ec1b2-eaa5-4a43-b610-86e65b439b11/fhd_ruskazeng_subs/master.m3u8?token=V-0K9ij0IONE64tE9-XVpw&amp;expires=1792653914",
+  "url": "https://edge.unicocdn.com/storage1/15/hlsjs/1/b1/755ec1b2-eaa5-4a43-b610-86e65b439b11/fhd_kazengrus_subs/master.m3u8?token=RnXO6bXKppXxm_MXWR7Ymg&amp;expires=1792670921",
   "markers": null,
   "vmap": null
 }</code></pre>
@@ -726,29 +695,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№10</span> <code>GET /content/premierone/246247/trailers/playwright-no-such-trailer/play</code> → <b class="st s5">503</b> <span class="lbl">premierone: подставной трейлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:14 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:41 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/premierone/246247/trailers/playwright-no-such-trailer/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 503
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1076
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:14 GMT
+date: Wed, 21 Oct 2026 12:08:42 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:14 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:42 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 99
 x-api-error-message: System error
 x-api-messages: 0
-x-api-servertime: 1792567514
+x-api-servertime: 1792584522
 x-api-version: 4
-x-debug-token: 5db8b1
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/5db8b1
+x-debug-token: 8a5862
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/8a5862
 x-powered-by: PHP/8.5.10
 
 {
@@ -756,7 +725,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_SYSTEM_ERROR",
     "code": 99,
     "message": "Системная ошибка. Повторите попытку позже.",
-    "request_id": "01a15d59-96a6-79f7-b361-4135ac27bfa2",
+    "request_id": "01a15e5d-18fb-776b-9cdd-a8ef4cca6a09",
     "details": {
       "title": null,
       "description": null
@@ -799,34 +768,34 @@ x-powered-by: PHP/8.5.10
 <details class="ex">
   <summary><span class="n">№11</span> <code>GET /content/premierone/246247/play</code> → <b class="st s2">200</b> <span class="lbl">premierone: /play для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:14 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:42 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/premierone/246247/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:15 GMT
+date: Wed, 21 Oct 2026 12:08:42 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:15 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:42 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567515
+x-api-servertime: 1792584522
 x-api-version: 4
-x-debug-token: 12e25f
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/12e25f
+x-debug-token: 7ecd2c
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/7ecd2c
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b8.kartina.stream:8200/cached/premier/8b903e6bc86e4839c5109526f58d1b99/index.m3u8?ticket=IJYdKKMiq9feAkevvLGd8GksGeQT1f9bGgFjoAxX8X8ENIdPPbcz4NVxMrFJjZvMvPDGZvWWyUGGu77gUwcbEw6qbU0jkoat2V09jljip2QpGvaFOX%2Fl6TAYf8sNo3eZgBqs%2FcdFfL6NK37aQdkfzwhVcXNMOJQz0j9UJ03WAK5a2PDHfHqqOIKG71H5u2AZscXzHJyb0lZUbgrT9TAte1VuVZYGGzQJIe3eCbe7zMDq4MmzKo8brZb4ayYtojiSXJDIMIEGR7sWUKQ15L%2FtK94tiEQSWq%2FONe5uu3rEAHVyQmQGdCHg46miS0sHZfysgnVZ5WTBt8zaV2fvx9R5AA%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-ber-c2-b3.kartina.stream:8200/cached/premier/8b903e6bc86e4839c5109526f58d1b99/index.m3u8?ticket=exajAyt1ijvOaF4%2B%2BlftE2p1yfQvWEVJz%2Bpd6qVuBcC3aNoNYavk6P7R%2Fn1811oOrSkl4saCEqWP56LJ2SsR8aD2BwPL0%2BDg%2FVUKEfGvsxXBaGd1YKhNi3mKpoKoPtTUqFKXQybfjDOSa9R7Va2v8j7clsqNOR6TK5JZwNd3tfqzeh3%2F5UPVpCrbGsCDMV50LAoBnDre%2BM%2FaH3PuP%2FwGb%2Fg6AWpmppjJmUXeYprE0NMuk1%2BycYegLuHUA67ciwJX0ek80kXNtaxYgtvT9FQ%2B4qoopszZxf7m32G67ewquVT110577%2BW1jtl1cLW7hkvhB5Sr2EGqMIu8MBt9CCOcJg%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": null,
   "vmap": null
 }</code></pre>
@@ -835,29 +804,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№12</span> <code>GET /content/souzmultru/6357c237e8ba7765d00d2865/trailers/playwright-no-such-trailer/play</code> → <b class="st s5">503</b> <span class="lbl">souzmultru: подставной трейлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:15 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:42 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/souzmultru/6357c237e8ba7765d00d2865/trailers/playwright-no-such-trailer/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 503
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1053
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:16 GMT
+date: Wed, 21 Oct 2026 12:08:43 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:16 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:43 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 99
 x-api-error-message: System error
 x-api-messages: 0
-x-api-servertime: 1792567516
+x-api-servertime: 1792584523
 x-api-version: 4
-x-debug-token: 5eb6b0
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/5eb6b0
+x-debug-token: 69adc0
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/69adc0
 x-powered-by: PHP/8.5.10
 
 {
@@ -865,7 +834,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_SYSTEM_ERROR",
     "code": 99,
     "message": "Системная ошибка. Повторите попытку позже.",
-    "request_id": "01a15d59-9b4e-7d7c-b098-d280abd80701",
+    "request_id": "01a15e5d-1d53-735b-847a-99c704e4d066",
     "details": {
       "title": null,
       "description": null
@@ -908,34 +877,34 @@ x-powered-by: PHP/8.5.10
 <details class="ex">
   <summary><span class="n">№13</span> <code>GET /content/souzmultru/6357c237e8ba7765d00d2865/play</code> → <b class="st s2">200</b> <span class="lbl">souzmultru: /play для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:16 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:43 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/souzmultru/6357c237e8ba7765d00d2865/play' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:16 GMT
+date: Wed, 21 Oct 2026 12:08:43 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:16 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:43 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567516
+x-api-servertime: 1792584523
 x-api-version: 4
-x-debug-token: 213f11
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/213f11
+x-debug-token: af9f3f
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/af9f3f
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b17.kartina.stream:8200/vod/hls/videoteka/souzmultru/OranzhevayaKorova/OranzhevayaKorova_s1e0/index.m3u8?ticket=nSudAFmm2Wil7YnZ%2BTbxeZXlClD0M9bYbbieSxRLltNYCXfT4NCo%2FtXyTvkRIi%2BggRa1UChH%2Bq3wJH4OLyZoMS9Wqne%2B9glBHgrzSXK96kT4oxxu%2FisYhPJHq%2BgG8v1Wg0kn8kQWjXfB%2FCtxVz46%2B8d%2BRpIEvkFJvELE7aurfdKhRHOU5B4a6CZR5dxI96ez6vgxRi5SP19LNtrmse3Z9owzmPSh9GMMsXtPIZ3YaG5W8GY26NVWVg3ObKSXJBypw5CtTM0Nw%2FVCTZ03y0HH3PbpoAytqjTu%2BUrxw9XRK7gXGkviwGIS6TOso0%2ByPv6GKRuuwK59LZk25uBRcFvW%2BA%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-fra-c4-b15.kartina.stream:8200/vod/hls/videoteka/souzmultru/OranzhevayaKorova/OranzhevayaKorova_s1e0/index.m3u8?ticket=jTxMqhqXG77buj%2BZSowWhBPUUIPL6vE4uQypOy08x8XS7EXeHlbzvhLrq4ZXffs%2FuxVjKqt8j6UlZMKJ4cyMJj7SbL3xkaPzWZUJ1eoeo93DOtacUJVK48ODKtl7kM4VZTX766p4OS5ltjoNkgNcHE8NJl%2BwScMdVeLH850loa4o6DTC4EHitfGfaXQ4WxqjhrAlVHBIcT9dr3HTMwDosm2PJn%2BBfYqB%2FPuLdyJl2749jGxqltBTmhC4sQle5DbEo8rS540haCttzM28ctVNWpielQuTKepWEVpywT90pSl3z9xZa3Br0GOisPbYD1jICNnXGpohj2p81hg7cMZGyg%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": {
     "closing_credits": {
       "start": 0,
@@ -960,34 +929,34 @@ x-token52-rem-addr: 185.146.250.95
   <dl><dt>Эндпоинт</dt><dd><code>GET /channels/{id}/teleteka/{timestamp}</code></dd>
     <dt>По документации</dt><dd>Нет записи: <code>403 E_ARCHIVE_NOT_AVAILABLE</code> («nothing recorded this moment»). Заглушка с извинением описана только для провайдера в режиме сбоя.</dd>
     <dt>Фактически</dt><dd>До деплоя staging 21.10.2026 любая прошедшая программа, которую EPG помечает <code>teleteka: false</code>, получала 200 с роликом-заглушкой (<code>…/zaglushka/index.m3u8</code>). После деплоя поведение разное: из 12 проверенных программ 5 по-прежнему получают заглушку, 7 — документированный <code>403 E_ARCHIVE_NOT_AVAILABLE</code>; на «ТНТ HD» — и то и другое в пределах одного канала. Программы взяты из EPG (пример — №14):
-      <div class="table-wrap"><table><thead><tr><th>Канал</th><th>Программа</th><th><code>starts_at</code></th><th>Запрос</th><th>Ответ</th></tr></thead><tbody><tr><td>2441 «Континент ТВ»</td><td>"Загадки человечества" с Олегом Шишкиным</td><td>1792483800</td><td>№15</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>2441 «Континент ТВ»</td><td>Невероятно интересные истории</td><td>1792486500</td><td>№16</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1909 «ТНТ HD»</td><td>Утро. ТНТ</td><td>1792548000</td><td>№17</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1909 «ТНТ HD»</td><td>СашаТаня</td><td>1792551000</td><td>№18</td><td><b>200, заглушка</b></td></tr><tr><td>2401 «Среда HD»</td><td>Загадка Монти Холла</td><td>1792481100</td><td>№19</td><td><b>200, заглушка</b></td></tr><tr><td>2401 «Среда HD»</td><td>Неравный брак</td><td>1792503780</td><td>№20</td><td><b>200, заглушка</b></td></tr><tr><td>2305 «STV Series»</td><td>Большая игра</td><td>1792481100</td><td>№21</td><td><b>200, заглушка</b></td></tr><tr><td>2305 «STV Series»</td><td>Большая игра</td><td>1792482600</td><td>№22</td><td><b>200, заглушка</b></td></tr><tr><td>9 «СТС»</td><td>100 мест, где поесть</td><td>1792547400</td><td>№23</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>9 «СТС»</td><td>С лёгким утром!</td><td>1792548000</td><td>№24</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1053 «Дождь»</td><td>Настроение на Дожде</td><td>1792489800</td><td>№25</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1053 «Дождь»</td><td>Настроение на Дожде</td><td>1792491300</td><td>№26</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr></tbody></table></div></dd>
+      <div class="table-wrap"><table><thead><tr><th>Канал</th><th>Программа</th><th><code>starts_at</code></th><th>Запрос</th><th>Ответ</th></tr></thead><tbody><tr><td>2441 «Континент ТВ»</td><td>100 вопросов обо всём</td><td>1792500300</td><td>№15</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>2441 «Континент ТВ»</td><td>Самая полезная программа</td><td>1792503300</td><td>№16</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1909 «ТНТ HD»</td><td>Утро. ТНТ</td><td>1792548000</td><td>№17</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1909 «ТНТ HD»</td><td>СашаТаня</td><td>1792551000</td><td>№18</td><td><b>200, заглушка</b></td></tr><tr><td>2401 «Среда HD»</td><td>Неравный брак</td><td>1792503780</td><td>№19</td><td><b>200, заглушка</b></td></tr><tr><td>2401 «Среда HD»</td><td>Загадка Ферма</td><td>1792521300</td><td>№20</td><td><b>200, заглушка</b></td></tr><tr><td>2305 «STV Series»</td><td>Большая игра</td><td>1792530900</td><td>№21</td><td><b>200, заглушка</b></td></tr><tr><td>2305 «STV Series»</td><td>Большая игра</td><td>1792532400</td><td>№22</td><td><b>200, заглушка</b></td></tr><tr><td>9 «СТС»</td><td>100 мест, где поесть</td><td>1792547400</td><td>№23</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>9 «СТС»</td><td>Поколение Вояджер</td><td>1792570800</td><td>№24</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1053 «Дождь»</td><td>Настроение на Дожде</td><td>1792498800</td><td>№25</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr><tr><td>1053 «Дождь»</td><td>Настроение на Дожде</td><td>1792502700</td><td>№26</td><td>403 <code>E_ARCHIVE_NOT_AVAILABLE</code></td></tr></tbody></table></div></dd>
     <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения; теперь ещё и по-разному для разных программ.</dd>
     <dt>Автотест</dt><dd><code>catalog/channels.spec.ts</code> › «teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)»: зелёный, пока заглушку получает хоть одна программа; упадёт, когда исправят полностью.</dd></dl>
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex">
-  <summary><span class="n">№14</span> <code>GET /channels/2441/epg?from=1792481087&amp;to=1792567487</code> → <b class="st s2">200</b></summary>
+  <summary><span class="n">№14</span> <code>GET /channels/2441/epg?from=1792498094&amp;to=1792584494</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:17 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2441/epg?from=1792481087&amp;to=1792567487' \
+    <div class="cap">Запрос · 2026-10-21 12:08:44 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2441/epg?from=1792498094&amp;to=1792584494' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ · тело сокращено до программ, о которых речь</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:18 GMT
+date: Wed, 21 Oct 2026 12:08:45 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:18 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:45 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567518
+x-api-servertime: 1792584525
 x-api-version: 4
-x-debug-token: adcb4b
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/adcb4b
+x-debug-token: 13b550
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/13b550
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -997,21 +966,49 @@ x-token52-rem-addr: 185.146.250.95
     "id": "2441",
     "title": "Континент ТВ"
   },
-  "count": 28,
+  "count": 27,
   "items": [
     "…",
     {
-      "starts_at": 1792483800,
-      "ends_at": 1792486500,
-      "title": "\"Загадки человечества\" с Олегом Шишкиным",
-      "title_id": 1399807,
+      "starts_at": 1792500300,
+      "ends_at": 1792503300,
+      "title": "100 вопросов обо всём",
+      "title_id": 3211643,
       "subtitle": null,
-      "description": "Программа - это неожиданный взгляд на самые невероятные события истории и современности",
+      "description": "Передача о науке, которая увлекает и взрослых, и детей, объясняя сложные вещи просто и интересно",
+      "category": "Досуг, хобби",
+      "genres": [
+        "Информация",
+        "Наука"
+      ],
+      "season": null,
+      "episode": null,
+      "part": null,
+      "countries": [
+        "Россия"
+      ],
+      "year": "2025",
+      "age_rating": 16,
+      "ratings": {
+        "kinopoisk": null,
+        "imdb": null
+      },
+      "image": "http://imgcdnv2.kartina.stream/mw-epg-prod/epgservice/476a7987-943f-51a3-a640-19b42306b534/9586705.jpeg?action=resize&amp;width=400&amp;height=225",
+      "teleteka": false,
+      "playable": true,
+      "play_url": "/api/v4/channels/2441/archive/1792500300"
+    },
+    {
+      "starts_at": 1792503300,
+      "ends_at": 1792506000,
+      "title": "Самая полезная программа",
+      "title_id": 1188198,
+      "subtitle": null,
+      "description": "Проверка товаров на прочность, надёжность и удобство - всё, что важно знать перед покупкой",
       "category": "Познавательное",
       "genres": [
-        "История",
-        "Мистика",
-        "Расследование",
+        "Наука",
+        "Социальный",
         "Информация"
       ],
       "season": null,
@@ -1020,46 +1017,16 @@ x-token52-rem-addr: 185.146.250.95
       "countries": [
         "Россия"
       ],
-      "year": "2017-2026",
+      "year": "2015-2026",
       "age_rating": 16,
       "ratings": {
         "kinopoisk": null,
         "imdb": null
       },
-      "image": "http://imgcdnv2.kartina.stream/mw-epg-prod/epgservice/476a7987-943f-51a3-a640-19b42306b534/9549224.jpeg?action=resize&amp;width=400&amp;height=225",
+      "image": "http://imgcdnv2.kartina.stream/mw-epg-prod/epgservice/476a7987-943f-51a3-a640-19b42306b534/5535367.jpeg?action=resize&amp;width=400&amp;height=225",
       "teleteka": false,
       "playable": true,
-      "play_url": "/api/v4/channels/2441/archive/1792483800"
-    },
-    {
-      "starts_at": 1792486500,
-      "ends_at": 1792489200,
-      "title": "Невероятно интересные истории",
-      "title_id": 1603216,
-      "subtitle": null,
-      "description": "В каждом выпуске вместе с ведущим зрители будут попадать в самые загадочные места планеты",
-      "category": "Познавательное",
-      "genres": [
-        "Информация",
-        "Путешествия",
-        "Приключения"
-      ],
-      "season": null,
-      "episode": null,
-      "part": null,
-      "countries": [
-        "Россия"
-      ],
-      "year": "2019-2026",
-      "age_rating": 16,
-      "ratings": {
-        "kinopoisk": null,
-        "imdb": null
-      },
-      "image": "http://imgcdnv2.kartina.stream/mw-epg-prod/epgservice/476a7987-943f-51a3-a640-19b42306b534/9549246.jpeg?action=resize&amp;width=400&amp;height=225",
-      "teleteka": false,
-      "playable": true,
-      "play_url": "/api/v4/channels/2441/archive/1792486500"
+      "play_url": "/api/v4/channels/2441/archive/1792503300"
     },
     "…"
   ]
@@ -1067,31 +1034,31 @@ x-token52-rem-addr: 185.146.250.95
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№15</span> <code>GET /channels/2441/teleteka/1792483800</code> → <b class="st s4">403</b> <span class="lbl">Континент ТВ: 403</span></summary>
+  <summary><span class="n">№15</span> <code>GET /channels/2441/teleteka/1792500300</code> → <b class="st s4">403</b> <span class="lbl">Континент ТВ: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:18 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2441/teleteka/1792483800' \
+    <div class="cap">Запрос · 2026-10-21 12:08:45 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2441/teleteka/1792500300' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:19 GMT
+date: Wed, 21 Oct 2026 12:08:46 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:19 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:46 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567519
+x-api-servertime: 1792584526
 x-api-version: 4
-x-debug-token: c0cc4a
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/c0cc4a
+x-debug-token: 13b740
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/13b740
 x-powered-by: PHP/8.5.10
 
 {
@@ -1099,7 +1066,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-a6e0-7d32-a342-0e16bac4f9f3",
+    "request_id": "01a15e5d-2844-706a-9e87-7c51aeb892d3",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1140,31 +1107,31 @@ x-powered-by: PHP/8.5.10
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№16</span> <code>GET /channels/2441/teleteka/1792486500</code> → <b class="st s4">403</b> <span class="lbl">Континент ТВ: 403</span></summary>
+  <summary><span class="n">№16</span> <code>GET /channels/2441/teleteka/1792503300</code> → <b class="st s4">403</b> <span class="lbl">Континент ТВ: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:19 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2441/teleteka/1792486500' \
+    <div class="cap">Запрос · 2026-10-21 12:08:46 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2441/teleteka/1792503300' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:19 GMT
+date: Wed, 21 Oct 2026 12:08:47 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:19 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:47 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567519
+x-api-servertime: 1792584527
 x-api-version: 4
-x-debug-token: 4a5b74
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/4a5b74
+x-debug-token: 505e6d
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/505e6d
 x-powered-by: PHP/8.5.10
 
 {
@@ -1172,7 +1139,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-a968-7a69-80cb-73f8d37f98ac",
+    "request_id": "01a15e5d-2d3f-73ca-aecd-fb927ab2f0f6",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1215,29 +1182,29 @@ x-powered-by: PHP/8.5.10
 <details class="ex">
   <summary><span class="n">№17</span> <code>GET /channels/1909/teleteka/1792548000</code> → <b class="st s4">403</b> <span class="lbl">ТНТ HD: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:21 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:48 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/1909/teleteka/1792548000' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:21 GMT
+date: Wed, 21 Oct 2026 12:08:49 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:21 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:49 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567521
+x-api-servertime: 1792584529
 x-api-version: 4
-x-debug-token: 55f969
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/55f969
+x-debug-token: 961b4b
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/961b4b
 x-powered-by: PHP/8.5.10
 
 {
@@ -1245,7 +1212,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-b0fc-77d0-acb1-7789ceab8dd4",
+    "request_id": "01a15e5d-34a2-703c-858c-fca1a200012f",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1288,178 +1255,178 @@ x-powered-by: PHP/8.5.10
 <details class="ex" open>
   <summary><span class="n">№18</span> <code>GET /channels/1909/teleteka/1792551000</code> → <b class="st s2">200</b> <span class="lbl">ТНТ HD: заглушка</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:21 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:49 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/1909/teleteka/1792551000' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:22 GMT
+date: Wed, 21 Oct 2026 12:08:49 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:22 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:49 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567522
+x-api-servertime: 1792584529
 x-api-version: 4
-x-debug-token: 493be0
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/493be0
+x-debug-token: 90a8c4
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/90a8c4
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b7.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=AfM8UMU1i%2B6F%2BhALBYQ1e8V3Z5yAK8eLjFvsZ%2FQGgBb1MQ7vbUD1va%2BbdFYRjJNLHzsWnsFghVH37DoZWSjeOGpHq9doDA7%2FG4v4WMN7GFD0%2B5qlwYrr0RhfjKoY1ejC3Yez%2B%2F2Kt4jJlyh4%2F2HOMDJWzEUFJLtcdpk5U%2BHUT5sk2O4g2t556u8HNRTOEHMbGtBAflnkEC5rxs%2BoiHnR93HOFjTTZqzYh7WTK5L82QWntqhcQigpBzwCNz%2F1vDTGvzi0QKO7aCV86JhLYU3uDBDGj3cZwA%2B%2F06pghnCDTguxGXTyE%2BaDAW7Za5eH63w73YtSLC5%2F1aoWFIKKp0u1HQ%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-fra-c4-b12.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=tVBWGo196FoXeXG9sF3bQM%2FeE3lw2GKTTNh7bn2LBfHmSm8xRvF4xaUIddShoyVJ3vx2%2FmYtJbMrhpYZr1MNVYwIgd42cr%2F4edw%2BGFC50CHGZ3tl4tgYCBDmPHMuBAoT7%2BS16b%2BLjrNSkO15y50owlbHoMHcumyyquWWPmFWrHqd4%2FvIjbeipkolGCIso%2FylrdsqNSwhlkaXfeqvtvbgGm51eWtiX8kOMbNwRnY6%2BR0d2vqcbu5NVLINGiLxYtcenYWmDCVQqOGKOC92jJp8QRYQovA9kqnL3vC8WcGDu2RSCaTMBnx6spy7aX6UdwyhGWuhyeJpv1eruDKZo1JoQw%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": null,
   "vmap": null
 }</code></pre>
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№19</span> <code>GET /channels/2401/teleteka/1792481100</code> → <b class="st s2">200</b> <span class="lbl">Среда HD: заглушка</span></summary>
+  <summary><span class="n">№19</span> <code>GET /channels/2401/teleteka/1792503780</code> → <b class="st s2">200</b> <span class="lbl">Среда HD: заглушка</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:23 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2401/teleteka/1792481100' \
-  -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
-    <div class="cap">Ответ</div>
-    <pre><code>HTTP 200
-cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
-connection: close
-content-encoding: gzip
-content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:24 GMT
-expires: Thu, 19 Nov 1981 08:52:00 GMT
-pragma: no-cache, no-cache
-server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:24 GMT; Max-Age=259200; path=/
-transfer-encoding: chunked
-vary: Origin
-x-api-messages: 0
-x-api-servertime: 1792567524
-x-api-version: 4
-x-debug-token: 6d7d9c
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/6d7d9c
-x-powered-by: PHP/8.5.10
-x-token52: httpS-v3
-x-token52-rem-addr: 185.146.250.95
-
-{
-  "url": "http://streamer-fra-c4-b18.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=wJCGctSjHe%2FQai3FO9emIEt764azi49UyyJ%2FA6mCIDTzqxcAimHi902IDawe1LpnDT3tJJ6nOI5X2%2B3ZyulOPNWTSG17m58SmyZJhrfW8AyjmaGnxamHeREezp9o34LR%2Fw6N2gg0xOkaF%2B9LifZnK8MkggV8ktLjxnxHo100cM6dgzJVU5yslC520uXF%2BsBYOyNcykBwxTbfyCdbu3sHSwAXhSMjS7MCgwHFtAXQ%2Fg3YpN1NclC7tFZADGefiIIyRsUoz1A0uHMuCg9n%2BGkRsmTnmOVPeD1PRMbdDNb4uHRHmkvzxux5aDXyecr2zuCtyUuoEraNSEm17OMn4NiH5Q%3D%3D&amp;device-id=androidtv-yb-005",
-  "markers": null,
-  "vmap": null
-}</code></pre>
-  </div>
-</details>
-<details class="ex">
-  <summary><span class="n">№20</span> <code>GET /channels/2401/teleteka/1792503780</code> → <b class="st s2">200</b> <span class="lbl">Среда HD: заглушка</span></summary>
-  <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:24 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:51 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2401/teleteka/1792503780' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:24 GMT
+date: Wed, 21 Oct 2026 12:08:51 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:24 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:51 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567524
+x-api-servertime: 1792584531
 x-api-version: 4
-x-debug-token: 9fa556
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/9fa556
+x-debug-token: 964d94
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/964d94
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b16.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=IIN8GtCApVsDDZ%2FdOwvBqrcOw8vBC0LUUBWOkzrtjwJywZwIr1qKNHYcGCPtv0BDPfHFceuCAW4MyHov0EiEFJB6pQcWE3TlllzkZ%2BqNmVv%2BraOC0oLVxy2qA3BE272TYArQ5JZw0x0FDqOkMI2zfVr3DD%2BTUSLF%2BGGwFkeRNOzJfj6ejt2xQ71drOVk%2F2WUnfB9%2Fo2hoKeTLvYFDq99HSW8ZT7qSuFs8cDH3LL29eecVwPeb43TSOA3%2B%2FH8e8QPCyP4Au9WH8OywsFJV6WwGwnZENbAFLfDarVoAeDleWmJ6vgitQLIRaRarIvz8o8%2FYTdNvbOdNag504Ge%2By4ibA%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-ber-c1-b9.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=XVzcyGkTqO96%2BmlMNqLHe8QHMCFqaSJEeYtr4rbGpP24Px10u2Emlc0K85W6jCRyEUqxn%2B3bQYFwZ0ix6anIApCcH44kFSASxFVR9mv2H5CqIXt5yGquZjZZk5bR%2Bi7%2BKuw9VO9tlM0j1a0ngapbX7OL6v1iU0h4at%2BjucKq3amkeOu9c%2B9RCodI7Y4GDWKMsFz%2FlEkFVrAJy6vXBFkpW%2Fe9w5X%2FiUW5mLJc3T3F1CPmkOhuzfKq2GxUueNw1FCbgOnjV5CpOVs6nQhgKvbGg8VmGFViZLnedPifgy7AKSNvKK0Hud%2BBaD2Tsz%2B7dId9cwenW3snNAL4x1VQIXlEDw%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": null,
   "vmap": null
 }</code></pre>
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№21</span> <code>GET /channels/2305/teleteka/1792481100</code> → <b class="st s2">200</b> <span class="lbl">STV Series: заглушка</span></summary>
+  <summary><span class="n">№20</span> <code>GET /channels/2401/teleteka/1792521300</code> → <b class="st s2">200</b> <span class="lbl">Среда HD: заглушка</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:25 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2305/teleteka/1792481100' \
+    <div class="cap">Запрос · 2026-10-21 12:08:52 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2401/teleteka/1792521300' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:25 GMT
+date: Wed, 21 Oct 2026 12:08:52 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:25 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:52 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567525
+x-api-servertime: 1792584532
 x-api-version: 4
-x-debug-token: 962471
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/962471
+x-debug-token: c989de
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/c989de
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b20.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=JjuKehxgCq7W4bK2ndw7pUiI1BlB4%2BDj7tlEP3YVTA3C27Q2byLkgd7PQhYJOnJZkXD0MkVtfMaDVYtShGWnCCrcRF7e2T%2BlOWVPCqFQwyjAxBWcKbizzuhJGpF2Sh4xyzDJs7gASfY15%2BDErPZx1kZKKOatCPsbn%2FTuD8A3Ciycl0sHb9%2BE9kByGxhE5bIcOvMlF8bujmJorfhCauPnHV%2FYYJjJa93nODiSySxtP80NGm7%2FHW1koQnTv507mgws%2B2%2FM9V7PuTkXkdP9Eerz2ExYAqyMvdgD7HbO5GnX6zykBVYcn9MHuAQlqQU7lzy0bV9FpAFMaVYBdoP%2BMloi9A%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-ber-c2-b3.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=iQYzDEY6vlewQKUrgA6fvqx0Ue8Tp0s81GdfYcQjy%2BagJ5D71U8rUERYX5Hc0tQPR64s3yAc7L8hGuGOVvoGEGvPR77Yg%2FrZowZyRhJJvL5KRuxtNdTGxHXz4B7vQQibGkUz2LJcqyKxNu1iPUUoL8mTG3Vb8QSj2CWeotU7%2B0kFefp%2BN6s%2Fl37lR2m6c4el1jcIIW4VCu7UETENQvB7bZFhiUIuv8QIDpkRhQW4Mei4NW%2Fdpl%2BIq5zXL8RjvDa4ZMaf3V4iQ4jjoc6yLWb6iKUy1NdHfOcz2SmfMzCv%2BW8T2jgmU1ZJZ9MjQ9Oaqgrd70pAGgKWlfaKJy6HPlBwCA%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": null,
   "vmap": null
 }</code></pre>
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№22</span> <code>GET /channels/2305/teleteka/1792482600</code> → <b class="st s2">200</b> <span class="lbl">STV Series: заглушка</span></summary>
+  <summary><span class="n">№21</span> <code>GET /channels/2305/teleteka/1792530900</code> → <b class="st s2">200</b> <span class="lbl">STV Series: заглушка</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:26 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2305/teleteka/1792482600' \
+    <div class="cap">Запрос · 2026-10-21 12:08:53 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2305/teleteka/1792530900' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:26 GMT
+date: Wed, 21 Oct 2026 12:08:53 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:26 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:53 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567526
+x-api-servertime: 1792584533
 x-api-version: 4
-x-debug-token: edf90c
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/edf90c
+x-debug-token: efb282
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/efb282
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "url": "http://streamer-fra-c4-b15.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=bqvh45mjZE%2BMn2dr0I%2Fd94FDt4Zvh7Oumz4TMhG6sE%2F02HNoVAnKT9DGutQsh%2BXap9CjHiE%2B%2F7LgWlBryBOvmBbDr3s8tIb2T%2Fl5NcAULlo%2BiRd79IVWjbZS%2FkXJZPq6FPeWhR4pzPxRwUOAI1MzL5z6JXrWsKxqrdqMHSEbmS03Tv%2BSm8%2Fgwihp5335tYlAu1pIl%2F3Lj7ikLc4PyII%2F0CYs09%2FoJ6vs%2BmtTGyKuSvTT9gce9v770YrxImh2ieQOk2MmjdYgVgSoMR2Esh1jivLcnZLm5eslBSUdb27Ki48w40QCubwN57KchU4ZGazbBIifpi90Yu%2FpHMZf%2BydrQA%3D%3D&amp;device-id=androidtv-yb-005",
+  "url": "http://streamer-am-c1-b11.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=Nc00GwIiq6pItn8zAvaLtQAHhEeEsJytv%2B8j95lGwgLZrRP8jSOcTcUtGClGX%2Bqu8hnyB6PoywoaTLJpXRmsiGMGY2NG%2FdYJVNP5ZBKT9vZtlsC4F1NHRDo676FlCs0Tp%2Fl2PqR95NNu6jG0ti52M74visLiNWtNyt4HSiM1isx9kqai13iSJc5A0YHMKUS4qyl%2FRn3gl3KIYeuzwESVfsMgRhWcLCyRETx3wRRoGa9URdtGFsGooXdK%2FjwY79lEeoBPOjAXsdoYzF7K3iJlan3XfbhjqkRHyM5LcNuzAcwooGnzius%2FQRTFuLuULCXHVJYvv0I1VDYoDM1oUBlwCg%3D%3D&amp;device-id=androidtv-yb-005",
+  "markers": null,
+  "vmap": null
+}</code></pre>
+  </div>
+</details>
+<details class="ex">
+  <summary><span class="n">№22</span> <code>GET /channels/2305/teleteka/1792532400</code> → <b class="st s2">200</b> <span class="lbl">STV Series: заглушка</span></summary>
+  <div class="exbody">
+    <div class="cap">Запрос · 2026-10-21 12:08:53 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/2305/teleteka/1792532400' \
+  -H 'Accept: application/json' \
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
+    <div class="cap">Ответ</div>
+    <pre><code>HTTP 200
+cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
+connection: close
+content-encoding: gzip
+content-type: application/json; charset=utf-8
+date: Wed, 21 Oct 2026 12:08:54 GMT
+expires: Thu, 19 Nov 1981 08:52:00 GMT
+pragma: no-cache, no-cache
+server: openresty
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:54 GMT; Max-Age=259200; path=/
+transfer-encoding: chunked
+vary: Origin
+x-api-messages: 0
+x-api-servertime: 1792584534
+x-api-version: 4
+x-debug-token: fc56e1
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/fc56e1
+x-powered-by: PHP/8.5.10
+x-token52: httpS-v3
+x-token52-rem-addr: 185.146.250.95
+
+{
+  "url": "http://streamer-am-c1-b10.kartina.stream:8200/vod/hls/mediateka/zaglushka/index.m3u8?ticket=TRH%2F9Dkg%2BRQ3EyVdcSqV3kv5MrN6Hvagi5bedqX5J%2BMiYYiawX4vlTEFPNRzXqzRT4OfCSR3lIjSjbR2fEkkOw%2F4CLpwNt0%2F77vuYDLn7jxoIPTAoyOQ36s%2BTqDu5ic52ZVPmNLhIe4vh7c3B6oU4%2FFu0Em06HCshKHp7IWUgnIOqeQT%2FtmCOeF3m4x7e%2BuRC1y%2F81%2B2%2BbNcQE%2BOwlZWvF%2FF1KqMpCB%2BkdUpm6AWfIGNrZzOBKe9KkBeLeZMYp511zCnp8tOxgUd%2B7bnUtb7OmotN9G%2F7IA%2FDG41vypZ8f4AeXlss01xJU23W5wbvP6Nh6UPtXSLbvTjmiY2xXnwhQ%3D%3D&amp;device-id=androidtv-yb-005",
   "markers": null,
   "vmap": null
 }</code></pre>
@@ -1468,29 +1435,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№23</span> <code>GET /channels/9/teleteka/1792547400</code> → <b class="st s4">403</b> <span class="lbl">СТС: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:27 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:55 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/9/teleteka/1792547400' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:27 GMT
+date: Wed, 21 Oct 2026 12:08:55 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:27 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:55 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567527
+x-api-servertime: 1792584535
 x-api-version: 4
-x-debug-token: 56f056
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/56f056
+x-debug-token: c6ee57
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/c6ee57
 x-powered-by: PHP/8.5.10
 
 {
@@ -1498,7 +1465,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-c8f5-7b50-b121-3dba709fd035",
+    "request_id": "01a15e5d-4df1-7c81-bcdd-f9ee489349f5",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1539,31 +1506,31 @@ x-powered-by: PHP/8.5.10
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№24</span> <code>GET /channels/9/teleteka/1792548000</code> → <b class="st s4">403</b> <span class="lbl">СТС: 403</span></summary>
+  <summary><span class="n">№24</span> <code>GET /channels/9/teleteka/1792570800</code> → <b class="st s4">403</b> <span class="lbl">СТС: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:27 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/9/teleteka/1792548000' \
+    <div class="cap">Запрос · 2026-10-21 12:08:55 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/9/teleteka/1792570800' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:28 GMT
+date: Wed, 21 Oct 2026 12:08:56 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:28 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:56 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567528
+x-api-servertime: 1792584536
 x-api-version: 4
-x-debug-token: 955fd7
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/955fd7
+x-debug-token: 97f0a8
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/97f0a8
 x-powered-by: PHP/8.5.10
 
 {
@@ -1571,7 +1538,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-cba5-7dc0-9b99-928bb100c269",
+    "request_id": "01a15e5d-50d1-7d4a-b1cd-64f9e246a54a",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1612,31 +1579,31 @@ x-powered-by: PHP/8.5.10
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№25</span> <code>GET /channels/1053/teleteka/1792489800</code> → <b class="st s4">403</b> <span class="lbl">Дождь: 403</span></summary>
+  <summary><span class="n">№25</span> <code>GET /channels/1053/teleteka/1792498800</code> → <b class="st s4">403</b> <span class="lbl">Дождь: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:29 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/1053/teleteka/1792489800' \
+    <div class="cap">Запрос · 2026-10-21 12:08:57 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/1053/teleteka/1792498800' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:29 GMT
+date: Wed, 21 Oct 2026 12:08:58 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:29 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:58 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567529
+x-api-servertime: 1792584538
 x-api-version: 4
-x-debug-token: 92b50c
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/92b50c
+x-debug-token: 0853df
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/0853df
 x-powered-by: PHP/8.5.10
 
 {
@@ -1644,7 +1611,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-d05c-731d-841b-e09686877fbb",
+    "request_id": "01a15e5d-5852-7dd9-acda-b55ab2aa42d6",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1685,31 +1652,31 @@ x-powered-by: PHP/8.5.10
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№26</span> <code>GET /channels/1053/teleteka/1792491300</code> → <b class="st s4">403</b> <span class="lbl">Дождь: 403</span></summary>
+  <summary><span class="n">№26</span> <code>GET /channels/1053/teleteka/1792502700</code> → <b class="st s4">403</b> <span class="lbl">Дождь: 403</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:29 UTC</div>
-    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/1053/teleteka/1792491300' \
+    <div class="cap">Запрос · 2026-10-21 12:08:58 UTC</div>
+    <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels/1053/teleteka/1792502700' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 403
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1068
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:30 GMT
+date: Wed, 21 Oct 2026 12:08:59 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:30 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:59 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 15
 x-api-error-message: Archive is not available
 x-api-messages: 0
-x-api-servertime: 1792567530
+x-api-servertime: 1792584539
 x-api-version: 4
-x-debug-token: a75fa8
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/a75fa8
+x-debug-token: f5cbf5
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/f5cbf5
 x-powered-by: PHP/8.5.10
 
 {
@@ -1717,7 +1684,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_ARCHIVE_NOT_AVAILABLE",
     "code": 15,
     "message": "Архив недоступен.",
-    "request_id": "01a15d59-d383-73b7-8aad-e041193e0109",
+    "request_id": "01a15e5d-5bae-79d0-9ce4-7e0b4c577104",
     "details": {
       "title": null,
       "description": "Teleteka record is not available"
@@ -1762,35 +1729,35 @@ x-powered-by: PHP/8.5.10
   <header><span class="id">A3</span><h3>Фасеты стран поиска всегда отвечают 503</h3><span class="sev mid">средняя</span></header>
   <dl><dt>Эндпоинт</dt><dd><code>GET /search/services/countries</code></dd>
     <dt>По документации</dt><dd>200 со списком стран производства и счётчиками. Документированы только 200, 304, 400, 403.</dd>
-    <dt>Фактически</dt><dd>503 <code>E_SYSTEM_ERROR</code> (request_id <code>01a15d59-d62c-7b16-a489-9933481d6dbf</code>), статус не документирован; то же на production. <b>Причина по трейсу staging:</b> <code>Nette\Schema\ValidationException: The length of item 'title' expects to be in range 1.., 0 characters given.</code> в <code>src/Component/Search/Base.php:120</code>: сервис поиска отдаёт страну с пустым названием, и валидация роняет весь список.</dd>
+    <dt>Фактически</dt><dd>503 <code>E_SYSTEM_ERROR</code> (request_id <code>01a15e5d-5e68-7b06-9a9c-45e2a4cf6305</code>), статус не документирован; то же на production. <b>Причина по трейсу staging:</b> <code>Nette\Schema\ValidationException: The length of item 'title' expects to be in range 1.., 0 characters given.</code> в <code>src/Component/Search/Base.php:120</code>: сервис поиска отдаёт страну с пустым названием, и валидация роняет весь список.</dd>
     <dt>Почему важно</dt><dd>Фильтр поиска по стране в клиентах не работает. Жанры (<code>/search/services/genres</code>) при этом работают. Достаточно пропускать элементы с пустым <code>title</code>.</dd>
     <dt>Автотест</dt><dd><code>catalog/search.spec.ts</code> › «GET /search/services/countries answers an undocumented 503 E_SYSTEM_ERROR (known API bug)»</dd></dl>
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex" open>
   <summary><span class="n">№27</span> <code>GET /search/services/countries</code> → <b class="st s5">503</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:30 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:59 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/search/services/countries' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 503
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1033
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:31 GMT
+date: Wed, 21 Oct 2026 12:08:59 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:31 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:08:59 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 99
 x-api-error-message: System error
 x-api-messages: 0
-x-api-servertime: 1792567531
+x-api-servertime: 1792584539
 x-api-version: 4
-x-debug-token: 18f5dd
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/18f5dd
+x-debug-token: 786361
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/786361
 x-powered-by: PHP/8.5.10
 
 {
@@ -1798,7 +1765,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_SYSTEM_ERROR",
     "code": 99,
     "message": "Системная ошибка. Повторите попытку позже.",
-    "request_id": "01a15d59-d62c-7b16-a489-9933481d6dbf",
+    "request_id": "01a15e5d-5e68-7b06-9a9c-45e2a4cf6305",
     "details": {
       "title": null,
       "description": null
@@ -1843,35 +1810,35 @@ x-powered-by: PHP/8.5.10
   <header><span class="id">A4</span><h3>Неизвестный блок страницы: 503 вместо 404</h3><span class="sev mid">средняя</span></header>
   <dl><dt>Эндпоинты</dt><dd><code>GET /pages/{slug}/blocks/{id}</code> и <code>GET /pages/{slug}/blocks/{id}/{link}</code></dd>
     <dt>По документации</dt><dd>404 для неизвестного блока (для <code>…/{link}</code> прямо: «Unknown … block (<code>E_SYSTEM_ERROR</code>)» с кодом 404). 503 у обеих операций не документирован.</dd>
-    <dt>Фактически</dt><dd>503 и 503 <code>E_SYSTEM_ERROR</code> (request_id <code>01a15d59-d834-7787-b1c1-c63fe81c6ef3</code>, <code>01a15d59-dbc3-73df-b573-473ba65e366b</code>). Причина по трейсу: <code>fetch block playwright-no-such-block: HTTP/1.1 400 Bad Request returned for "https://collections-dev.kartina.tv/api/mw/block/playwright-no-such-block?path=dashboard&amp;platform=androidtv-yb-005&amp;country=DE".</code> — сервис коллекций отвечает 400, middleware превращает это в 503.</dd>
+    <dt>Фактически</dt><dd>503 и 503 <code>E_SYSTEM_ERROR</code> (request_id <code>01a15e5d-60fc-71e4-8325-c5494307f38d</code>, <code>01a15e5d-64c0-7e93-aed6-29c755bd7da2</code>). Причина по трейсу: <code>fetch block playwright-no-such-block: HTTP/1.1 400 Bad Request returned for "https://collections-dev.kartina.tv/api/mw/block/playwright-no-such-block?path=dashboard&amp;platform=androidtv-yb-005&amp;country=DE".</code> — сервис коллекций отвечает 400, middleware превращает это в 503.</dd>
     <dt>Почему важно</dt><dd>503 означает «временно, повторите» — клиент будет ретраить удалённый блок, хотя должен его просто пропустить.</dd>
     <dt>Автотесты</dt><dd><code>interface/blocks.spec.ts</code> › «an unknown block id answers an undocumented 503 instead of 404», «a link of an unknown block answers 503 instead of the documented 404»</dd></dl>
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex" open>
   <summary><span class="n">№28</span> <code>GET /pages/dashboard/blocks/playwright-no-such-block</code> → <b class="st s5">503</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:31 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:08:59 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/pages/dashboard/blocks/playwright-no-such-block' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 503
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1606
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:32 GMT
+date: Wed, 21 Oct 2026 12:09:00 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:32 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:00 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 99
 x-api-error-message: System error
 x-api-messages: 0
-x-api-servertime: 1792567532
+x-api-servertime: 1792584540
 x-api-version: 4
-x-debug-token: 6a4d78
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/6a4d78
+x-debug-token: 551551
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/551551
 x-powered-by: PHP/8.5.10
 
 {
@@ -1879,7 +1846,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_SYSTEM_ERROR",
     "code": 99,
     "message": "Системная ошибка. Повторите попытку позже.",
-    "request_id": "01a15d59-d834-7787-b1c1-c63fe81c6ef3",
+    "request_id": "01a15e5d-60fc-71e4-8325-c5494307f38d",
     "details": {
       "title": null,
       "description": null
@@ -1922,29 +1889,29 @@ x-powered-by: PHP/8.5.10
 <details class="ex">
   <summary><span class="n">№29</span> <code>GET /pages/dashboard/blocks/playwright-no-such-block/fetch</code> → <b class="st s5">503</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:32 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:00 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/pages/dashboard/blocks/playwright-no-such-block/fetch' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 503
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1606
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:33 GMT
+date: Wed, 21 Oct 2026 12:09:01 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:32 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:01 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 99
 x-api-error-message: System error
 x-api-messages: 0
-x-api-servertime: 1792567532
+x-api-servertime: 1792584541
 x-api-version: 4
-x-debug-token: f1451c
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/f1451c
+x-debug-token: b61cef
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/b61cef
 x-powered-by: PHP/8.5.10
 
 {
@@ -1952,7 +1919,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_SYSTEM_ERROR",
     "code": 99,
     "message": "Системная ошибка. Повторите попытку позже.",
-    "request_id": "01a15d59-dbc3-73df-b573-473ba65e366b",
+    "request_id": "01a15e5d-64c0-7e93-aed6-29c755bd7da2",
     "details": {
       "title": null,
       "description": null
@@ -2002,28 +1969,28 @@ x-powered-by: PHP/8.5.10
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex">
   <summary><span class="n">№30</span> <code>GET /channels</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:33 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:01 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:33 GMT
+date: Wed, 21 Oct 2026 12:09:02 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:33 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:02 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567533
+x-api-servertime: 1792584542
 x-api-version: 4
-x-debug-token: 75634a
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/75634a
+x-debug-token: 995639
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/995639
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2034,28 +2001,28 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№31</span> <code>GET /favorites</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:33 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:02 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/favorites' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:34 GMT
+date: Wed, 21 Oct 2026 12:09:02 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:34 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:02 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567534
+x-api-servertime: 1792584542
 x-api-version: 4
-x-debug-token: 4f1594
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/4f1594
+x-debug-token: 57be38
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/57be38
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2066,28 +2033,28 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№32</span> <code>GET /blocks/playback</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:34 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:03 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/blocks/playback' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:34 GMT
+date: Wed, 21 Oct 2026 12:09:03 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:34 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:03 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567534
+x-api-servertime: 1792584543
 x-api-version: 4
-x-debug-token: 9f8145
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/9f8145
+x-debug-token: 9b95f1
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/9b95f1
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2098,29 +2065,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№33</span> <code>GET /channels</code> → <b class="st s2">200</b> <span class="lbl">с If-None-Match</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:34 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:03 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/channels' \
   -H 'Accept: application/json' \
   -H 'If-None-Match: "anything"' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:35 GMT
+date: Wed, 21 Oct 2026 12:09:04 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:35 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:04 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567535
+x-api-servertime: 1792584544
 x-api-version: 4
-x-debug-token: a98122
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/a98122
+x-debug-token: dd6d08
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/dd6d08
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2137,28 +2104,28 @@ x-token52-rem-addr: 185.146.250.95
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex">
   <summary><span class="n">№34</span> <code>GET /blocks/playback?limit=0</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:35 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:04 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/blocks/playback?limit=0' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:35 GMT
+date: Wed, 21 Oct 2026 12:09:04 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:35 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:04 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567535
+x-api-servertime: 1792584544
 x-api-version: 4
-x-debug-token: b05173
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/b05173
+x-debug-token: 878047
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/878047
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2175,28 +2142,28 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№35</span> <code>GET /blocks/playback?limit=101</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:35 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:04 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/blocks/playback?limit=101' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:36 GMT
+date: Wed, 21 Oct 2026 12:09:05 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:36 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:05 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567536
+x-api-servertime: 1792584545
 x-api-version: 4
-x-debug-token: 2bc3e9
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/2bc3e9
+x-debug-token: 5464cd
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/5464cd
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2213,28 +2180,28 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№36</span> <code>GET /blocks/playback?limit=-5</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:36 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:05 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/blocks/playback?limit=-5' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:36 GMT
+date: Wed, 21 Oct 2026 12:09:05 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:36 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:05 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567536
+x-api-servertime: 1792584545
 x-api-version: 4
-x-debug-token: 16664e
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/16664e
+x-debug-token: a8e5d3
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/a8e5d3
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2251,29 +2218,29 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№37</span> <code>GET /search/services?limit=0</code> → <b class="st s4">400</b> <span class="lbl">для сравнения</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:36 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:05 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/search/services?limit=0' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 400
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1300
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:37 GMT
+date: Wed, 21 Oct 2026 12:09:06 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:37 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:06 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 23
 x-api-error-message: Need parameter
 x-api-messages: 0
-x-api-servertime: 1792567537
+x-api-servertime: 1792584546
 x-api-version: 4
-x-debug-token: 810c26
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/810c26
+x-debug-token: b5eef1
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/b5eef1
 x-powered-by: PHP/8.5.10
 
 {
@@ -2281,7 +2248,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_NEED_PARAM",
     "code": 23,
     "message": "Need parameter",
-    "request_id": "01a15d59-eead-7c91-a84b-6cc9616e0dd8",
+    "request_id": "01a15e5d-7781-7622-af5d-ad5e88b2e8d5",
     "details": {
       "title": null,
       "description": "limit: This value should be between 1 and 100."
@@ -2331,28 +2298,28 @@ x-powered-by: PHP/8.5.10
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex" open>
   <summary><span class="n">№38</span> <code>GET /pages/radio/channel-group</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:37 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:06 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/pages/radio/channel-group' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ · тело сокращено до станций с неверным kind</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:37 GMT
+date: Wed, 21 Oct 2026 12:09:06 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:37 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:06 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567537
+x-api-servertime: 1792584546
 x-api-version: 4
-x-debug-token: 2f3b8f
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/2f3b8f
+x-debug-token: 8a2ae5
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/8a2ae5
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2399,28 +2366,28 @@ x-token52-rem-addr: 185.146.250.95
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex" open>
   <summary><span class="n">№39</span> <code>GET /radio</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:37 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:06 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/radio' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ · тело сокращено: первая станция и станции с description: null (всего 15)</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:38 GMT
+date: Wed, 21 Oct 2026 12:09:07 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:38 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:07 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567538
+x-api-servertime: 1792584547
 x-api-version: 4
-x-debug-token: 942b68
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/942b68
+x-debug-token: 5694ab
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/5694ab
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2484,7 +2451,7 @@ x-token52-rem-addr: 185.146.250.95
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex" open>
   <summary><span class="n">№40</span> <code>GET /account</code> → <b class="st s4">403</b> <span class="lbl">без сессии</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:38 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:07 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/account' \
   -H 'Accept: application/json'</code></pre>
     <div class="cap">Ответ</div>
@@ -2493,19 +2460,19 @@ cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 1132
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:39 GMT
+date: Wed, 21 Oct 2026 12:09:07 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=45f8ea4c3fefcd6afb18b1b6f8e205ae; expires=Sat, 24 Oct 2026 07:25:39 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=0fc707100bc176ffea192ef893e094ca; expires=Sat, 24 Oct 2026 12:09:07 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-error-code: 12
 x-api-error-message: Authentication error
 x-api-messages: 0
-x-api-servertime: 1792567539
+x-api-servertime: 1792584547
 x-api-version: 4
-x-debug-token: 8dc089
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/8dc089
+x-debug-token: 93e7bb
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/93e7bb
 x-powered-by: PHP/8.5.10
 
 {
@@ -2513,7 +2480,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_AUTH_ERROR",
     "code": 12,
     "message": "Ошибка авторизации.",
-    "request_id": "01a15d59-f525-74cb-90cf-02c3a6e89c50",
+    "request_id": "01a15e5d-7db9-70b1-a647-31648f3610b4",
     "details": {
       "title": null,
       "description": "Wrong session. Client is not authorized"
@@ -2556,7 +2523,7 @@ x-powered-by: PHP/8.5.10
 <details class="ex">
   <summary><span class="n">№41</span> <code>GET /servertime</code> → <b class="st s2">200</b> <span class="lbl">заголовки X-Debug-*</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:39 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:07 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/servertime' \
   -H 'Accept: application/json'</code></pre>
     <div class="cap">Ответ</div>
@@ -2565,38 +2532,38 @@ cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:39 GMT
+date: Wed, 21 Oct 2026 12:09:08 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=13c0ef0ba4c73d9c2ce2f993efbdc090; expires=Sat, 24 Oct 2026 07:25:39 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=bac885d95fd49df16109a2bca20a6a65; expires=Sat, 24 Oct 2026 12:09:08 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567539
+x-api-servertime: 1792584548
 x-api-version: 4
-x-debug-token: 4cd207
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/4cd207
+x-debug-token: ff8a47
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/ff8a47
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
 
 {
-  "servertime": 1792567539
+  "servertime": 1792584548
 }</code></pre>
   </div>
 </details>
 <details class="ex">
-  <summary><span class="n">№42</span> <code>GET http://rustvt.kartina.tv/_profiler/4cd207</code> → <b class="st s4">404</b> <span class="lbl">ссылка на профайлер</span></summary>
+  <summary><span class="n">№42</span> <code>GET http://rustvt.kartina.tv/_profiler/ff8a47</code> → <b class="st s4">404</b> <span class="lbl">ссылка на профайлер</span></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:39 UTC</div>
-    <pre><code>curl -i -X GET 'http://rustvt.kartina.tv/_profiler/4cd207'</code></pre>
+    <div class="cap">Запрос · 2026-10-21 12:09:08 UTC</div>
+    <pre><code>curl -i -X GET 'http://rustvt.kartina.tv/_profiler/ff8a47'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 404
 connection: close
 content-encoding: gzip
 content-type: text/html; charset=iso-8859-1
-date: Wed, 21 Oct 2026 07:25:39 GMT
+date: Wed, 21 Oct 2026 12:09:08 GMT
 server: openresty
 transfer-encoding: chunked
 
@@ -2605,7 +2572,7 @@ transfer-encoding: chunked
 &lt;title&gt;404 Not Found&lt;/title&gt;
 &lt;/head&gt;&lt;body&gt;
 &lt;h1&gt;Not Found&lt;/h1&gt;
-&lt;p&gt;The requested URL /_profiler/4cd207 was not found on this server.&lt;/p&gt;
+&lt;p&gt;The requested URL /_profiler/ff8a47 was not found on this server.&lt;/p&gt;
 &lt;hr&gt;
 &lt;address&gt;Apache/2.2.15 (CentOS) Server at rustvt.kartina.tv Port 80&lt;/address&gt;
 &lt;/body&gt;&lt;/html&gt;
@@ -2656,28 +2623,28 @@ x-api-error-code: 11
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex">
   <summary><span class="n">№43</span> <code>GET /content/startru/05688f4e-4219-4b1c-a758-5db94774d892</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:39 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:08 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/content/startru/05688f4e-4219-4b1c-a758-5db94774d892' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ · тело сокращено</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:40 GMT
+date: Wed, 21 Oct 2026 12:09:08 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:40 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:08 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567540
+x-api-servertime: 1792584548
 x-api-version: 4
-x-debug-token: d1118f
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/d1118f
+x-debug-token: 8314b2
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/8314b2
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2698,26 +2665,26 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№44</span> <code>GET /favorites/startru</code> → <b class="st s4">404</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:40 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:09 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/favorites/startru' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 404
 cache-control: private, must-revalidate
 connection: close
 content-length: 1363
 content-type: application/problem+json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:40 GMT
+date: Wed, 21 Oct 2026 12:09:09 GMT
 expires: -1
 pragma: no-cache
 server: openresty
 vary: Origin
 x-api-error-code: 99
 x-api-error-message: System error
-x-api-servertime: 1792567540
-x-debug-token: c935ae
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/c935ae
+x-api-servertime: 1792584549
+x-debug-token: 771678
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/771678
 x-powered-by: PHP/8.5.10
 
 {
@@ -2725,7 +2692,7 @@ x-powered-by: PHP/8.5.10
     "type": "E_SYSTEM_ERROR",
     "code": 99,
     "message": "Системная ошибка. Повторите попытку позже.",
-    "request_id": "01a15d59-fbde-7cd9-bbc4-074e49fb569c",
+    "request_id": "01a15e5d-84be-7b9b-b6b7-fa729912f1b0",
     "details": {
       "title": null,
       "description": "No route found for \"GET http://rustvt.kartina.tv/api/v4/favorites/startru\""
@@ -2774,28 +2741,28 @@ x-powered-by: PHP/8.5.10
   <div class="cap" style="margin-top:14px">Запросы и ответы</div><div class="exs"><details class="ex">
   <summary><span class="n">№45</span> <code>PUT /channels/129/favorite</code> → <b class="st s2">201</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:40 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:10 UTC</div>
     <pre><code>curl -i -X PUT 'https://rustvt.kartina.tv/api/v4/channels/129/favorite' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 201
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-length: 0
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:41 GMT
+date: Wed, 21 Oct 2026 12:09:10 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:41 GMT; Max-Age=259200; path=/
-set-cookie: sf_redirect=%7B%22token%22%3A%22913a2a%22%2C%22route%22%3A%22v4_channel_favorite_add%22%2C%22method%22%3A%22PUT%22%2C%22controller%22%3A%22Middleware%5C%5CHttp%5C%5CAction%5C%5Cv4%5C%5CFavorite%5C%5CAddAction%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; httponly; samesite=lax
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:10 GMT; Max-Age=259200; path=/
+set-cookie: sf_redirect=%7B%22token%22%3A%222d5bb6%22%2C%22route%22%3A%22v4_channel_favorite_add%22%2C%22method%22%3A%22PUT%22%2C%22controller%22%3A%22Middleware%5C%5CHttp%5C%5CAction%5C%5Cv4%5C%5CFavorite%5C%5CAddAction%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; httponly; samesite=lax
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567541
+x-api-servertime: 1792584550
 x-api-version: 4
-x-debug-token: 913a2a
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/913a2a
+x-debug-token: 2d5bb6
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/2d5bb6
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2806,28 +2773,28 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№46</span> <code>GET /favorites/channels</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:41 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:10 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/favorites/channels' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:42 GMT
+date: Wed, 21 Oct 2026 12:09:11 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:42 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:11 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567542
+x-api-servertime: 1792584551
 x-api-version: 4
-x-debug-token: 54ec61
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/54ec61
+x-debug-token: 9fc74a
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/9fc74a
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2854,16 +2821,16 @@ x-token52-rem-addr: 185.146.250.95
         "hidden": false
       },
       "current_program": {
-        "starts_at": 1792566600,
-        "ends_at": 1792568700,
-        "title": "Иисус",
-        "subtitle": null,
+        "starts_at": 1792584180,
+        "ends_at": 1792585500,
+        "title": "Библейские истины",
+        "subtitle": "Новый завет. Служение Иисуса. Евангелия",
         "category": "Документальный сериал",
         "genres": [
-          "Религия"
+          "Информация"
         ],
         "age_rating": null,
-        "image": "http://imgcdnv2.kartina.stream/mw-epg-prod/epgservice/07723af9-03d6-5e46-bfb4-fe65a35ee19f/10259377.jpeg?action=resize&amp;width=400&amp;height=225"
+        "image": "http://imgcdnv2.kartina.stream/mw-epg-prod/epgservice/07723af9-03d6-5e46-bfb4-fe65a35ee19f/7209295.jpeg?action=resize&amp;width=400&amp;height=225"
       },
       "play_url": "/api/v4/channels/129/play",
       "epg_url": "/api/v4/channels/129/epg",
@@ -2876,28 +2843,28 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№47</span> <code>GET /blocks/client-channels</code> → <b class="st s2">200</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:42 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:11 UTC</div>
     <pre><code>curl -i -X GET 'https://rustvt.kartina.tv/api/v4/blocks/client-channels' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 200
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
 content-encoding: gzip
 content-type: application/json; charset=utf-8
-date: Wed, 21 Oct 2026 07:25:42 GMT
+date: Wed, 21 Oct 2026 12:09:11 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:42 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:11 GMT; Max-Age=259200; path=/
 transfer-encoding: chunked
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567542
+x-api-servertime: 1792584551
 x-api-version: 4
-x-debug-token: 6c9f17
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/6c9f17
+x-debug-token: e72b50
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/e72b50
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2914,25 +2881,25 @@ x-token52-rem-addr: 185.146.250.95
 <details class="ex">
   <summary><span class="n">№48</span> <code>DELETE /channels/129/favorite</code> → <b class="st s2">204</b></summary>
   <div class="exbody">
-    <div class="cap">Запрос · 2026-10-21 07:25:42 UTC</div>
+    <div class="cap">Запрос · 2026-10-21 12:09:11 UTC</div>
     <pre><code>curl -i -X DELETE 'https://rustvt.kartina.tv/api/v4/channels/129/favorite' \
   -H 'Accept: application/json' \
-  -H 'Cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421'</code></pre>
+  -H 'Cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314'</code></pre>
     <div class="cap">Ответ</div>
     <pre><code>HTTP 204
 cache-control: no-store, no-cache, must-revalidate, private, must-revalidate
 connection: close
-date: Wed, 21 Oct 2026 07:25:43 GMT
+date: Wed, 21 Oct 2026 12:09:12 GMT
 expires: Thu, 19 Nov 1981 08:52:00 GMT
 pragma: no-cache, no-cache
 server: openresty
-set-cookie: MW_SSID=94ca325cf2dfca2aeed12d0f740f5421; expires=Sat, 24 Oct 2026 07:25:43 GMT; Max-Age=259200; path=/
+set-cookie: MW_SSID=7d79bf1aca63af59baff493d239fd314; expires=Sat, 24 Oct 2026 12:09:12 GMT; Max-Age=259200; path=/
 vary: Origin
 x-api-messages: 0
-x-api-servertime: 1792567543
+x-api-servertime: 1792584552
 x-api-version: 4
-x-debug-token: 1a1dda
-x-debug-token-link: http://rustvt.kartina.tv/_profiler/1a1dda
+x-debug-token: 4a6477
+x-debug-token-link: http://rustvt.kartina.tv/_profiler/4a6477
 x-powered-by: PHP/8.5.10
 x-token52: httpS-v3
 x-token52-rem-addr: 185.146.250.95
@@ -2949,19 +2916,20 @@ x-token52-rem-addr: 185.146.250.95
 </article>
 
 <h2 id="cases">Результаты прогона тест-кейсов</h2>
-<p class="meta">Прогон 2026-10-21 07:22:48 UTC, 119 с, https://rustvt.kartina.tv/api/v4.
-455 автотестов: 453 прошли, 2 пропущены, 0 упали.
-Кейсы и причины пробелов — из <code>TEST_CASES.md</code> репозитория тестов; тест относится к кейсу по тегу (<code>npx playwright test --grep @CNT-11</code> прогоняет один кейс).</p>
+<p class="meta">Прогон 2026-10-21 12:03:52 UTC, 145 с, https://rustvt.kartina.tv/api/v4.
+452 автотестов: 450 прошли, 2 пропущены, 0 упали.
+Кейсы и причины пробелов — из <code>TEST_CASES.md</code> репозитория тестов; тест относится к кейсу по тегу: <code>npx playwright test --grep @CNT-11</code> прогоняет один кейс, для кейса, меняющего аккаунт, — <code>V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05</code>.</p>
 <div class="facts">
   <div class="fact"><b>176</b><span>тест-кейсов</span></div>
-  <div class="fact"><b>134</b><span>пройдены (из них 7 с допущенным известным расхождением)</span></div>
+  <div class="fact"><b>133</b><span>пройдены (из них 7 с допущенным известным расхождением)</span></div>
   <div class="fact"><b>16</b><span>закреплённых багов воспроизводятся</span></div>
   <div class="fact"><b>2</b><span>пропущены (нет нужных данных)</span></div>
-  <div class="fact"><b>24</b><span>не автоматизированы</span></div>
+  <div class="fact"><b>0</b><span>не запускались (упал тест, от которого они зависят, или прогон прерван)</span></div>
+  <div class="fact"><b>25</b><span>не автоматизированы</span></div>
   <div class="fact"><b>0</b><span>упали</span></div>
 </div>
 <p class="legend"><span class="rs ok">пройден</span> всё как в документации · <span class="rs okk">пройден*</span> кейс выполнен, но в ответах есть известное расхождение из этого отчёта (на нём кейс не падает) ·
-<span class="rs bugrep">баг воспроизводится</span> кейс закрепляет баг: тест зелёный, пока баг есть · <span class="rs skip">пропущен</span> нужных данных сейчас нет · <span class="rs gap">не автоматизирован</span> причина в примечании</p>
+<span class="rs bugrep">баг воспроизводится</span> кейс закрепляет баг: тест зелёный, пока баг есть · <span class="rs skip">пропущен</span> нужных данных сейчас нет · <span class="rs notrun">не запускался</span> тест не запускался, причина в примечании · <span class="rs gap">не автоматизирован</span> причина в примечании</p>
 <h3 class="sect">Account · Security — <code>POST /login</code>, <code>POST /logout</code></h3>
 <div class="table-wrap"><table class="cases">
   <thead><tr><th>ID</th><th>Кейс</th><th>Приор.</th><th>Результат</th><th>Тесты</th><th>Примечание</th></tr></thead>
@@ -3146,7 +3114,7 @@ x-token52-rem-addr: 185.146.250.95
     <tr><td class="cid">SRCH-12</td><td><b>BUG:</b> country facets <a href="#A3">[A3]</a></td><td>P1</td><td><span class="rs bugrep">баг воспроизводится</span></td><td class="num">1/1</td><td>баг воспроизводится — <a href="#A3">A3</a></td></tr>
     <tr><td class="cid">SRCH-13</td><td>Search history</td><td>P1</td><td><span class="rs okk">пройден*</span></td><td class="num">1/1</td><td>пройден; в ответах допущено известное расхождение <a href="#D1">D1</a></td></tr>
     <tr><td class="cid">SRCH-14</td><td>A repeat moves to the top, lowercased</td><td>P1</td><td><span class="rs okk">пройден*</span></td><td class="num">1/1</td><td>пройден; в ответах допущено известное расхождение <a href="#D1">D1</a></td></tr>
-    <tr><td class="cid">SRCH-15</td><td>Record without a query</td><td>P2</td><td><span class="rs ok">пройден</span></td><td class="num">1/1</td><td></td></tr>
+    <tr><td class="cid">SRCH-15</td><td>Record without a query</td><td>P2</td><td><span class="rs gap">не автоматизирован</span></td><td class="num">—</td><td>excluded: a request the server stored by mistake could only be undone by clearing the whole history; see SRCH-16</td></tr>
     <tr><td class="cid">SRCH-16</td><td>Record a new query / a blank one</td><td>P2</td><td><span class="rs gap">не автоматизирован</span></td><td class="num">—</td><td>excluded: a stored entry can only be undone by clearing the whole history</td></tr>
     <tr><td class="cid">SRCH-17</td><td>Clear the history</td><td>P2</td><td><span class="rs gap">не автоматизирован</span></td><td class="num">—</td><td>excluded: wipes the account's history</td></tr>
   </tbody>
@@ -3216,10 +3184,10 @@ x-token52-rem-addr: 185.146.250.95
 <div class="table-wrap"><table class="cases">
   <thead><tr><th>ID</th><th>Кейс</th><th>Приор.</th><th>Результат</th><th>Тесты</th><th>Примечание</th></tr></thead>
   <tbody>
-    <tr><td class="cid">GEN-01</td><td>Every response matches its documented contract</td><td>P0</td><td><span class="rs ok">пройден</span></td><td class="num">453/453</td><td>проверяется в каждом тесте прогона</td></tr>
+    <tr><td class="cid">GEN-01</td><td>Every response matches its documented contract</td><td>P0</td><td><span class="rs ok">пройден</span></td><td class="num">450/450</td><td>проверяется в каждом тесте прогона</td></tr>
     <tr><td class="cid">GEN-02</td><td>Error envelope</td><td>P0</td><td><span class="rs ok">пройден</span></td><td class="num">1/1</td><td></td></tr>
     <tr><td class="cid">GEN-03</td><td>Every operation that needs a session refuses an anonymous caller (×65)</td><td>P0</td><td><span class="rs ok">пройден</span></td><td class="num">65/65</td><td></td></tr>
-    <tr><td class="cid">GEN-04</td><td>Operations open without a session</td><td>P1</td><td><span class="rs ok">пройден</span></td><td class="num">12/12</td><td>по кейсам SEC-08, SEC-09, SEC-10, SEC-11, OTH-01, OTH-02, CNT-14, CNT-15, SHR-04</td></tr>
+    <tr><td class="cid">GEN-04</td><td>Operations open without a session</td><td>P1</td><td><span class="rs ok">пройден</span></td><td class="num">12/12</td><td></td></tr>
     <tr><td class="cid">GEN-05</td><td><b>BUG:</b> no <code>ETag</code>, so no <code>304</code> <a href="#A5">[A5]</a></td><td>P1</td><td><span class="rs bugrep">баг воспроизводится</span></td><td class="num">1/1</td><td>баг воспроизводится — <a href="#A5">A5</a></td></tr>
     <tr><td class="cid">GEN-06</td><td><code>X-Clear-Cache</code></td><td>P2</td><td><span class="rs ok">пройден</span></td><td class="num">1/1</td><td></td></tr>
     <tr><td class="cid">GEN-07</td><td><b>BUG:</b> staging leaks its debug trace <a href="#S1">[S1]</a></td><td>P1</td><td><span class="rs bugrep">баг воспроизводится</span></td><td class="num">1/1</td><td>баг воспроизводится — <a href="#S1">S1</a></td></tr>
@@ -3231,7 +3199,7 @@ x-token52-rem-addr: 185.146.250.95
 
 <h2>Что проверено и что нет</h2>
 <ul>
-  <li><b>Покрытие:</b> все 70 операций спецификации; 455 автотестов по 176 тест-кейсам (<a href="#cases">результаты</a>), каталог — <code>TEST_CASES.md</code> в репозитории тестов.</li>
+  <li><b>Покрытие:</b> все 70 операций спецификации; 452 автотестов по 176 тест-кейсам (<a href="#cases">результаты</a>), каталог — <code>TEST_CASES.md</code> в репозитории тестов.</li>
   <li><b>Production</b> (<code>iptv.kartina.tv</code>), разовая проверка 20.10.2026, не из этого прогона: только чтение; A3, A5, A7, A8, D1 воспроизводились там же, S1 — нет. A1 и A2 на production не проверялись.</li>
   <li><b>Не проверено:</b> пропускает ли эндпоинт трейлера (A1) проверки подписки и гео — у тестового аккаунта всё оплачено.</li>
   <li><b>Сознательно не тестировалось</b> (меняет реальный аккаунт или затрагивает других): отправка кодов и создание аккаунтов sharing, смена protect-кода, очистка истории поиска, ответ на registration prompt, вытеснение сессий, неверный пароль реального аккаунта.</li>

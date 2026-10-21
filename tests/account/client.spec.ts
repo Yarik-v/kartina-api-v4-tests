@@ -44,8 +44,9 @@ test.describe('GET /account', () => {
 });
 
 // Settings belong to the device of the shared session (the suite's own serial), not
-// to the account, so changing them can't reach the account's real devices. Each
-// test restores what it changed; the file runs in order so they never overlap.
+// to the account, so changing them can't reach the account's real devices. Every test
+// here, the rejected changes included (should the server accept one after all),
+// registers the restore with `undo` before it sends anything.
 test.describe('client settings', { tag: '@mutates' }, () => {
   test.describe.configure({ mode: 'default' });
 
@@ -75,49 +76,48 @@ test.describe('client settings', { tag: '@mutates' }, () => {
     }
   });
 
-  test('POST /settings changes one setting, answers with all of them, and the change sticks', { tag: '@CLI-03' }, async ({ api }) => {
+  test('POST /settings changes one setting, answers with all of them, and the change sticks', { tag: '@CLI-03' }, async ({ api, undo }) => {
     const original = await readSettings(api);
     const target = original.server.allowed.find((option) => option.value !== original.server.value);
     test.skip(!target, 'The server setting allows only its current value');
+    undo(() => restore(api, original));
 
-    try {
-      const changed = await expectResponse<ClientSettings>(await api.changeSetting('server', target!.value), 'changeSetting', 200);
-      expect(changed.server.value).toBe(target!.value);
-      expect(Object.keys(changed).sort()).toEqual([...CHOICE_SETTINGS, 'catchup'].sort());
-      expect((await readSettings(api)).server.value, 'GET /settings after the change').toBe(target!.value);
-    } finally {
-      await restore(api, original);
-    }
+    const changed = await expectResponse<ClientSettings>(await api.changeSetting('server', target!.value), 'changeSetting', 200);
+    expect(changed.server.value).toBe(target!.value);
+    expect(Object.keys(changed).sort()).toEqual([...CHOICE_SETTINGS, 'catchup'].sort());
+    expect((await readSettings(api)).server.value, 'GET /settings after the change').toBe(target!.value);
   });
 
-  test('POST /settings for standard returns the recalculated settings', { tag: '@CLI-04' }, async ({ api }) => {
+  test('POST /settings for standard returns the recalculated settings', { tag: '@CLI-04' }, async ({ api, undo }) => {
     const original = await readSettings(api);
     const target = original.standard.allowed.find((option) => option.value !== original.standard.value);
     test.skip(!target, 'The standard setting allows only its current value');
+    undo(() => restore(api, original));
 
-    try {
-      const changed = await expectResponse<ClientSettings>(await api.changeSetting('standard', target!.value), 'changeSetting', 200);
-      expect(changed.standard.value).toBe(target!.value);
-      // "Re-render them from the response": the body must describe a consistent state.
-      for (const name of CHOICE_SETTINGS) {
-        expect(changed[name].allowed.map((option) => option.value), name).toContain(changed[name].value);
-      }
-    } finally {
-      await restore(api, original);
+    const changed = await expectResponse<ClientSettings>(await api.changeSetting('standard', target!.value), 'changeSetting', 200);
+    expect(changed.standard.value).toBe(target!.value);
+    // "Re-render them from the response": the body must describe a consistent state.
+    for (const name of CHOICE_SETTINGS) {
+      expect(changed[name].allowed.map((option) => option.value), name).toContain(changed[name].value);
     }
   });
 
-  test('POST /settings rejects a value outside the allowed list with 400', { tag: '@CLI-05' }, async ({ api }) => {
+  test('POST /settings rejects a value outside the allowed list with 400', { tag: '@CLI-05' }, async ({ api, undo }) => {
     const before = await readSettings(api);
+    undo(() => restore(api, before));
     await expectError(await api.changeSetting('server', 'playwright-no-such-server'), 'changeSetting', 400);
     expect((await readSettings(api)).server.value, 'nothing changed').toBe(before.server.value);
   });
 
-  test('POST /settings rejects an unknown setting name with 400', { tag: '@CLI-06' }, async ({ api }) => {
+  test('POST /settings rejects an unknown setting name with 400', { tag: '@CLI-06' }, async ({ api, undo }) => {
+    const before = await readSettings(api);
+    undo(() => restore(api, before));
     await expectError(await api.changeSettingRaw({ name: 'playwright', value: 1 }), 'changeSetting', 400);
   });
 
-  test('POST /settings rejects a body without value with 400', { tag: '@CLI-07' }, async ({ api }) => {
+  test('POST /settings rejects a body without value with 400', { tag: '@CLI-07' }, async ({ api, undo }) => {
+    const before = await readSettings(api);
+    undo(() => restore(api, before));
     await expectError(await api.changeSettingRaw({ name: 'server' }), 'changeSetting', 400);
   });
 });

@@ -105,7 +105,7 @@ test.describe('POST /logout', () => {
 });
 
 test.describe('POST /login with invalid input', { tag: '@no-session' }, () => {
-  test('an empty body names every missing field', { tag: '@SEC-08' }, async ({ anonApi }) => {
+  test('an empty body names every missing field', { tag: ['@SEC-08', '@GEN-04'] }, async ({ anonApi }) => {
     const body = await expectError(await anonApi.loginRaw({}), 'login', 400, 'E_NEED_PARAM');
     for (const field of ['login', 'password', 'device', 'serial']) {
       expect(body.error.details.description).toContain(`${field}: This value should not be blank.`);
@@ -113,7 +113,7 @@ test.describe('POST /login with invalid input', { tag: '@no-session' }, () => {
   });
 
   for (const field of ['login', 'password', 'device', 'serial'] as const) {
-    test(`a body without ${field} is rejected with 400 naming only ${field}`, { tag: '@SEC-09' }, async ({ anonApi }) => {
+    test(`a body without ${field} is rejected with 400 naming only ${field}`, { tag: ['@SEC-09', '@GEN-04'] }, async ({ anonApi }) => {
       const payload: Record<string, string> = { login: NOT_A_LOGIN, password: 'x', device: v4Device, serial: v4AuxSerial };
       delete payload[field];
       const body = await expectError(await anonApi.loginRaw(payload), 'login', 400, 'E_NEED_PARAM');
@@ -121,13 +121,13 @@ test.describe('POST /login with invalid input', { tag: '@no-session' }, () => {
     });
   }
 
-  test('an unknown device model is rejected with 400', { tag: '@SEC-10' }, async ({ anonApi }) => {
+  test('an unknown device model is rejected with 400', { tag: ['@SEC-10', '@GEN-04'] }, async ({ anonApi }) => {
     const res = await anonApi.loginRaw({ login: NOT_A_LOGIN, password: 'x', device: 'playwright-no-such-model', serial: v4AuxSerial });
     const body = await expectError(res, 'login', 400, 'E_NEED_PARAM');
     expect(body.error.details.description).toBe('Device playwright-no-such-model not found.');
   });
 
-  test('an unknown login is rejected with 403 E_INCORRECT_LOGIN and opens no session', { tag: '@SEC-11' }, async ({ anonApi }) => {
+  test('an unknown login is rejected with 403 E_INCORRECT_LOGIN and opens no session', { tag: ['@SEC-11', '@GEN-04'] }, async ({ anonApi }) => {
     const res = await anonApi.loginRaw({ login: NOT_A_LOGIN, password: 'x', device: v4Device, serial: v4AuxSerial });
     const body = await expectError(res, 'login', 403, 'E_INCORRECT_LOGIN');
     expect(body.error.details.description).toBe('Incorrect login');

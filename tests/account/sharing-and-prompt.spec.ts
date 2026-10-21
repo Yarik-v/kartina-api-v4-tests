@@ -25,7 +25,7 @@ test.describe('Sharing (Mobile Friend)', () => {
     else await expectResponse(res, 'getSharingFriends', 200);
   });
 
-  test('POST /sharing/redeem without a code answers 400', { tag: ['@no-session', '@SHR-04'] }, async ({ anonApi }) => {
+  test('POST /sharing/redeem without a code answers 400', { tag: ['@no-session', '@SHR-04', '@GEN-04'] }, async ({ anonApi }) => {
     await expectError(await anonApi.redeemSharingLink({}), 'redeemSharingLink', 400);
   });
 });

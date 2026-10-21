@@ -178,7 +178,11 @@ export function checkResponse(operationId: string, status: number, contentType: 
   }
   const mediaTypes = Object.keys(documented.response.content ?? {});
   if (mediaTypes.length === 0) {
-    return body === null ? { errors: [] } : { problem: `status ${status} documents no body, got one`, errors: [] };
+    // A redirect may carry a short "Redirecting to …" page (Symfony's RedirectResponse
+    // always does); clients follow the Location, the body is informational. Any other
+    // status documented without content must come without one.
+    if (body === null || (status >= 300 && status < 400)) return { errors: [] };
+    return { problem: `status ${status} documents no body, got one`, errors: [] };
   }
   const mediaType = mediaTypes.find((type) => contentType.split(';')[0].trim() === type);
   if (!mediaType) {

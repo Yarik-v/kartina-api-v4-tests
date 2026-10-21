@@ -22,6 +22,11 @@ export interface LoadedBlock extends Cached<Block> {
 // out ~30 requests together, the staging gateway starts answering 503.
 const BLOCK_FETCH_CONCURRENCY = 4;
 
+// The dashboard crawl (~30 blocks) and the sample-title lookups take many seconds on
+// staging. With their own timeout that time isn't charged to the first test that
+// happens to need them, so it can't push that test past its 30 s mid-change.
+const FIXTURE_TIMEOUT = 120_000;
+
 export interface DiscoveredTitle {
   card: ContentCard;
   details: ContentDetails;
@@ -63,6 +68,13 @@ interface Fixtures {
   anonApi: V4ApiClient;
   /** Another cookie-less client per call, for tests that juggle several sessions. */
   newAnonApi: () => Promise<V4ApiClient>;
+  /**
+   * Registers a step that puts the account back. Register it BEFORE the change it
+   * undoes (so a change the server applied but answered unexpectedly is still taken
+   * back); every step runs after the test, in reverse order, also when the test failed
+   * or timed out, and a step that throws fails the test.
+   */
+  undo: (step: () => Promise<unknown>) => void;
 }
 
 interface WorkerFixtures {
@@ -119,6 +131,26 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
 
   api: async ({ request }, use) => {
     await use(new V4ApiClient(request));
+  },
+
+  // Depends on `api` so it is torn down first, while the shared session's context is
+  // still open; a `finally` in the test body would instead run against a disposed
+  // context after a timeout.
+  undo: async ({ api }, use) => {
+    void api;
+    const steps: (() => Promise<unknown>)[] = [];
+    await use((step) => {
+      steps.push(step);
+    });
+    const errors: unknown[] = [];
+    for (const step of steps.reverse()) {
+      try {
+        await step();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    if (errors.length) throw errors[0];
   },
 
   anonApi: async ({ newAnonApi }, use) => {
@@ -215,7 +247,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
       await Promise.all(Array.from({ length: BLOCK_FETCH_CONCURRENCY }, worker));
       await use(blocks);
     },
-    { scope: 'worker' },
+    { scope: 'worker', timeout: FIXTURE_TIMEOUT },
   ],
 
   subscribedServices: [
@@ -230,7 +262,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
       const candidates = findCards(dashboardBlocks, (c) => c.kind === 'movie' && c.playable && subscribedServices.has(c.service));
       await use(await firstWithDetails(workerApi, candidates, (details) => details.playable));
     },
-    { scope: 'worker' },
+    { scope: 'worker', timeout: FIXTURE_TIMEOUT },
   ],
 
   sampleSeries: [
@@ -240,7 +272,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
         await firstWithDetails(workerApi, candidates, (details) => details.playable && (details.seasons[0]?.episodes.length ?? 0) > 0),
       );
     },
-    { scope: 'worker' },
+    { scope: 'worker', timeout: FIXTURE_TIMEOUT },
   ],
 });
 

@@ -41,12 +41,30 @@ export interface RunSummary {
 }
 
 /**
+ * The setup and teardown projects: a project that names a `teardown`, and that
+ * teardown. Their tests open and close the session and check nothing, so they never
+ * count as passed or skipped (a run whose only real test skipped must not read as
+ * green). Their failures still count.
+ */
+function infrastructureProjects(rootSuite: Suite): Set<string> {
+  const names = new Set<string>();
+  for (const projectSuite of rootSuite.suites) {
+    const project = projectSuite.project();
+    if (project?.teardown) names.add(project.name).add(project.teardown);
+  }
+  return names;
+}
+
+/**
  * Buckets every test in `rootSuite` by outcome, relative to `startedAt`. Shared by
  * every reporter in this directory so they can never disagree on counts or on which
  * tests count as failures.
  */
 export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary {
-  const tests = rootSuite.allTests();
+  const infrastructure = infrastructureProjects(rootSuite);
+  const tests = rootSuite
+    .allTests()
+    .filter((test) => test.outcome() === 'unexpected' || !infrastructure.has(test.parent.project()?.name ?? ''));
   const durationSec = ((Date.now() - startedAt.getTime()) / 1000).toFixed(1);
 
   let passed = 0;
@@ -59,7 +77,11 @@ export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary
   for (const test of tests) {
     switch (test.outcome()) {
       case 'skipped':
-        if (test.results.length === 0) {
+        // Only a test that skipped itself (test.skip / fixme) expects 'skipped'. Any
+        // other skipped outcome never got to run: its project's dependency failed (no
+        // results), a beforeAll or the worker failed (a 'skipped' result), or the run
+        // was cut short (an 'interrupted' result).
+        if (test.expectedStatus !== 'skipped') {
           notRun++;
         } else {
           const skip = test.annotations.find(({ type }) => type === 'skip' || type === 'fixme');

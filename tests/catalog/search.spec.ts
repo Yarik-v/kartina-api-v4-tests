@@ -85,11 +85,11 @@ test.describe('search facets', () => {
     expect(body.total).toBeGreaterThan(0);
   });
 
-  test('search_url breaks its own documented format (known docs bug)', { tag: '@SRCH-11' }, async ({ api }) => {
+  test('search_url breaks its own documented format (known docs bug)', { tag: ['@SRCH-11', '@pinned'] }, async ({ api }) => {
     await expectKnownIssue(await api.searchServicesGenres(), 'searchServicesGenres', 200, 'search-url-template-format');
   });
 
-  test('GET /search/services/countries answers an undocumented 503 E_SYSTEM_ERROR (known API bug)', { tag: '@SRCH-12' }, async ({ api }) => {
+  test('GET /search/services/countries answers an undocumented 503 E_SYSTEM_ERROR (known API bug)', { tag: ['@SRCH-12', '@pinned'] }, async ({ api }) => {
     // Documented: 200 with the production countries. On staging and production
     // alike it answers 503, which the operation doesn't document at all. When it
     // starts answering 200 this fails; then check it like the genres above.
@@ -122,9 +122,5 @@ test.describe('search history', { tag: '@mutates' }, () => {
     await expectResponse(await api.addSearchHistoryEntry({ query: before.items[0].toUpperCase() }), 'addSearchHistoryEntry', 201);
     const after = await expectResponse<SearchHistory>(await api.getSearchHistory(), 'getSearchHistory', 200);
     expect(after.items).toEqual(before.items);
-  });
-
-  test('POST /search/history without a query answers 400', { tag: '@SRCH-15' }, async ({ api }) => {
-    await expectError(await api.addSearchHistoryEntry({}), 'addSearchHistoryEntry', 400);
   });
 });

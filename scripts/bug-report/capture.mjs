@@ -78,6 +78,22 @@ export async function capture({ base, login, password, device, serial }) {
     return entry.n;
   }
 
+  /**
+   * Whether a step got the JSON it needs. A gateway 503 with an HTML page, or an error
+   * envelope, makes a step skip (or, for the two the rest depends on, stop with a clear
+   * message) instead of a TypeError taking the whole report down.
+   * @param {{ exchange: Exchange, json: any }} result
+   */
+  const ok = (result) => result.exchange.status === 200 && result.json !== null && typeof result.json === 'object';
+  /**
+   * @param {{ exchange: Exchange, json: any }} result
+   * @param {string} what
+   */
+  const required = (result, what) => {
+    if (!ok(result)) throw new Error(`capture: ${what} answered ${result.exchange.status}: ${result.exchange.body.slice(0, 200)}`);
+    return result.json;
+  };
+
   const now = Math.floor(Date.now() / 1000);
   const loginCall = await call('POST', '/login', { json: { login, password, device, serial } });
   if (loginCall.exchange.status !== 200) throw new Error(`Login failed: ${loginCall.exchange.status} ${loginCall.exchange.body}`);
@@ -87,7 +103,7 @@ export async function capture({ base, login, password, device, serial }) {
   const out = { login: log.length };
   try {
     // Live data to pick titles and channels from (not part of the report).
-    const dashboard = (await call('GET', '/pages/dashboard', { keep: false })).json;
+    const dashboard = required(await call('GET', '/pages/dashboard', { keep: false }), 'GET /pages/dashboard');
     /** @type {any[]} */
     const cards = [];
     for (const block of dashboard.items) {
@@ -97,7 +113,7 @@ export async function capture({ base, login, password, device, serial }) {
     /** @type {Map<string, any>} one title per service, a movie where there is one */
     const perService = new Map();
     for (const card of [...cards.filter((c) => c.kind === 'movie'), ...cards]) if (!perService.has(card.service)) perService.set(card.service, card);
-    const channels = (await call('GET', '/channels', { keep: false })).json.items.filter(
+    const channels = required(await call('GET', '/channels', { keep: false }), 'GET /channels').items.filter(
       /** @param {any} c */ (c) => c.playable && !c.access.protected,
     );
 
@@ -126,6 +142,7 @@ export async function capture({ base, login, password, device, serial }) {
     out.teleteka = { epg: null, programmes: [] };
     for (const channel of channels.slice(0, 40)) {
       const epg = await call('GET', `/channels/${channel.id}/epg?from=${now - 86400}&to=${now}`, { keep: false });
+      if (!ok(epg) || !Array.isArray(epg.json.items)) continue;
       const programmes = epg.json.items.filter(/** @param {any} p */ (p) => !p.teleteka && p.ends_at < now).slice(0, 2);
       if (!programmes.length) continue;
       if (out.teleteka.epg === null) {
@@ -171,23 +188,33 @@ export async function capture({ base, login, password, device, serial }) {
 
     // A7: the radio group, shortened to the stations with the wrong kind.
     const group = await call('GET', '/pages/radio/channel-group', { keep: false });
-    const wrongKind = group.json.items.filter(/** @param {any} i */ (i) => i.kind !== 'radio');
-    out.radioGroupWrongKind = wrongKind.map(/** @param {any} i */ (i) => ({ id: i.id, title: i.title, kind: i.kind, play_url: i.play_url }));
-    out.radioGroup = record(group.exchange, {
-      body: JSON.stringify({ ...group.json, items: [...wrongKind, `… ещё ${group.json.items.length - wrongKind.length} станций с kind "radio"`] }, null, 1),
-      note: 'тело сокращено до станций с неверным kind',
-    });
+    if (ok(group) && Array.isArray(group.json.items)) {
+      const wrongKind = group.json.items.filter(/** @param {any} i */ (i) => i.kind !== 'radio');
+      out.radioGroupWrongKind = wrongKind.map(/** @param {any} i */ (i) => ({ id: i.id, title: i.title, kind: i.kind, play_url: i.play_url }));
+      out.radioGroup = record(group.exchange, {
+        body: JSON.stringify({ ...group.json, items: [...wrongKind, `… ещё ${group.json.items.length - wrongKind.length} станций с kind "radio"`] }, null, 1),
+        note: 'тело сокращено до станций с неверным kind',
+      });
+    } else {
+      out.radioGroupWrongKind = null;
+      out.radioGroup = record(group.exchange);
+    }
 
     // A8: the first station and the ones with a null description.
     const radio = await call('GET', '/radio', { keep: false });
-    const nullDescription = radio.json.data.filter(/** @param {any} s */ (s) => s.description === null);
-    out.radioTotal = radio.json.data.length;
-    out.radioNoTitle = radio.json.data.filter(/** @param {any} s */ (s) => !('title' in s._links.play)).length;
-    out.radioNullDescription = nullDescription.map(/** @param {any} s */ (s) => ({ id: s.id, title: s.title }));
-    out.radio = record(radio.exchange, {
-      body: JSON.stringify({ data: [radio.json.data[0], '…', ...nullDescription, '…'] }, null, 1),
-      note: `тело сокращено: первая станция и станции с description: null (всего ${radio.json.data.length})`,
-    });
+    if (ok(radio) && Array.isArray(radio.json.data)) {
+      const nullDescription = radio.json.data.filter(/** @param {any} s */ (s) => s.description === null);
+      out.radioTotal = radio.json.data.length;
+      out.radioNoTitle = radio.json.data.filter(/** @param {any} s */ (s) => !('title' in (s._links?.play ?? {}))).length;
+      out.radioNullDescription = nullDescription.map(/** @param {any} s */ (s) => ({ id: s.id, title: s.title }));
+      out.radio = record(radio.exchange, {
+        body: JSON.stringify({ data: [radio.json.data[0], '…', ...nullDescription, '…'] }, null, 1),
+        note: `тело сокращено: первая станция и станции с description: null (всего ${radio.json.data.length})`,
+      });
+    } else {
+      out.radioNullDescription = null;
+      out.radio = record(radio.exchange);
+    }
 
     // S1: errors and headers without a session, and the profiler link they advertise.
     out.debugAnon = (await call('GET', '/account', { anon: true })).exchange.n;
@@ -195,18 +222,21 @@ export async function capture({ base, login, password, device, serial }) {
     out.debugServertime = servertime.exchange.n;
     const profilerLink = servertime.exchange.resHeaders.find(([name]) => name === 'x-debug-token-link')?.[1];
     if (profilerLink) {
-      const res = await fetch(profilerLink, { redirect: 'manual' });
-      out.profiler = record({
-        n: 0,
-        at: new Date().toISOString(),
-        method: 'GET',
-        url: profilerLink,
-        reqHeaders: {},
-        reqBody: null,
-        status: res.status,
-        resHeaders: headerList(res.headers),
-        body: (await res.text()).slice(0, 400),
-      });
+      // Optional evidence: an unreachable profiler host only leaves the exchange out.
+      try {
+        const res = await fetch(profilerLink, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
+        out.profiler = record({
+          n: 0,
+          at: new Date().toISOString(),
+          method: 'GET',
+          url: profilerLink,
+          reqHeaders: {},
+          reqBody: null,
+          status: res.status,
+          resHeaders: headerList(res.headers),
+          body: (await res.text()).slice(0, 400),
+        });
+      } catch {}
     }
 
     // D2: details of a startru title, and favorites by that service.
@@ -220,21 +250,36 @@ export async function capture({ base, login, password, device, serial }) {
       out.d2fav = (await call('GET', '/favorites/startru')).exchange.n;
     }
 
-    // D3: a fresh channel favorite doesn't show in the "favorite-channels" block. Taken back.
-    const channel = [...channels].reverse().find(/** @param {any} c */ (c) => !c.favorite);
+    // D3: a fresh channel favorite doesn't show in the "favorite-channels" block. The
+    // channel is picked against the live favorites, and taken back only when this PUT
+    // created the favorite (201): a 200 means it was the subscriber's own already.
+    const liveFavorites = await call('GET', '/favorites/channels', { keep: false });
+    const favoriteIds = new Set(ok(liveFavorites) ? liveFavorites.json.items.map(/** @param {any} c */ (c) => c.id) : []);
+    const channel = ok(liveFavorites) ? [...channels].reverse().find(/** @param {any} c */ (c) => !favoriteIds.has(c.id)) : undefined;
     if (channel) {
       out.d3channel = { id: channel.id, title: channel.title };
-      out.d3 = [(await call('PUT', `/channels/${channel.id}/favorite`)).exchange.n];
+      out.d3 = [];
+      let created = false;
       try {
+        const put = await call('PUT', `/channels/${channel.id}/favorite`);
+        out.d3.push(put.exchange.n);
+        created = put.exchange.status === 201;
         out.d3.push((await call('GET', '/favorites/channels')).exchange.n, (await call('GET', '/blocks/client-channels')).exchange.n);
       } finally {
-        out.d3.push((await call('DELETE', `/channels/${channel.id}/favorite`)).exchange.n);
+        if (created) out.d3.push((await call('DELETE', `/channels/${channel.id}/favorite`)).exchange.n);
       }
+      if (!created) out.d3 = undefined;
     }
   } finally {
     // Whatever failed above, the session doesn't keep one of the account's few slots.
-    out.logout = (await call('POST', '/logout')).exchange.n;
-    out.after = (await call('GET', '/account')).exchange.n;
+    // The report shows the session id, so it must be confirmed dead: the logout is
+    // retried once, and `sessionClosed` says whether GET /account then refuses it.
+    let logout = await call('POST', '/logout');
+    if (logout.exchange.status !== 204) logout = await call('POST', '/logout');
+    out.logout = logout.exchange.n;
+    const after = await call('GET', '/account');
+    out.after = after.exchange.n;
+    out.sessionClosed = after.exchange.status === 403 && after.json?.error?.type === 'E_AUTH_ERROR';
   }
   out.meta = { base, device, serial, login, ssid, at: log[0].at, until: log[log.length - 1].at };
   return { out, log };

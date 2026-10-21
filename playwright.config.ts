@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 import 'dotenv/config';
 import { v4BaseURL } from './src/config';
-import { MUTATES_TAG, V4_SESSION_FILE } from './tests/session';
+import { MUTATES_TAG, PINNED_TAG, V4_SESSION_FILE } from './tests/session';
 
 const v4Use = {
   baseURL: v4BaseURL,
@@ -42,6 +42,20 @@ export default defineConfig({
     {
       name: 'api-v4',
       dependencies: ['api-v4-setup'],
+      grepInvert: new RegExp(`${MUTATES_TAG}|${PINNED_TAG}`),
+      // A Playwright dependency is a pass/fail gate: one failure here leaves
+      // api-v4-mutating unrun. A retry keeps a single transient staging 503 from
+      // doing that (a test that passes on retry counts as flaky, not failed).
+      retries: 1,
+      use: v4Use,
+    },
+    // The read-only tests that pin a known API bug: they turn red on purpose once the
+    // bug is fixed, so they're kept out of api-v4 and that gate. Same phase as api-v4
+    // (both depend only on the setup), so they finish before api-v4-mutating starts.
+    {
+      name: 'api-v4-pinned',
+      dependencies: ['api-v4-setup'],
+      grep: new RegExp(PINNED_TAG),
       grepInvert: new RegExp(MUTATES_TAG),
       use: v4Use,
     },
@@ -49,10 +63,11 @@ export default defineConfig({
     // the search history) run after the read-only ones, one at a time: in parallel
     // they would race every read of the same state (a hidden channel missing from
     // a count, a recalculated setting under a playback test). As with any dependency,
-    // a failure in api-v4 leaves this project unrun.
+    // a failure in api-v4 leaves this project unrun. To run only some of them without
+    // the whole read-only project first: V4_MUTATING_ONLY=1 (see README).
     {
       name: 'api-v4-mutating',
-      dependencies: ['api-v4'],
+      dependencies: [process.env.V4_MUTATING_ONLY ? 'api-v4-setup' : 'api-v4'],
       grep: new RegExp(MUTATES_TAG),
       fullyParallel: false,
       workers: 1,

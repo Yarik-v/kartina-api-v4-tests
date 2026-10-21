@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures';
 import { expectError, expectResponse, recordKnownIssue } from '../../src/assertions';
-import { apiPath } from '../../src/client';
+import { apiPath, type V4ApiClient } from '../../src/client';
 import { v4ProtectCode } from '../../src/config';
 import type { ChannelEpg, ChannelListCard, ChannelsList, Page, PlaybackStream } from '../../src/types';
 
@@ -156,7 +156,7 @@ test.describe('archive and teleteka', () => {
     test.skip(true, 'No playable teleteka recording on the first channels');
   });
 
-  test('teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)', { tag: '@CH-19' }, async ({
+  test('teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)', { tag: ['@CH-19', '@pinned'] }, async ({
     api,
     channels,
   }) => {
@@ -204,58 +204,65 @@ test.describe('archive and teleteka', () => {
 });
 
 // Hiding needs the protect code, and DELETE /channels/hidden clears every rule the
-// account has, so the reset runs only when nothing was hidden before.
+// account has. So every test here, the negative ones included, runs only with the
+// protect code and only while the account hides nothing: should the server wrongly
+// accept a request without the code, nothing of the account's is lost, and `undo`
+// unhides whatever a test may have hidden, also when it fails or times out.
 test.describe('hidden channels', { tag: '@mutates' }, () => {
-  test.describe.configure({ mode: 'default' });
-
-  test('PUT /channels/{id}/hidden without the protect code answers 400', { tag: '@CH-22' }, async ({ api, channels }) => {
-    await expectError(await api.hideChannel(playableChannel(channels)!.id, {}), 'hideChannel', 400);
-  });
-
-  test('DELETE /channels/hidden without the protect code answers 400', { tag: '@CH-23' }, async ({ api }) => {
-    await expectError(await api.clearHiddenChannels({}), 'clearHiddenChannels', 400);
-  });
-
-  test('hide, list with show=1, unhide and reset', { tag: '@CH-24' }, async ({ api, channels }) => {
-    test.skip(!v4ProtectCode, 'V4_PROTECT_CODE is not set in .env');
-    const withHidden = await expectResponse<ChannelsList>(
+  async function skipUnlessNothingHidden(api: V4ApiClient): Promise<void> {
+    test.skip(!v4ProtectCode, "V4_PROTECT_CODE is not set in .env: the account's hidden channels can't be checked first");
+    const all = await expectResponse<ChannelsList>(
       await api.getChannels({ params: { show: 1, protect: v4ProtectCode } }),
       'getChannels',
       200,
     );
-    test.skip(withHidden.items.some((c) => c.access.hidden), 'The account hides channels of its own; not touching them');
-    // From the end of the list: the read-only tests use the first playable channel.
-    const channel = [...channels.items].reverse().find((c) => c.playable && !c.access.protected)!;
+    test.skip(all.items.some((c) => c.access.hidden), 'The account hides channels of its own; not touching them');
+  }
+
+  const unhide = async (api: V4ApiClient, id: string) => {
+    expect((await api.unhideChannel(id, { code: v4ProtectCode })).status(), `unhide channel ${id}`).toBe(204);
+  };
+
+  test('PUT /channels/{id}/hidden without the protect code answers 400', { tag: '@CH-22' }, async ({ api, channels, undo }) => {
+    await skipUnlessNothingHidden(api);
+    const channel = playableChannel(channels);
+    test.skip(!channel, 'No playable unprotected channel in the packet');
+    undo(() => unhide(api, channel!.id));
+    await expectError(await api.hideChannel(channel!.id, {}), 'hideChannel', 400);
+  });
+
+  test('DELETE /channels/hidden without the protect code answers 400', { tag: '@CH-23' }, async ({ api }) => {
+    await skipUnlessNothingHidden(api);
+    await expectError(await api.clearHiddenChannels({}), 'clearHiddenChannels', 400);
+  });
+
+  test('hide, list with show=1, unhide and reset', { tag: '@CH-24' }, async ({ api, channels, undo }) => {
+    await skipUnlessNothingHidden(api);
+    const channel = playableChannel(channels);
+    test.skip(!channel, 'No playable unprotected channel in the packet');
+    const { id } = channel!;
     const code = { code: v4ProtectCode };
+    undo(() => unhide(api, id));
 
-    let hidden = false;
-    try {
-      await expectResponse(await api.hideChannel(channel.id, code), 'hideChannel', 204);
-      hidden = true;
-      await expectResponse(await api.hideChannel(channel.id, code), 'hideChannel', 204);
+    await expectResponse(await api.hideChannel(id, code), 'hideChannel', 204);
+    await expectResponse(await api.hideChannel(id, code), 'hideChannel', 204);
 
-      const visible = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
-      expect(visible.items.map((c) => c.id), 'gone from the plain list').not.toContain(channel.id);
-      const all = await expectResponse<ChannelsList>(
-        await api.getChannels({ params: { show: 1, protect: v4ProtectCode } }),
-        'getChannels',
-        200,
-      );
-      expect(all.items.find((c) => c.id === channel.id)?.access.hidden, 'listed as hidden with show=1').toBe(true);
+    const visible = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+    expect(visible.items.map((c) => c.id), 'gone from the plain list').not.toContain(id);
+    const all = await expectResponse<ChannelsList>(
+      await api.getChannels({ params: { show: 1, protect: v4ProtectCode } }),
+      'getChannels',
+      200,
+    );
+    expect(all.items.find((c) => c.id === id)?.access.hidden, 'listed as hidden with show=1').toBe(true);
 
-      await expectResponse(await api.unhideChannel(channel.id, code), 'unhideChannel', 204);
-      hidden = false;
-      const again = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
-      expect(again.items.map((c) => c.id), 'back in the plain list').toContain(channel.id);
+    await expectResponse(await api.unhideChannel(id, code), 'unhideChannel', 204);
+    const again = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+    expect(again.items.map((c) => c.id), 'back in the plain list').toContain(id);
 
-      await expectResponse(await api.hideChannel(channel.id, code), 'hideChannel', 204);
-      hidden = true;
-      await expectResponse(await api.clearHiddenChannels(code), 'clearHiddenChannels', 204);
-      hidden = false;
-      const reset = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
-      expect(reset.items.map((c) => c.id), 'back after the reset').toContain(channel.id);
-    } finally {
-      if (hidden) await api.unhideChannel(channel.id, code);
-    }
+    await expectResponse(await api.hideChannel(id, code), 'hideChannel', 204);
+    await expectResponse(await api.clearHiddenChannels(code), 'clearHiddenChannels', 204);
+    const reset = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);
+    expect(reset.items.map((c) => c.id), 'back after the reset').toContain(id);
   });
 });

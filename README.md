@@ -70,7 +70,10 @@ session cookie; a login test's trace also records the password.
   Favorites, Sharing, Registration Prompt), `catalog/` (Channels, Content, Radio,
   Search, Services), `interface/` (Pages, Blocks) and `other/` (Other, plus checks that
   sweep the whole spec). All 70 operations are covered. Each test is tagged with
-  the ID of its `TEST_CASES.md` case (`npx playwright test --grep @CNT-11`).
+  the ID of its `TEST_CASES.md` case: `npx playwright test --grep @CNT-11` runs that
+  case. An `@mutates` case would bring the whole read-only `api-v4` project along (it's
+  a dependency); `V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05`
+  runs just it, after the setup.
 - `tests/fixtures.ts` — `api` (the shared session), `anonApi` / `newAnonApi` (no
   cookies), and worker-scoped live data fetched once per worker: `account`,
   `services`, `channels`, `dashboard`, `dashboardBlocks` (each loaded from its own
@@ -97,11 +100,21 @@ model must be one the server knows (`V4_DEVICE`, default `androidtv-yb-005`).
 
 - Settings (they belong to the suite's own device), profiles (prefixed `pw-`, cleaned
   up even after an interrupted run), VOD and channel favorites and hidden channels are
-  changed and put back. Tests that change the account are tagged `@mutates` and run
-  in their own project, `api-v4-mutating`: after the read-only `api-v4` project, one
-  at a time, so no read races a change. Like any Playwright dependency, a failure in
-  `api-v4` leaves `api-v4-mutating` unrun (the report marks those cases "не
-  запускался"). Anonymous clients that end a test still logged in are logged out.
+  changed and put back. Each such test registers the clean-up with the `undo` fixture
+  BEFORE the change, so it runs after the test also when the change was applied but
+  answered unexpectedly, an assertion failed or the test timed out; a clean-up that
+  fails fails the test. Negative tests that could do lasting damage if the server
+  wrongly accepted them (hiding or resetting channels without the code, switching to
+  a foreign profile, invalid settings) are guarded the same way, and the hidden-channel
+  ones run only with the protect code while the account hides nothing.
+- Projects: tests that change the account are tagged `@mutates` and run in
+  `api-v4-mutating`, after the read-only `api-v4` project and one at a time, so no read
+  races a change. A Playwright dependency is a pass/fail gate, so `api-v4` gets one
+  retry (a transient 503 doesn't cancel the mutating run), and the read-only tests that
+  pin a known bug (`@pinned`, red on purpose once it's fixed) run in their own
+  `api-v4-pinned` project outside that gate. A real failure in `api-v4` still leaves
+  `api-v4-mutating` unrun; the report marks those cases "не запускался".
+  Anonymous clients that end a test still logged in are logged out.
 - Never called: changing the protect code, `POST /sharing/code` / `POST /sharing/account`
   / `DELETE /sharing/friends/…` (they send codes or change the friend subscription),
   clearing the search history, answering the registration prompt. They're still
@@ -110,7 +123,8 @@ model must be one the server knows (`V4_DEVICE`, default `androidtv-yb-005`).
 - Wrong credentials use a login that can't exist, never a wrong password for the real
   account (a long number like `99999999999` can be someone else's account).
 - `V4_PROTECT_CODE` (optional) enables the protect-code and hidden-channel tests;
-  without it the suite never sends a protect code at all.
+  without it the suite never sends a protect code at all, and never calls the
+  hidden-channel endpoints.
 - `V4_ADMIN_CREATED_ACCOUNT=1` (optional) says the account comes from the admin panel,
   i.e. it's a developer's or tester's account. Those always have a personal cabinet
   (`has_personal_account: true`), which CLI-16 then checks; it's the dev team's rule,

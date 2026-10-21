@@ -16,11 +16,11 @@ test.describe('GET /radio (deprecated)', () => {
     }
   });
 
-  test('play links have no title (known API bug)', { tag: '@RAD-02' }, async ({ api }) => {
+  test('play links have no title (known API bug)', { tag: ['@RAD-02', '@pinned'] }, async ({ api }) => {
     await expectKnownIssue(await api.getRadio(), 'GET /radio', 200, 'radio-play-link-title');
   });
 
-  test('some stations have a null description (known API bug)', { tag: '@RAD-03' }, async ({ api }) => {
+  test('some stations have a null description (known API bug)', { tag: ['@RAD-03', '@pinned'] }, async ({ api }) => {
     await expectKnownIssue(await api.getRadio(), 'GET /radio', 200, 'radio-null-description');
   });
 });

@@ -13,19 +13,22 @@ Legend: **P0** = blocks release if broken, **P1** = should work, **P2** = nice t
 the case pins the current behavior so that a fix turns its test red (see README,
 "Known API bugs are pinned, not skipped"). The bugs are written up for the developers,
 with the exact requests and responses, in
-[`reports/2026-10-20-api-v4-staging.html`](reports/2026-10-20-api-v4-staging.html);
+`reports/` (the newest file, e.g.
+[`reports/2026-10-21-api-v4-staging.html`](reports/2026-10-21-api-v4-staging.html));
 the **[A1]**-style tags in this catalog are that report's IDs.
 
-**176 cases total, 152 automated, 24 gaps** (`—` in Automated); see "Remaining gaps"
-at the end for the breakdown. Of the automated ones, 8 run only when their
-precondition holds: 5 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
+**176 cases total, 151 automated, 25 gaps** (`—` in Automated); see "Remaining gaps"
+at the end for the breakdown. Of the automated ones, 10 run only when their
+precondition holds: 7 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
 20.10.2026 the dashboard has no non-playable title and no ivi / start_film block).
 
 All cases run on one shared session of the account in `.env` unless the
 Preconditions say "no session". Every test carries the ID of its case as a tag, so
-`npx playwright test --grep @CNT-11` runs one case, and a run's results map onto this
-catalog case by case (the developer report has that table).
+`npx playwright test --grep @CNT-11` runs one case (for a case that changes the
+account: `V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05`),
+and a run's results map onto this catalog case by case (the developer report has that
+table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 
 ## 1. Account
 
@@ -152,8 +155,8 @@ catalog case by case (the developer report has that table).
 | CH-19 | **BUG:** teleteka of a programme without a recording **[A2]** | P1 | past programmes with `teleteka: false` | GET `…/teleteka/{starts_at}` for up to 12 of them | Docs: 403 `E_ARCHIVE_NOT_AVAILABLE`. Until the staging deploy of 21.10.2026 every one got 200 with a stub clip (`…/zaglushka/…`); since then some get the documented 403 and some still the stub, even on one channel. Each 403 must be the documented one; the test stays green while any programme gets the stub | `tests/catalog/channels.spec.ts` (pinned) |
 | CH-20 | Teleteka at a timestamp no programme starts at | P2 | none | GET `…/teleteka/1` | 404 `E_WRONG_ID`, `Program not found` | `tests/catalog/channels.spec.ts` |
 | CH-21 | Archive / teleteka of a protected channel | P2 | `V4_PROTECT_CODE`, a protected archive channel | Without and with `protect` | 403 `E_CURRENT_PASS_BAD`, then 200 | — (not automated yet) |
-| CH-22 | Hide without the protect code | P1 | none | PUT `/channels/{id}/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` |
-| CH-23 | Reset without the protect code | P1 | none | DELETE `/channels/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` |
+| CH-22 | Hide without the protect code | P1 | `V4_PROTECT_CODE`; the account hides nothing yet | PUT `/channels/{id}/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
+| CH-23 | Reset without the protect code | P1 | `V4_PROTECT_CODE`; the account hides nothing yet | DELETE `/channels/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CH-24 | Hide, list, unhide, reset | P1 | `V4_PROTECT_CODE`; the account hides nothing yet | PUT hidden (twice), GET `/channels`, GET `?show=1&protect=`, DELETE `…/hidden`, hide again, DELETE `/channels/hidden` | 204 each (idempotent); gone from the plain list; listed with `access.hidden` under `show=1`; back after unhide and after the reset | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
 
 ### 2.2 Content — `/content/{service}/{id}` and its playback
@@ -206,7 +209,7 @@ catalog case by case (the developer report has that table).
 | SRCH-12 | **BUG:** country facets **[A3]** | P1 | none | GET `/search/services/countries` | Docs: 200 with the countries. Actually 503 `E_SYSTEM_ERROR`, a status the operation doesn't document. Cause, from the staging trace: the search service returns a country with an empty `title`, and the schema check in `Search/Base.php:120` (`Client::countries()`) fails the whole list | `tests/catalog/search.spec.ts` (pinned) |
 | SRCH-13 | Search history | P1 | none | GET `/search/history` | 200; `count == items.length`; every query lowercased; `history_url` / `search_url` (`{query}`) | `tests/catalog/search.spec.ts` |
 | SRCH-14 | A repeat moves to the top, lowercased | P1 | non-empty history | POST the top query in capitals; GET | 201; the history is exactly as before | `tests/catalog/search.spec.ts` |
-| SRCH-15 | Record without a query | P2 | none | POST `{}` | 400 | `tests/catalog/search.spec.ts` |
+| SRCH-15 | Record without a query | P2 | none | POST `{}` | 400 | — (excluded: a request the server stored by mistake could only be undone by clearing the whole history; see SRCH-16) |
 | SRCH-16 | Record a new query / a blank one | P2 | none | POST a new query; POST `"   "` | New one on top; blank one 400 | — (excluded: a stored entry can only be undone by clearing the whole history) |
 | SRCH-17 | Clear the history | P2 | none | DELETE `/search/history` | 204; empty history | — (excluded: wipes the account's history) |
 
@@ -276,7 +279,7 @@ catalog case by case (the developer report has that table).
 | GEN-01 | Every response matches its documented contract | P0 | Any request | The status is documented for the operation; documented headers present (`X-Api-Version: 4`, `X-Api-Servertime`, `X-Api-Messages`, `X-Token` …); media type and body match the response schema | Every `expectResponse` call, i.e. every test above |
 | GEN-02 | Error envelope | P0 | Any documented error | `application/problem+json` `{error: {type, code, message, request_id, details}}`; `X-Api-Error-Code` equals `error.code`; `X-Api-Error-Message` set; `request_id` is a UUID v7 | Every `expectError` call; `tests/other/errors.spec.ts` |
 | GEN-03 | Every operation that needs a session refuses an anonymous caller (×65) | P0 | Call each secured operation without a cookie, path parameters from the spec's examples | 403 `E_AUTH_ERROR` | `tests/other/auth-required.spec.ts` |
-| GEN-04 | Operations open without a session | P1 | `/login`, `/servertime`, `/screensaver`, `/content/{service}/free/{id}/play`, `/sharing/redeem` without a cookie | Answer by their own logic, not 403 `E_AUTH_ERROR` | SEC-08…11, OTH-01/02, CNT-14/15, SHR-04 |
+| GEN-04 | Operations open without a session | P1 | `/login`, `/servertime`, `/screensaver`, `/content/{service}/free/{id}/play`, `/sharing/redeem` without a cookie | Answer by their own logic, not 403 `E_AUTH_ERROR` | SEC-08…11, OTH-01/02, CNT-14/15, SHR-04 (their tests also carry `@GEN-04`) |
 | GEN-05 | **BUG:** no `ETag`, so no `304` **[A5]** | P1 | GET a response that documents `ETag`, then repeat with `If-None-Match` | Docs: `ETag` on 19 responses, 304 on a match. Actually no response carries an ETag | `tests/other/caching.spec.ts` (pinned) |
 | GEN-06 | `X-Clear-Cache` | P2 | GET `/channels` with `X-Clear-Cache: 1` | 200; same resource | `tests/other/caching.spec.ts` |
 | GEN-07 | **BUG:** staging leaks its debug trace **[S1]** | P1 | Any error on staging | Docs: `error` only. Staging adds `exception` (Symfony trace: classes, server paths, internal hosts) and `X-Debug-Token(-Link)` headers; production doesn't | `tests/other/errors.spec.ts` (pinned) |
@@ -290,7 +293,7 @@ Not gaps in effort; each needs something this black-box position on a real accou
 doesn't have, or would cost the account something it can't get back:
 
 - **Changes the suite won't make to the real account** (SEC-12, SEC-13, CLI-14, SHR-06,
-  SHR-07, SHR-08, SHR-09, REG-04, SRCH-16, SRCH-17): a wrong password risks a lockout,
+  SHR-07, SHR-08, SHR-09, REG-04, SRCH-15, SRCH-16, SRCH-17): a wrong password risks a lockout,
   a 4th session evicts real devices, a changed protect code could stay changed, the
   sharing calls send real codes or alter the friend subscription, the prompt answer
   is one-way, the search history can only be cleaned up by wiping it. A dedicated

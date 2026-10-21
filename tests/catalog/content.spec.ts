@@ -56,7 +56,7 @@ test.describe('GET /content/{service}/{id}', () => {
     await expectError(await api.getContentDetails('playwright-no-such-service', '1'), 'getContentDetails', 404);
   });
 
-  test('dashboard cards link to details of services the spec leaves out of {service} (known docs bug)', { tag: '@CNT-05' }, async ({
+  test('dashboard cards link to details of services the spec leaves out of {service} (known docs bug)', { tag: ['@CNT-05', '@pinned'] }, async ({
     api,
     dashboardBlocks,
   }) => {
@@ -139,7 +139,7 @@ test.describe('playback', () => {
     await expectError(await api.playContent(card.service, card.id), 'playContent', 403);
   });
 
-  test('an unknown trailer id is not answered with the documented 404 (known API bug)', { tag: '@CNT-11' }, async ({ api, dashboardBlocks }) => {
+  test('an unknown trailer id is not answered with the documented 404 (known API bug)', { tag: ['@CNT-11', '@pinned'] }, async ({ api, dashboardBlocks }) => {
     // Documented: 404 E_WRONG_ID ("No such content, episode or trailer"). Live, one
     // title per service (a movie where there is one): most answer an undocumented
     // 503, and some answer 200, for some movies with
@@ -176,7 +176,7 @@ test.describe('playback', () => {
 
 test.describe('GET /content/{service}/free/{id}/play', () => {
   // The series is found on the shared session; the play request itself goes without one.
-  test('needs no session: the first episode of a series either plays or is documented as not free', { tag: '@CNT-14' }, async ({
+  test('needs no session: the first episode of a series either plays or is documented as not free', { tag: ['@CNT-14', '@GEN-04'] }, async ({
     api,
     anonApi,
     dashboardBlocks,
@@ -196,7 +196,7 @@ test.describe('GET /content/{service}/free/{id}/play', () => {
     else await expectResponse<PlaybackStream>(res, 'playContentFreeEpisode', 200);
   });
 
-  test('an unknown episode answers 404', { tag: ['@no-session', '@CNT-15'] }, async ({ anonApi }) => {
+  test('an unknown episode answers 404', { tag: ['@no-session', '@CNT-15', '@GEN-04'] }, async ({ anonApi }) => {
     await expectError(
       await anonApi.playContentFreeEpisode('mediateka', 'playwright-no-such-episode'),
       'playContentFreeEpisode',

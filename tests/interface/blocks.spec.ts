@@ -27,7 +27,7 @@ test.describe('GET /pages/{slug}/blocks/{id}', () => {
     }
   });
 
-  test('an unknown block id answers an undocumented 503 instead of 404 (known API bug)', { tag: '@BLK-03' }, async ({ api }) => {
+  test('an unknown block id answers an undocumented 503 instead of 404 (known API bug)', { tag: ['@BLK-03', '@pinned'] }, async ({ api }) => {
     // Documented: 404 for an unknown block. The server answers 503 E_SYSTEM_ERROR,
     // a status the operation doesn't document. Pinned: a fix turns this red; then
     // assert the 404 with expectError instead.
@@ -64,7 +64,7 @@ test.describe('GET /pages/{slug}/blocks/{id}/{link}', () => {
     );
   });
 
-  test('a link of an unknown block answers 503 instead of the documented 404 (known API bug)', { tag: '@BLK-07' }, async ({ api }) => {
+  test('a link of an unknown block answers 503 instead of the documented 404 (known API bug)', { tag: ['@BLK-07', '@pinned'] }, async ({ api }) => {
     // Documented: 404 E_SYSTEM_ERROR for an unknown block. The server answers 503
     // (the same E_SYSTEM_ERROR), which the operation doesn't document; same cause as
     // the unknown page block above. Pinned: a fix turns this red.
@@ -98,7 +98,7 @@ test.describe('GET /blocks/playback', () => {
     expect(body.count).toBeLessThanOrEqual(1);
   });
 
-  test('limit outside 1–100 is not rejected with the documented 400 (known API bug)', { tag: '@BLK-10' }, async ({ api }) => {
+  test('limit outside 1–100 is not rejected with the documented 400 (known API bug)', { tag: ['@BLK-10', '@pinned'] }, async ({ api }) => {
     // The limit parameter is documented as 1–100 and the operation documents 400 for
     // invalid input; GET /search/services does reject its out-of-range limit, this
     // one answers 200. Pinned: a fix turns this red.
@@ -182,7 +182,7 @@ test.describe('channel group blocks', () => {
     expect(body.items.some((item) => item.playable)).toBe(true);
   });
 
-  test('radio stations come with kind "channel" (known API bug)', { tag: '@BLK-21' }, async ({ api }) => {
+  test('radio stations come with kind "channel" (known API bug)', { tag: ['@BLK-21', '@pinned'] }, async ({ api }) => {
     await expectKnownIssue(await api.getRadioChannelGroupBlock(), 'getRadioChannelGroupBlock', 200, 'radio-group-channel-kind');
   });
 });

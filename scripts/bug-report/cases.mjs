@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { esc, md } from './util.mjs';
 
 /** The projects whose tests carry case tags (setup and teardown don't). */
-const TEST_PROJECTS = ['api-v4', 'api-v4-mutating'];
+const TEST_PROJECTS = ['api-v4', 'api-v4-pinned', 'api-v4-mutating'];
 
 /** Known-issue annotation (see src/knownIssues.ts and the pinned tests) → finding of the report. */
 const FINDING = /** @type {[RegExp, string][]} */ ([
@@ -25,14 +25,24 @@ const FINDING = /** @type {[RegExp, string][]} */ ([
 const findingOf = (/** @type {string} */ description) => FINDING.find(([re]) => re.test(description))?.[1] ?? '?';
 
 /**
- * @typedef {'pass' | 'pass-known' | 'bug' | 'skip' | 'gap' | 'fail'} CaseStatus
+ * `skip`: the test ran and skipped itself (no matching live data). `notrun`: it never
+ * got to run (its project's dependency failed, a beforeAll failed, the run was cut).
+ * @typedef {'pass' | 'pass-known' | 'bug' | 'skip' | 'notrun' | 'gap' | 'fail'} CaseStatus
  * @typedef {{ status: CaseStatus, tests: string, note: string }} CaseResult
  * @typedef {Record<string, string> & { result: CaseResult }} CaseRow  catalog columns (ID, Title, Prio, …) plus the result
  * @typedef {{ title: string, rows: CaseRow[] }} CaseSection
  * @typedef {{ type: string, description?: string }} Annotation
- * @typedef {{ title: string, status: string, annotations: Annotation[] }} TaggedTest
+ * @typedef {{ title: string, status: string, expectedStatus: string, results: { status: string }[], annotations: Annotation[] }} TaggedTest
  * @typedef {{ startTime: string, duration: number, expected: number, skipped: number, unexpected: number, flaky: number }} RunStats
  */
+
+/** Why a test that didn't skip itself never ran. @param {TaggedTest} test */
+function notRunReason(test) {
+  const last = test.results.at(-1);
+  if (!last) return 'не запускался: упал тест проекта, от которого зависит его проект';
+  if (last.status === 'interrupted') return 'не запускался: прогон прерван';
+  return 'не запускался: упал beforeAll или воркер в его файле';
+}
 
 /**
  * @param {string} resultsPath  Playwright JSON reporter output
@@ -42,15 +52,26 @@ export function caseResults(resultsPath, catalogPath) {
   const results = JSON.parse(readFileSync(resultsPath, 'utf8'));
   /** @type {Map<string, TaggedTest[]>} */
   const byCase = new Map();
+  // Counted over the test projects only, like the reporters: setup and teardown open
+  // and close the session and check nothing.
+  /** @type {Record<string, number>} */
+  const counts = { expected: 0, skipped: 0, unexpected: 0, flaky: 0 };
   /** @param {any} suite */
   const walk = (suite) => {
     for (const spec of suite.specs ?? []) {
       for (const test of spec.tests) {
         if (!TEST_PROJECTS.includes(test.projectName)) continue;
+        counts[test.status] = (counts[test.status] ?? 0) + 1;
         for (const tag of spec.tags) {
           if (!/^[A-Z]+-\d+$/.test(tag)) continue;
           if (!byCase.has(tag)) byCase.set(tag, []);
-          byCase.get(tag)?.push({ title: spec.title, status: test.status, annotations: test.annotations });
+          byCase.get(tag)?.push({
+            title: spec.title,
+            status: test.status,
+            expectedStatus: test.expectedStatus,
+            results: test.results,
+            annotations: test.annotations,
+          });
         }
       }
     }
@@ -58,7 +79,7 @@ export function caseResults(resultsPath, catalogPath) {
   };
   results.suites.forEach(walk);
   /** @type {RunStats} */
-  const stats = results.stats;
+  const stats = { ...results.stats, expected: counts.expected, skipped: counts.skipped, unexpected: counts.unexpected, flaky: counts.flaky };
 
   /** @type {CaseSection[]} */
   const sections = [];
@@ -104,12 +125,6 @@ export function caseResults(resultsPath, catalogPath) {
       const ran = stats.expected + stats.unexpected + stats.flaky;
       return { status: stats.unexpected ? 'fail' : 'pass', tests: `${stats.expected}/${ran}`, note: 'проверяется в каждом тесте прогона' };
     }
-    if (id === 'GEN-04') {
-      const ids = ['SEC-08', 'SEC-09', 'SEC-10', 'SEC-11', 'OTH-01', 'OTH-02', 'CNT-14', 'CNT-15', 'SHR-04'];
-      const sub = ids.flatMap((x) => byCase.get(x) ?? []);
-      const ok = sub.filter((t) => t.status === 'expected').length;
-      return { status: ok === sub.length ? 'pass' : 'fail', tests: `${ok}/${sub.length}`, note: `по кейсам ${ids.join(', ')}` };
-    }
     if (tests.length === 0) {
       const reason = row.Automated.replace(/^—\s*/, '').replace(/^\((.*)\)$/, '$1');
       return { status: 'gap', tests: '—', note: md(reason || 'не автоматизирован') };
@@ -119,14 +134,18 @@ export function caseResults(resultsPath, catalogPath) {
     if (tests.some((t) => t.status === 'unexpected' || t.status === 'flaky')) {
       return { status: 'fail', tests: count, note: /\*\*(BUG|DOCS BUG)/.test(row.Title) ? 'закреплённый тест упал: баг, похоже, исправлен — проверить' : 'см. отчёт прогона' };
     }
+    // A test that skipped itself has expectedStatus 'skipped'; any other 'skipped'
+    // outcome is a test that never got to run (Playwright 1.63 reports a project left
+    // unrun by a failed dependency with no results, one skipped after a failed beforeAll
+    // or a worker crash with a 'skipped' result, a run cut short with 'interrupted').
+    const notRun = tests.filter((t) => t.status === 'skipped' && t.expectedStatus !== 'skipped');
+    if (notRun.length) {
+      const reasons = [...new Set(notRun.map(notRunReason))];
+      return { status: 'notrun', tests: count, note: esc(reasons.join('; ')) };
+    }
     const skipped = tests.filter((t) => t.status === 'skipped');
     if (skipped.length) {
-      // No skip annotation: the test never ran, e.g. api-v4-mutating after a failure in api-v4.
-      const reasons = [
-        ...new Set(
-          skipped.map((t) => t.annotations.find((a) => a.type === 'skip')?.description ?? 'не запускался: упал тест, от которого зависит его проект'),
-        ),
-      ];
+      const reasons = [...new Set(skipped.map((t) => t.annotations.find((a) => a.type === 'skip')?.description ?? ''))];
       return { status: 'skip', tests: count, note: esc(reasons.join('; ')) };
     }
     const findings = [
