@@ -152,14 +152,18 @@ test.describe('profile lifecycle', { tag: '@mutates' }, () => {
 test.describe('invalid profile requests', { tag: '@mutates' }, () => {
   test('POST /profiles with an age band outside 0/7/12/16 answers 400', { tag: '@PRF-09' }, async ({ api, undo }) => {
     undo(noSuiteProfilesLeft(api));
-    const res = await api.createProfile({ name: `${PREFIX}invalid`, age_band: 5 });
-    if (res.status() === 201) await api.deleteProfile((await res.json()).id);
-    await expectError(res, 'createProfile', 400);
+    await expectError(await api.createProfile({ name: `${PREFIX}invalid`, age_band: 5 }), 'createProfile', 400);
   });
 
-  test('POST /profiles without a name answers 400', { tag: '@PRF-10' }, async ({ api }) => {
+  test('POST /profiles without a name answers 400', { tag: '@PRF-10' }, async ({ api, undo }) => {
+    // A profile created without a name wouldn't carry the suite's prefix, so
+    // noSuiteProfilesLeft can't find it: it's deleted by the id the response gives.
+    let createdId: number | undefined;
+    undo(async () => {
+      if (createdId !== undefined) await expectResponse(await api.deleteProfile(createdId), 'deleteProfile', 204);
+    });
     const res = await api.createProfile({ age_band: 0 });
-    if (res.status() === 201) await api.deleteProfile((await res.json()).id);
+    if (res.status() === 201) createdId = (await res.json()).id;
     await expectError(res, 'createProfile', 400);
   });
 

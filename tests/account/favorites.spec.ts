@@ -1,4 +1,5 @@
-import { test, expect, findCards } from '../fixtures';
+import type { APIResponse } from '@playwright/test';
+import { test, expect, findCards, type Undo } from '../fixtures';
 import { expectError, expectResponse, recordKnownIssue } from '../../src/assertions';
 import type { V4ApiClient } from '../../src/client';
 import { operation, parameterEnum } from '../../src/spec';
@@ -16,25 +17,39 @@ async function favorites(api: V4ApiClient): Promise<FavoritesList> {
 const contains = (list: FavoritesList, id: string, service?: string) =>
   list.items.some((item) => item.id === id && (!service || item.service === service));
 
-/** An `undo` step for a favorite the test adds: 404 is fine, the test may have removed it itself. */
-const removeTitle = (api: V4ApiClient, service: string, id: string) => async () => {
-  expect([204, 404], `remove favorite ${service}/${id}`).toContain((await api.removeContentFavorite(service, id)).status());
-};
-const removeChannel = (api: V4ApiClient, id: string) => async () => {
-  expect([204, 404], `remove favorite channel ${id}`).toContain((await api.removeChannelFavorite(id)).status());
-};
+/**
+ * Sends the PUT that adds a favorite, its removal registered with `undo` first. A 200
+ * means the item was a favorite already (the subscriber's own, missing from what the
+ * test checked), and then it stays; otherwise it's removed after the test, 404 included
+ * (the test may have removed it itself).
+ */
+async function addFavorite(undo: Undo, what: string, put: () => Promise<APIResponse>, remove: () => Promise<APIResponse>): Promise<APIResponse> {
+  let wasFavorite = false;
+  undo(async () => {
+    if (!wasFavorite) expect([204, 404], `remove favorite ${what}`).toContain((await remove()).status());
+  });
+  const res = await put();
+  wasFavorite = res.status() === 200;
+  return res;
+}
+const addTitle = (api: V4ApiClient, undo: Undo, service: string, id: string) =>
+  addFavorite(undo, `${service}/${id}`, () => api.addContentFavorite(service, id), () => api.removeContentFavorite(service, id));
+const addChannel = (api: V4ApiClient, undo: Undo, id: string) =>
+  addFavorite(undo, `channel ${id}`, () => api.addChannelFavorite(id), () => api.removeChannelFavorite(id));
 
-/** A playable channel that isn't a favorite now: checked live, not from the worker's snapshot. */
+/** A playable channel that isn't a favorite: by the worker's snapshot and by the live list. */
 async function nonFavoriteChannel(api: V4ApiClient, channels: ChannelsList): Promise<ChannelListCard | undefined> {
   const live = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
-  return [...channels.items].reverse().find((c) => c.playable && !c.access.protected && !contains(live, c.id));
+  return [...channels.items].reverse().find((c) => !c.favorite && c.playable && !c.access.protected && !contains(live, c.id));
 }
 
 // Favorites are the account's own list: these tests run in the api-v4-mutating
 // project, and every test takes back exactly what it added. It only adds a title or
-// channel that isn't a favorite right now (checked live), and registers the removal
-// with `undo` before the PUT, so it's removed also when the PUT is applied but answered
-// unexpectedly, when an assertion fails halfway, or when the test times out.
+// channel that isn't a favorite (neither by its card nor by the live list), and its
+// first PUT goes through `addFavorite`: the removal is registered before it, so it
+// runs also when the PUT is applied but answered unexpectedly, when an assertion
+// fails halfway, or when the test times out, and is dropped when the PUT says the
+// item was a favorite already.
 
 test.describe('GET /favorites', { tag: '@mutates' }, () => {
   test('lists channels and titles, all marked favorite', { tag: '@FAV-01' }, async ({ api }) => {
@@ -59,10 +74,9 @@ test.describe('GET /favorites', { tag: '@mutates' }, () => {
     // With no favorite of a service this endpoint lists, the check below would hold
     // trivially (0 == 0); a title is added for the test then, and taken back.
     if (!all.items.some((item) => item.service && listable(item.service))) {
-      const card = findCards(dashboardBlocks, (c) => listable(c.service) && !contains(all, c.id, c.service)).pop();
+      const card = findCards(dashboardBlocks, (c) => !c.favorite && listable(c.service) && !contains(all, c.id, c.service)).pop();
       test.skip(!card, 'No title of a service GET /favorites/{service} lists, favorite or not');
-      undo(removeTitle(api, card!.service, card!.id));
-      await expectResponse(await api.addContentFavorite(card!.service, card!.id), 'addContentFavorite', 201);
+      await expectResponse(await addTitle(api, undo, card!.service, card!.id), 'addContentFavorite', 201);
       all = await favorites(api);
     }
     const service = all.items.find((item) => item.service && listable(item.service))!.service!;
@@ -85,12 +99,14 @@ test.describe('VOD title favorites', { tag: '@mutates' }, () => {
     undo,
   }) => {
     const before = await favorites(api);
-    const card = findCards(dashboardBlocks, (c) => FAVORABLE_SERVICES.includes(c.service) && !contains(before, c.id, c.service)).pop();
+    const card = findCards(
+      dashboardBlocks,
+      (c) => !c.favorite && FAVORABLE_SERVICES.includes(c.service) && !contains(before, c.id, c.service),
+    ).pop();
     test.skip(!card, 'No non-favorite title on the dashboard right now');
     const { service, id } = card!;
-    undo(removeTitle(api, service, id));
 
-    await expectResponse(await api.addContentFavorite(service, id), 'addContentFavorite', 201);
+    await expectResponse(await addTitle(api, undo, service, id), 'addContentFavorite', 201);
     await expectResponse(await api.addContentFavorite(service, id), 'addContentFavorite', 200);
 
     expect(contains(await favorites(api), id, service), 'listed in GET /favorites').toBe(true);
@@ -112,9 +128,8 @@ test.describe('channel favorites', { tag: '@mutates' }, () => {
     const channel = await nonFavoriteChannel(api, channels);
     test.skip(!channel, 'Every channel is a favorite already');
     const { id } = channel!;
-    undo(removeChannel(api, id));
 
-    await expectResponse(await api.addChannelFavorite(id), 'addChannelFavorite', 201);
+    await expectResponse(await addChannel(api, undo, id), 'addChannelFavorite', 201);
     await expectResponse(await api.addChannelFavorite(id), 'addChannelFavorite', 200);
 
     const listed = await expectResponse<FavoritesList>(await api.getFavoritesByService('channels'), 'getFavoritesByService', 200);
@@ -136,9 +151,8 @@ test.describe('channel favorites', { tag: '@mutates' }, () => {
     const channel = await nonFavoriteChannel(api, channels);
     test.skip(!channel, 'Every channel is a favorite already');
     const { id } = channel!;
-    undo(removeChannel(api, id));
 
-    await expectResponse(await api.addChannelFavorite(id), 'addChannelFavorite', 201);
+    await expectResponse(await addChannel(api, undo, id), 'addChannelFavorite', 201);
     const block = await expectResponse<CardList<ChannelCard>>(await api.getClientChannelsBlock(), 'getClientChannelsBlock', 200);
     expect(block.items.map((item) => item.id), 'a fresh favorite in the block').not.toContain(id);
     recordKnownIssue('client-channels-summary: GET /blocks/client-channels is summarized as favorite channels, but holds the most-watched ones');

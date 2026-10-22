@@ -51,6 +51,13 @@ export const v4AuxSerial = `${v4Serial}-aux`;
 
 export const isStaging = v4Host === 'rustvt.kartina.tv';
 
+/**
+ * `V4_MUTATING_ONLY=1`: the run leaves out the read-only projects, so a mutating case
+ * runs right after the setup instead of after the whole read-only suite. Exactly `1`:
+ * `0` or `false` must not switch it on.
+ */
+export const v4MutatingOnly = process.env.V4_MUTATING_ONLY === '1';
+
 /** Throws a clear error unless V4_API_HOST / V4_API_SCHEME are values the spec allows. */
 export function assertValidV4Host() {
   if (!ALLOWED_HOSTS.includes(v4Host)) {

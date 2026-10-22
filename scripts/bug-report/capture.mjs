@@ -251,11 +251,13 @@ export async function capture({ base, login, password, device, serial }) {
     }
 
     // D3: a fresh channel favorite doesn't show in the "favorite-channels" block. The
-    // channel is picked against the live favorites, and taken back only when this PUT
-    // created the favorite (201): a 200 means it was the subscriber's own already.
+    // channel is a favorite neither by its card nor by the live favorites, and taken
+    // back only when this PUT created the favorite (201): a 200 means it was the
+    // subscriber's own already.
     const liveFavorites = await call('GET', '/favorites/channels', { keep: false });
-    const favoriteIds = new Set(ok(liveFavorites) ? liveFavorites.json.items.map(/** @param {any} c */ (c) => c.id) : []);
-    const channel = ok(liveFavorites) ? [...channels].reverse().find(/** @param {any} c */ (c) => !favoriteIds.has(c.id)) : undefined;
+    const listed = ok(liveFavorites) && Array.isArray(liveFavorites.json.items);
+    const favoriteIds = new Set(listed ? liveFavorites.json.items.map(/** @param {any} c */ (c) => c.id) : []);
+    const channel = listed ? [...channels].reverse().find(/** @param {any} c */ (c) => !c.favorite && !favoriteIds.has(c.id)) : undefined;
     if (channel) {
       out.d3channel = { id: channel.id, title: channel.title };
       out.d3 = [];
@@ -274,12 +276,20 @@ export async function capture({ base, login, password, device, serial }) {
     // Whatever failed above, the session doesn't keep one of the account's few slots.
     // The report shows the session id, so it must be confirmed dead: the logout is
     // retried once, and `sessionClosed` says whether GET /account then refuses it.
-    let logout = await call('POST', '/logout');
-    if (logout.exchange.status !== 204) logout = await call('POST', '/logout');
-    out.logout = logout.exchange.n;
-    const after = await call('GET', '/account');
-    out.after = after.exchange.n;
-    out.sessionClosed = after.exchange.status === 403 && after.json?.error?.type === 'E_AUTH_ERROR';
+    // A request here that throws doesn't replace the error that stopped the capture:
+    // it leaves `sessionClosed` false (bug-report.mjs then writes no report), with the
+    // reason in `logoutError`.
+    out.sessionClosed = false;
+    try {
+      let logout = await call('POST', '/logout');
+      if (logout.exchange.status !== 204) logout = await call('POST', '/logout');
+      out.logout = logout.exchange.n;
+      const after = await call('GET', '/account');
+      out.after = after.exchange.n;
+      out.sessionClosed = after.exchange.status === 403 && after.json?.error?.type === 'E_AUTH_ERROR';
+    } catch (error) {
+      out.logoutError = error instanceof Error ? error.message : String(error);
+    }
   }
   out.meta = { base, device, serial, login, ssid, at: log[0].at, until: log[log.length - 1].at };
   return { out, log };

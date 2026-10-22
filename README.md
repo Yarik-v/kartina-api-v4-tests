@@ -73,7 +73,9 @@ session cookie; a login test's trace also records the password.
   the ID of its `TEST_CASES.md` case: `npx playwright test --grep @CNT-11` runs that
   case. An `@mutates` case would bring the whole read-only `api-v4` project along (it's
   a dependency); `V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05`
-  runs just it, after the setup.
+  runs just it, after the setup. With `V4_MUTATING_ONLY=1` (exactly `1`) the read-only
+  projects are left out of the run altogether, so nothing reads the account while it
+  changes; `npm run report:bugs` refuses to run the suite with it set.
 - `tests/fixtures.ts` — `api` (the shared session), `anonApi` / `newAnonApi` (no
   cookies), and worker-scoped live data fetched once per worker: `account`,
   `services`, `channels`, `dashboard`, `dashboardBlocks` (each loaded from its own

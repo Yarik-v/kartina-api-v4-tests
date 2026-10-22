@@ -169,6 +169,9 @@ export interface ResponseCheck {
   errors: ErrorObject[];
 }
 
+/** Statuses whose informational body a client ignores: it follows the Location. */
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
 /** Checks a live response against what `operationId` documents for `status`. */
 export function checkResponse(operationId: string, status: number, contentType: string, body: unknown): ResponseCheck {
   const op = operation(operationId);
@@ -180,8 +183,9 @@ export function checkResponse(operationId: string, status: number, contentType: 
   if (mediaTypes.length === 0) {
     // A redirect may carry a short "Redirecting to …" page (Symfony's RedirectResponse
     // always does); clients follow the Location, the body is informational. Any other
-    // status documented without content must come without one.
-    if (body === null || (status >= 300 && status < 400)) return { errors: [] };
+    // status documented without content must come without one, 304 included (HTTP
+    // forbids it a body).
+    if (body === null || REDIRECT_STATUSES.has(status)) return { errors: [] };
     return { problem: `status ${status} documents no body, got one`, errors: [] };
   }
   const mediaType = mediaTypes.find((type) => contentType.split(';')[0].trim() === type);

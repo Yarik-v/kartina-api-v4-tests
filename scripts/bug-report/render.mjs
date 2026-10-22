@@ -328,6 +328,9 @@ x-api-error-code: 11
     if (statuses.some((s) => s === 'fail')) return '<span class="rs fail">не воспроизвелось — проверить</span>';
     if (f.id === 'S1' && !stagingTrace) return '<span class="rs ok">на этом хосте нет</span>';
     if (statuses.every((s) => s === 'gap')) return '<span class="rs gap">не автоматизирован</span>';
+    // One case that reproduced it is enough, even if another case of the finding
+    // didn't run or skipped itself.
+    if (statuses.some((s) => s === 'bug')) return '<span class="rs bugrep">воспроизводится</span>';
     if (statuses.some((s) => s === 'notrun')) return '<span class="rs notrun">не проверено: тест не запускался</span>';
     if (statuses.some((s) => s === 'skip')) return '<span class="rs skip">не проверено</span>';
     if (statuses.every((s) => s === 'pass')) return '<span class="rs ok">не наблюдалось</span>';
@@ -351,7 +354,17 @@ x-api-error-code: 11
   const sevCount = (sev) => findings.filter((f) => f.sev === sev).length;
 
   const { stats, tally } = cases;
-  const runTotal = stats.expected + stats.skipped + stats.unexpected + stats.flaky;
+  const runTotal = stats.expected + stats.flaky + stats.skipped + stats.notRun + stats.unexpected;
+  /** The run's counts in words, the same in the summary and in the cases section. */
+  const runCounts = [
+    `${stats.expected} прошли`,
+    stats.flaky ? `${stats.flaky} прошли со второй попытки` : '',
+    `${stats.skipped} пропущены`,
+    stats.notRun ? `${stats.notRun} не запускались` : '',
+    `${stats.unexpected} упали`,
+  ]
+    .filter(Boolean)
+    .join(', ');
   const passedCases = (tally.pass ?? 0) + (tally['pass-known'] ?? 0);
   /** @param {CaseStatus} status */
   const badge = (status) => `<span class="rs ${STATUS[status][0]}">${STATUS[status][1]}</span>`;
@@ -393,7 +406,7 @@ ${CSS}</style>
   <div class="fact"><b>${sevCount('high')}</b><span>высокая серьёзность</span></div>
   <div class="fact"><b>${sevCount('mid')}</b><span>средняя</span></div>
   <div class="fact"><b>${cases.all.length}</b><span>тест-кейсов: <a href="#cases">${passedCases} пройдены, ${tally.bug ?? 0} — баг воспроизводится, ${tally.skip ?? 0} пропущены${tally.notrun ? `, ${tally.notrun} не запускались` : ''}, ${tally.gap ?? 0} не автоматизированы${tally.fail ? `, ${tally.fail} упали` : ''}</a></span></div>
-  <div class="fact"><b>${runTotal}</b><span>автотестов: ${stats.expected} прошли, ${stats.skipped} пропущены, ${stats.unexpected} упали</span></div>
+  <div class="fact"><b>${runTotal}</b><span>автотестов: ${runCounts}</span></div>
 </div>
 
 <p>Каждая находка закреплена автотестом: тест проверяет текущее (неверное) поведение и упадёт,
@@ -431,7 +444,7 @@ ${cards(['D1', 'D2', 'D3', 'D4'])}
 
 <h2 id="cases">Результаты прогона тест-кейсов</h2>
 <p class="meta">Прогон ${esc(utc(stats.startTime))}, ${Math.round(stats.duration / 1000)} с, ${esc(base)}.
-${runTotal} автотестов: ${stats.expected} прошли, ${stats.skipped} пропущены, ${stats.unexpected} упали${stats.flaky ? `, ${stats.flaky} нестабильны` : ''}.
+${runTotal} автотестов: ${runCounts}.
 Кейсы и причины пробелов — из <code>TEST_CASES.md</code> репозитория тестов; тест относится к кейсу по тегу: <code>npx playwright test --grep @CNT-11</code> прогоняет один кейс, для кейса, меняющего аккаунт, — <code>V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05</code>.</p>
 <div class="facts">
   <div class="fact"><b>${cases.all.length}</b><span>тест-кейсов</span></div>

@@ -55,6 +55,9 @@ async function okJson<T>(res: APIResponse, what: string): Promise<T> {
   return res.json();
 }
 
+/** The `undo` fixture: registers a step that puts the account back after the test. */
+export type Undo = (step: () => Promise<unknown>) => void;
+
 interface Fixtures {
   /** Skips the test without a session, unless it's tagged `@no-session`. */
   sessionGate: void;
@@ -74,7 +77,7 @@ interface Fixtures {
    * back); every step runs after the test, in reverse order, also when the test failed
    * or timed out, and a step that throws fails the test.
    */
-  undo: (step: () => Promise<unknown>) => void;
+  undo: Undo;
 }
 
 interface WorkerFixtures {
@@ -150,7 +153,13 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
         errors.push(error);
       }
     }
-    if (errors.length) throw errors[0];
+    // Every failed step is reported, not only the first: each names what was left on
+    // the account.
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) {
+      const messages = errors.map((error) => (error instanceof Error ? error.message : String(error)));
+      throw new Error(`${errors.length} undo steps failed:\n\n${messages.join('\n\n')}`);
+    }
   },
 
   anonApi: async ({ newAnonApi }, use) => {

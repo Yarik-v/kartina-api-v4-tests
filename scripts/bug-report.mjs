@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HOST_LABELS, assertValidV4Host, v4Device, v4Host, v4Login, v4Origin, v4Password } from '../src/env.mjs';
+import { HOST_LABELS, assertValidV4Host, v4Device, v4Host, v4Login, v4MutatingOnly, v4Origin, v4Password } from '../src/env.mjs';
 import { capture } from './bug-report/capture.mjs';
 import { caseResults } from './bug-report/cases.mjs';
 import { render } from './bug-report/render.mjs';
@@ -26,6 +26,9 @@ assertValidV4Host();
 if (!v4Login || !v4Password) throw new Error('Set V4_LOGIN and V4_PASSWORD in .env');
 
 if (!process.argv.includes('--skip-tests')) {
+  // The report needs the whole suite: with V4_MUTATING_ONLY the read-only projects
+  // aren't in the run, and every case they hold would read as not run.
+  if (v4MutatingOnly) throw new Error('V4_MUTATING_ONLY=1 leaves the read-only tests out of the run: unset it for the report');
   // Removed up front: a run that dies before Playwright cleans test-results/ (a
   // config or load error) must not leave the previous results to be reported as new.
   rmSync(RESULTS, { force: true });
@@ -59,7 +62,8 @@ const captured = await capture({
 if (!captured.out.sessionClosed) {
   throw new Error(
     `The capture's session (serial bugreport-${date}) could not be confirmed closed, so no report was written: ` +
-      'it would publish a live session id. Run `npm run report:bugs -- --skip-tests` again in a moment.',
+      'it would publish a live session id. Run `npm run report:bugs -- --skip-tests` again in a moment.' +
+      (captured.out.logoutError ? ` (${captured.out.logoutError})` : ''),
   );
 }
 

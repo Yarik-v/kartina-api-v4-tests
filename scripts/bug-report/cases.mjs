@@ -3,8 +3,12 @@
 import { readFileSync } from 'node:fs';
 import { esc, md } from './util.mjs';
 
-/** The projects whose tests carry case tags (setup and teardown don't). */
-const TEST_PROJECTS = ['api-v4', 'api-v4-pinned', 'api-v4-mutating'];
+/**
+ * The setup and teardown projects of playwright.config.ts: they open and close the
+ * session, check nothing and carry no case tags. Every other project's tests count, so
+ * a project added later is in the report without a change here.
+ */
+const INFRASTRUCTURE_PROJECTS = ['api-v4-setup', 'api-v4-teardown'];
 
 /** Known-issue annotation (see src/knownIssues.ts and the pinned tests) → finding of the report. */
 const FINDING = /** @type {[RegExp, string][]} */ ([
@@ -33,8 +37,15 @@ const findingOf = (/** @type {string} */ description) => FINDING.find(([re]) => 
  * @typedef {{ title: string, rows: CaseRow[] }} CaseSection
  * @typedef {{ type: string, description?: string }} Annotation
  * @typedef {{ title: string, status: string, expectedStatus: string, results: { status: string }[], annotations: Annotation[] }} TaggedTest
- * @typedef {{ startTime: string, duration: number, expected: number, skipped: number, unexpected: number, flaky: number }} RunStats
+ * `skipped` counts the tests that skipped themselves, `notRun` the ones that never got to run.
+ * @typedef {{ startTime: string, duration: number, expected: number, skipped: number, notRun: number, unexpected: number, flaky: number }} RunStats
  */
+
+// A test that skipped itself has expectedStatus 'skipped'; any other 'skipped' outcome
+// is a test that never got to run (Playwright 1.63 reports a project left unrun by a
+// failed dependency with no results, one skipped after a failed beforeAll or a worker
+// crash with a 'skipped' result, a run cut short with 'interrupted').
+const neverRan = (/** @type {{ status: string, expectedStatus: string }} */ test) => test.status === 'skipped' && test.expectedStatus !== 'skipped';
 
 /** Why a test that didn't skip itself never ran. @param {TaggedTest} test */
 function notRunReason(test) {
@@ -52,16 +63,20 @@ export function caseResults(resultsPath, catalogPath) {
   const results = JSON.parse(readFileSync(resultsPath, 'utf8'));
   /** @type {Map<string, TaggedTest[]>} */
   const byCase = new Map();
-  // Counted over the test projects only, like the reporters: setup and teardown open
-  // and close the session and check nothing.
+  // Like the reporters (src/reporters/runSummary.ts): setup and teardown count only
+  // when they fail, since a failed login leaves every test unrun.
   /** @type {Record<string, number>} */
-  const counts = { expected: 0, skipped: 0, unexpected: 0, flaky: 0 };
+  const counts = { expected: 0, skipped: 0, notRun: 0, unexpected: 0, flaky: 0 };
   /** @param {any} suite */
   const walk = (suite) => {
     for (const spec of suite.specs ?? []) {
       for (const test of spec.tests) {
-        if (!TEST_PROJECTS.includes(test.projectName)) continue;
-        counts[test.status] = (counts[test.status] ?? 0) + 1;
+        if (INFRASTRUCTURE_PROJECTS.includes(test.projectName)) {
+          if (test.status === 'unexpected') counts.unexpected++;
+          continue;
+        }
+        const bucket = neverRan(test) ? 'notRun' : test.status;
+        counts[bucket] = (counts[bucket] ?? 0) + 1;
         for (const tag of spec.tags) {
           if (!/^[A-Z]+-\d+$/.test(tag)) continue;
           if (!byCase.has(tag)) byCase.set(tag, []);
@@ -79,7 +94,14 @@ export function caseResults(resultsPath, catalogPath) {
   };
   results.suites.forEach(walk);
   /** @type {RunStats} */
-  const stats = { ...results.stats, expected: counts.expected, skipped: counts.skipped, unexpected: counts.unexpected, flaky: counts.flaky };
+  const stats = {
+    ...results.stats,
+    expected: counts.expected,
+    skipped: counts.skipped,
+    notRun: counts.notRun,
+    unexpected: counts.unexpected,
+    flaky: counts.flaky,
+  };
 
   /** @type {CaseSection[]} */
   const sections = [];
@@ -123,31 +145,37 @@ export function caseResults(resultsPath, catalogPath) {
     const tests = byCase.get(id) ?? [];
     if (id === 'GEN-01') {
       const ran = stats.expected + stats.unexpected + stats.flaky;
-      return { status: stats.unexpected ? 'fail' : 'pass', tests: `${stats.expected}/${ran}`, note: 'проверяется в каждом тесте прогона' };
+      const tests = `${stats.expected + stats.flaky}/${ran}`;
+      if (stats.unexpected) return { status: 'fail', tests, note: 'проверяется в каждом тесте прогона' };
+      if (!ran) return { status: 'notrun', tests, note: 'ни один тест прогона не выполнился' };
+      return { status: 'pass', tests, note: 'проверяется в каждом тесте прогона' };
     }
     if (tests.length === 0) {
       const reason = row.Automated.replace(/^—\s*/, '').replace(/^\((.*)\)$/, '$1');
       return { status: 'gap', tests: '—', note: md(reason || 'не автоматизирован') };
     }
-    const passed = tests.filter((t) => t.status === 'expected').length;
+    // A flaky test passed on its retry (api-v4 retries once): it counts as passed, as
+    // in the run's own report, with a note.
+    const passed = tests.filter((t) => t.status === 'expected' || t.status === 'flaky').length;
     const count = `${passed}/${tests.length}`;
-    if (tests.some((t) => t.status === 'unexpected' || t.status === 'flaky')) {
+    if (tests.some((t) => t.status === 'unexpected')) {
       return { status: 'fail', tests: count, note: /\*\*(BUG|DOCS BUG)/.test(row.Title) ? 'закреплённый тест упал: баг, похоже, исправлен — проверить' : 'см. отчёт прогона' };
     }
-    // A test that skipped itself has expectedStatus 'skipped'; any other 'skipped'
-    // outcome is a test that never got to run (Playwright 1.63 reports a project left
-    // unrun by a failed dependency with no results, one skipped after a failed beforeAll
-    // or a worker crash with a 'skipped' result, a run cut short with 'interrupted').
-    const notRun = tests.filter((t) => t.status === 'skipped' && t.expectedStatus !== 'skipped');
+    const notRun = tests.filter(neverRan);
     if (notRun.length) {
       const reasons = [...new Set(notRun.map(notRunReason))];
       return { status: 'notrun', tests: count, note: esc(reasons.join('; ')) };
     }
     const skipped = tests.filter((t) => t.status === 'skipped');
     if (skipped.length) {
-      const reasons = [...new Set(skipped.map((t) => t.annotations.find((a) => a.type === 'skip')?.description ?? ''))];
+      const reasons = [
+        ...new Set(skipped.map((t) => t.annotations.find((a) => a.type === 'skip' || a.type === 'fixme')?.description || 'без причины')),
+      ];
       return { status: 'skip', tests: count, note: esc(reasons.join('; ')) };
     }
+    const flaky = tests.some((t) => t.status === 'flaky') ? 'прошёл со второй попытки' : '';
+    /** @param {CaseStatus} status @param {string} note @returns {CaseResult} */
+    const result = (status, note) => ({ status, tests: count, note: [note, flaky].filter(Boolean).join('; ') });
     const findings = [
       ...new Set(tests.flatMap((t) => t.annotations.filter((a) => a.type === 'known-issue').map((a) => findingOf(a.description ?? '')))),
     ];
@@ -156,14 +184,14 @@ export function caseResults(resultsPath, catalogPath) {
       const link = finding ? ` — <a href="#${finding}">${finding}</a>` : '';
       // Every pinned test records its known issue when the bug shows; a green one
       // without it saw no bug here (e.g. the staging-only debug trace on production).
-      if (!findings.length) return { status: 'pass', tests: count, note: `баг на этом хосте не наблюдался${link}` };
-      return { status: 'bug', tests: count, note: `баг воспроизводится${link}` };
+      if (!findings.length) return result('pass', `баг на этом хосте не наблюдался${link}`);
+      return result('bug', `баг воспроизводится${link}`);
     }
     if (findings.length) {
       const links = findings.map((f) => `<a href="#${f}">${f}</a>`).join(', ');
-      return { status: 'pass-known', tests: count, note: `пройден; в ответах допущено известное расхождение ${links}` };
+      return result('pass-known', `пройден; в ответах допущено известное расхождение ${links}`);
     }
-    return { status: 'pass', tests: count, note: '' };
+    return result('pass', '');
   };
   for (const row of all) row.result = evaluate(row);
 
