@@ -11,15 +11,13 @@ codes, evicting devices), or it needs something a black-box client doesn't contr
 Legend: **P0** = blocks release if broken, **P1** = should work, **P2** = nice to have covered.
 **BUG** / **DOCS BUG** = the live API (or the spec itself) contradicts the documentation;
 the case pins the current behavior so that a fix turns its test red (see README,
-"Known API bugs are pinned, not skipped"). The bugs are written up for the developers,
-with the exact requests and responses, in
-`reports/` (the newest file, e.g.
-[`reports/2026-10-21-api-v4-staging.html`](reports/2026-10-21-api-v4-staging.html));
-the **[A1]**-style tags in this catalog are that report's IDs.
+"Known API bugs"). The bugs are written up for the developers, with the exact requests
+and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
+not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
 **176 cases total, 151 automated, 25 gaps** (`—` in Automated); see "Remaining gaps"
-at the end for the breakdown. Of the automated ones, 10 run only when their
-precondition holds: 7 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
+at the end for the breakdown. Of the automated ones, 11 run only when their
+precondition holds: 8 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
 20.10.2026 the dashboard has no non-playable title and no ivi / start_film block).
 
@@ -68,7 +66,7 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | CLI-09 | Protect-code check without a code | P1 | none | POST `/protect-code/check` `{}` | 400 | `tests/account/client.spec.ts` |
 | CLI-10 | Protect-code check, right code | P1 | `V4_PROTECT_CODE` | POST `{code: <right>}` | 200 `{success: true}` | `tests/account/client.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CLI-11 | Protect-code check, wrong code | P1 | `V4_PROTECT_CODE` | POST `{code: <wrong>}` | 403 `E_CURRENT_PASS_BAD` | `tests/account/client.spec.ts` (needs `V4_PROTECT_CODE`) |
-| CLI-12 | Protect-code change without parameters | P2 | none | POST `/protect-code/change` `{}` | 400; nothing changes | `tests/account/client.spec.ts` |
+| CLI-12 | Protect-code change without parameters | P2 | `V4_PROTECT_CODE` (to check afterwards that it still works) | POST `/protect-code/change` `{}` | 400; nothing changes | `tests/account/client.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CLI-13 | Protect-code change, confirmation mismatch | P1 | `V4_PROTECT_CODE` | POST `{old: <right>, new: A, confirm: B}` | 400; nothing changes | `tests/account/client.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CLI-14 | Protect-code change succeeds | P1 | `V4_PROTECT_CODE` | Change old → new, check, change back | 200 each way; the new code works for `/check` | — (excluded: changes the account's parental code; a failure halfway would leave it changed) |
 | CLI-15 | The account shows the prompt only without a personal cabinet | P1 | none | GET `/account` | `registration_prompt.show` is true only when `has_personal_account` is false; a personal cabinet (or `null`) means no prompt | `tests/account/client.spec.ts` |

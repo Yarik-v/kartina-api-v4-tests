@@ -167,6 +167,9 @@ test.describe('archive and teleteka', () => {
     // the EPG marks `teleteka: false`: a 403 must be the documented one, and the test
     // stays green while any of them still plays the stub. Once none does, it fails:
     // then assert the 403 for all of them instead.
+    // Up to 52 requests one after another (12.9 s on a good day): on a slow staging the
+    // default 30 s would time it out, and a red pinned test reads as "fixed".
+    test.setTimeout(90_000);
     const outcomes: { channel: string; startsAt: number; stub: boolean }[] = [];
     for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 40)) {
       const epg = await expectResponse<ChannelEpg>(

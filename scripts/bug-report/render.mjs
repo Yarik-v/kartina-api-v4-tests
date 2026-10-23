@@ -14,8 +14,15 @@ import { esc, md, streamFile } from './util.mjs';
  */
 
 const CSS = readFileSync(new URL('./report.css', import.meta.url), 'utf8');
-/** The password never makes it into the report; everything else is shown as sent. */
+/**
+ * The password and the login's `x-token` never make it into the report; everything
+ * else is shown as sent. The session id stays: the report is written only once that
+ * session is confirmed closed. `x-token` is an opaque token of unknown lifetime that
+ * nothing in the report needs, so it can't be assumed dead with the session.
+ */
 const PASSWORD_PLACEHOLDER = '<пароль: не включён в отчёт>';
+const SECRET_RESPONSE_HEADERS = new Set(['x-token']);
+const SECRET_PLACEHOLDER = '<не включён в отчёт>';
 const SEV_NAME = { high: 'высокая', mid: 'средняя', low: 'низкая', doc: 'документация' };
 /** @type {Record<CaseStatus, [string, string]>} */
 const STATUS = {
@@ -48,9 +55,11 @@ const utc = (iso) => iso.replace('T', ' ').replace(/(:\d\d)(\.\d+)?Z$/, '$1 UTC'
 export function render({ capture, cases, hostLabel }) {
   const { out } = capture;
   const log = capture.log.map((e) => {
-    if (!e.reqBody || !e.url.endsWith('/login')) return e;
+    /** @type {[string, string][]} */
+    const resHeaders = e.resHeaders.map(([name, value]) => [name, SECRET_RESPONSE_HEADERS.has(name.toLowerCase()) ? SECRET_PLACEHOLDER : value]);
+    if (!e.reqBody || !e.url.endsWith('/login')) return { ...e, resHeaders };
     const body = JSON.parse(e.reqBody);
-    return 'password' in body ? { ...e, reqBody: JSON.stringify({ ...body, password: PASSWORD_PLACEHOLDER }) } : e;
+    return { ...e, resHeaders, reqBody: 'password' in body ? JSON.stringify({ ...body, password: PASSWORD_PLACEHOLDER }) : e.reqBody };
   });
   const base = out.meta.base;
   /** @param {number} n */

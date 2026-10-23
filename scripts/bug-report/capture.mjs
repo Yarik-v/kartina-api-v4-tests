@@ -251,9 +251,10 @@ export async function capture({ base, login, password, device, serial }) {
     }
 
     // D3: a fresh channel favorite doesn't show in the "favorite-channels" block. The
-    // channel is a favorite neither by its card nor by the live favorites, and taken
-    // back only when this PUT created the favorite (201): a 200 means it was the
-    // subscriber's own already.
+    // channel is a favorite neither by its card nor by the live favorites, so the
+    // favorite is taken back unless the PUT answered 200 (then it was the subscriber's
+    // own already): also when the PUT threw or answered oddly, as the server may have
+    // created it all the same.
     const liveFavorites = await call('GET', '/favorites/channels', { keep: false });
     const listed = ok(liveFavorites) && Array.isArray(liveFavorites.json.items);
     const favoriteIds = new Set(listed ? liveFavorites.json.items.map(/** @param {any} c */ (c) => c.id) : []);
@@ -262,13 +263,15 @@ export async function capture({ base, login, password, device, serial }) {
       out.d3channel = { id: channel.id, title: channel.title };
       out.d3 = [];
       let created = false;
+      let subscribersOwn = false;
       try {
         const put = await call('PUT', `/channels/${channel.id}/favorite`);
         out.d3.push(put.exchange.n);
         created = put.exchange.status === 201;
+        subscribersOwn = put.exchange.status === 200;
         out.d3.push((await call('GET', '/favorites/channels')).exchange.n, (await call('GET', '/blocks/client-channels')).exchange.n);
       } finally {
-        if (created) out.d3.push((await call('DELETE', `/channels/${channel.id}/favorite`)).exchange.n);
+        if (!subscribersOwn) out.d3.push((await call('DELETE', `/channels/${channel.id}/favorite`)).exchange.n);
       }
       if (!created) out.d3 = undefined;
     }

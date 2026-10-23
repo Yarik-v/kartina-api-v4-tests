@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect } from '../fixtures';
+import { test, expect, type Undo } from '../fixtures';
 import { expectError, expectResponse } from '../../src/assertions';
 import type { V4ApiClient } from '../../src/client';
 import { v4AdminCreatedAccount, v4Login, v4ProtectCode } from '../../src/config';
@@ -122,9 +122,31 @@ test.describe('client settings', { tag: '@mutates' }, () => {
   });
 });
 
+/**
+ * For a change request that must be rejected: registers, before it is sent, a step
+ * that checks the protect code still works and, should the server have changed it
+ * anyway, puts it back from each code the request could have set.
+ */
+function guardProtectCode(api: V4ApiClient, undo: Undo, possibleCodes: string[]): void {
+  undo(async () => {
+    const check = await api.checkProtectCode({ code: v4ProtectCode });
+    if (check.status() === 200) return;
+    // Only on a definite "wrong code": a transient error must not trigger change
+    // attempts with guessed old codes against the account's parental code, so it
+    // fails the test instead and leaves the check to a person.
+    const type = ((await check.json().catch(() => null)) as ApiError | null)?.error?.type;
+    expect(`${check.status()} ${type}`, 'protect code check after the change request').toBe('403 E_CURRENT_PASS_BAD');
+    for (const code of possibleCodes) {
+      await api.raw('POST', 'protect-code/change', { data: { old: code, new: v4ProtectCode, confirm: v4ProtectCode } });
+    }
+    expect((await api.checkProtectCode({ code: v4ProtectCode })).status(), 'protect code restored').toBe(200);
+  });
+}
+
 // The protect (parental) code is never changed by the suite, and without
-// V4_PROTECT_CODE it never sends a code at all, wrong or right.
-test.describe('protect code', { tag: '@mutates' }, () => {
+// V4_PROTECT_CODE it never sends a code at all, wrong or right. Checking without a
+// code or with the right one changes nothing, so those run with the read-only tests.
+test.describe('protect code check', () => {
   test('POST /protect-code/check without a code answers 400', { tag: '@CLI-09' }, async ({ api }) => {
     await expectError(await api.checkProtectCode({}), 'checkProtectCode', 400);
   });
@@ -138,34 +160,29 @@ test.describe('protect code', { tag: '@mutates' }, () => {
     );
     expect(body.success).toBe(true);
   });
+});
 
+// A wrong code runs with the account-changing tests, one at a time and never next to
+// the hidden-channel ones that send the right code: should the server count wrong
+// attempts towards a lockout, the suite sends just this one.
+test.describe('protect code', { tag: '@mutates' }, () => {
   test('POST /protect-code/check rejects a wrong code with 403 E_CURRENT_PASS_BAD', { tag: '@CLI-11' }, async ({ api }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);
     await expectError(await api.checkProtectCode({ code: `${v4ProtectCode}0` }), 'checkProtectCode', 403, 'E_CURRENT_PASS_BAD');
   });
 
-  test('POST /protect-code/change without parameters answers 400 and changes nothing', { tag: '@CLI-12' }, async ({ api }) => {
+  test('POST /protect-code/change without parameters answers 400 and changes nothing', { tag: '@CLI-12' }, async ({ api, undo }) => {
+    // Needs the code only to prove afterwards that it still works.
+    test.skip(!v4ProtectCode, NO_PROTECT_CODE);
+    guardProtectCode(api, undo, ['']);
     await expectError(await api.raw('POST', 'protect-code/change', { data: {} }), 'changeProtectCode', 400);
   });
 
-  test('POST /protect-code/change rejects a confirmation that differs from the new code', { tag: '@CLI-13' }, async ({ api }) => {
+  test('POST /protect-code/change rejects a confirmation that differs from the new code', { tag: '@CLI-13' }, async ({ api, undo }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);
     const candidates = ['1234567', '7654321'];
+    guardProtectCode(api, undo, candidates);
     const res = await api.raw('POST', 'protect-code/change', { data: { old: v4ProtectCode, new: candidates[0], confirm: candidates[1] } });
-    try {
-      await expectError(res, 'changeProtectCode', 400);
-    } finally {
-      // Should the server change the code anyway, put the original back before failing.
-      // Only on a definite "wrong code": a transient error must not trigger change
-      // attempts with guessed old codes against the account's parental code.
-      const check = await api.checkProtectCode({ code: v4ProtectCode });
-      const rejected = check.status() === 403 && ((await check.json()) as ApiError).error.type === 'E_CURRENT_PASS_BAD';
-      if (rejected) {
-        for (const code of candidates) {
-          await api.raw('POST', 'protect-code/change', { data: { old: code, new: v4ProtectCode, confirm: v4ProtectCode } });
-        }
-        expect((await api.checkProtectCode({ code: v4ProtectCode })).status(), 'protect code restored').toBe(200);
-      }
-    }
+    await expectError(res, 'changeProtectCode', 400);
   });
 });
