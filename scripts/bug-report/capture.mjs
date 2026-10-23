@@ -1,6 +1,6 @@
-// Replays the requests behind every finding of the bug report on a session of its
-// own and records each exchange exactly as sent and received. Changes nothing for
-// good: the one write (a channel favorite, for D3) is taken back right away.
+// Replays the requests behind every bug-report finding on its own session and logs
+// each exchange as sent and received. Its one write (a channel favorite, for D3) is
+// undone right away.
 import { TELETEKA_EPG_SPAN, TELETEKA_SAMPLE, isTeletekaStub, programmesWithoutRecording, teletekaChannels } from '../../src/teleteka.mjs';
 import { streamFile } from './util.mjs';
 
@@ -80,9 +80,8 @@ export async function capture({ base, login, password, device, serial }) {
   }
 
   /**
-   * Whether a step got the JSON it needs. A gateway 503 with an HTML page, or an error
-   * envelope, makes a step skip (or, for the two the rest depends on, stop with a clear
-   * message) instead of a TypeError taking the whole report down.
+   * Whether a step got JSON. A gateway 503 page or an error envelope makes the step
+   * skip (or `required` stop with a clear message) instead of crashing the report.
    * @param {{ exchange: Exchange, json: any }} result
    */
   const ok = (result) => result.exchange.status === 200 && result.json !== null && typeof result.json === 'object';
@@ -138,9 +137,8 @@ export async function capture({ base, login, password, device, serial }) {
       });
     }
 
-    // A2: the teleteka of past programmes the EPG marks `teleteka: false`, the same
-    // sample as CH-19 (src/teleteka.mjs): since 21.10.2026 some answer the documented
-    // 403, some still the stub.
+    // A2: teleteka of past programmes without a recording, same sample as CH-19. Since
+    // 21.10.2026 some get the documented 403, some still the stub.
     out.teleteka = { epg: null, programmes: [] };
     for (const channel of teletekaChannels(channels)) {
       const epg = await call('GET', `/channels/${channel.id}/epg?from=${now - TELETEKA_EPG_SPAN}&to=${now}`, { keep: false });
@@ -253,10 +251,9 @@ export async function capture({ base, login, password, device, serial }) {
     }
 
     // D3: a fresh channel favorite doesn't show in the "favorite-channels" block. The
-    // channel is a favorite neither by its card nor by the live favorites, so the
-    // favorite is taken back unless the PUT answered 200 (then it was the subscriber's
-    // own already): also when the PUT threw or answered oddly, as the server may have
-    // created it all the same.
+    // channel is checked not to be a favorite, so the favorite is removed afterwards
+    // unless the PUT answered 200 (the subscriber's own); also when the PUT threw, as
+    // the server may have added it anyway.
     const liveFavorites = await call('GET', '/favorites/channels', { keep: false });
     const listed = ok(liveFavorites) && Array.isArray(liveFavorites.json.items);
     const favoriteIds = new Set(listed ? liveFavorites.json.items.map(/** @param {any} c */ (c) => c.id) : []);
@@ -278,12 +275,10 @@ export async function capture({ base, login, password, device, serial }) {
       if (!created) out.d3 = undefined;
     }
   } finally {
-    // Whatever failed above, the session doesn't keep one of the account's few slots.
-    // The report shows the session id, so it must be confirmed dead: the logout is
-    // retried once, and `sessionClosed` says whether GET /account then refuses it.
-    // A request here that throws doesn't replace the error that stopped the capture:
-    // it leaves `sessionClosed` false (bug-report.mjs then writes no report), with the
-    // reason in `logoutError`.
+    // Always free the session slot. The report shows the session id, so it must be
+    // confirmed dead: logout (retried once), then GET /account must refuse it. A throw
+    // here leaves `sessionClosed` false (no report is written) with the reason in
+    // `logoutError`, without hiding the error that stopped the capture.
     out.sessionClosed = false;
     try {
       let logout = await call('POST', '/logout');

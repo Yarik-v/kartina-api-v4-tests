@@ -1,7 +1,6 @@
-// Renders the developer bug report: the findings (written by hand below), every
-// exchange behind them exactly as sent and received, and the per-case results of the
-// test run. When a pinned test turns red (the bug looks fixed), its finding shows
-// "не воспроизвелось" in the summary; update or drop the finding here then.
+// Renders the developer bug report: the hand-written findings below, the exchanges
+// behind them as sent and received, and per-case results. When a pinned test turns
+// red, its finding shows "не воспроизвелось"; then update or drop it here.
 import { readFileSync } from 'node:fs';
 import { esc, md, streamFile } from './util.mjs';
 
@@ -15,10 +14,8 @@ import { esc, md, streamFile } from './util.mjs';
 
 const CSS = readFileSync(new URL('./report.css', import.meta.url), 'utf8');
 /**
- * The password and the login's `x-token` never make it into the report; everything
- * else is shown as sent. The session id stays: the report is written only once that
- * session is confirmed closed. `x-token` is an opaque token of unknown lifetime that
- * nothing in the report needs, so it can't be assumed dead with the session.
+ * Left out: the password and the login's `x-token` (unknown lifetime, nothing here
+ * needs it). The session id stays: the report is written only once it's closed.
  */
 const PASSWORD_PLACEHOLDER = '<пароль: не включён в отчёт>';
 const SECRET_RESPONSE_HEADERS = new Set(['x-token']);
@@ -129,14 +126,14 @@ export function render({ capture, cases, hostLabel }) {
   /** @type {{ channel: string, channelTitle: string, title: string, startsAt: number, call: number, status: number, stub: boolean, errorType: string | null }[]} */
   const teleProgrammes = tele.programmes;
   const teleStubs = teleProgrammes.filter((p) => p.stub);
-  /** The documented answer; every other non-stub outcome is counted apart, with its status. */
+  /** The documented answer; other non-stub outcomes are counted apart. */
   const teleDocumented = teleProgrammes.filter((p) => !p.stub && p.status === 403 && p.errorType === 'E_ARCHIVE_NOT_AVAILABLE');
   const teleOther = teleProgrammes.filter((p) => !p.stub && !teleDocumented.includes(p));
   /** Channels where some programmes get the stub and others the documented 403. */
   const teleMixed = [...new Set(teleProgrammes.map((p) => p.channelTitle))].filter(
     (title) => teleStubs.some((p) => p.channelTitle === title) && teleDocumented.some((p) => p.channelTitle === title),
   );
-  /** `null` when the request itself failed during the capture. @type {{ id: string, title: string, kind: string, play_url: string }[] | null} */
+  /** `null` when the capture's request failed. @type {{ id: string, title: string, kind: string, play_url: string }[] | null} */
   const wrongKind = out.radioGroupWrongKind;
   /** @type {{ id: number, title: string }[] | null} */
   const nullDescription = out.radioNullDescription;
@@ -217,8 +214,8 @@ export function render({ capture, cases, hostLabel }) {
       area: '<code>POST /login</code> и любой запрос',
       short: 'Лимит 3 сессии и <code>409 E_ANOTHER_CLIENT_IN</code> не описаны',
       title: 'Лимит одновременных сессий и 409 E_ANOTHER_CLIENT_IN не описаны',
-      // Observed once while exploring the API; not replayed by capture.mjs, since
-      // evicting sessions would knock the account's real devices out.
+      // Seen once while exploring; not replayed, as evicting sessions would knock out
+      // the account's real devices.
       body: `<dt>По документации</dt><dd>Ничего: ни лимита, ни статуса 409 у операций.</dd>
     <dt>Фактически</dt><dd><ul>
       <li>Повторный логин с тем же <code>device</code> + <code>serial</code> завершает предыдущую сессию этого serial (дальше <code>403 E_AUTH_ERROR</code>).</li>
@@ -326,19 +323,18 @@ x-api-error-code: 11
     },
   ];
 
-  // Whether the pinned case of each finding still reproduces it in this run.
+  // Whether each finding's pinned case still reproduces it in this run.
   const caseById = new Map(cases.all.map((row) => [row.ID, row]));
   const unknownCases = findings.flatMap((f) => f.cases.filter((id) => !caseById.has(id)).map((id) => `${f.id} → ${id}`));
   if (unknownCases.length) throw new Error(`Findings refer to cases TEST_CASES.md doesn't have: ${unknownCases.join(', ')}`);
   /** @param {Finding} f */
   const reproduces = (f) => {
     const statuses = f.cases.map((id) => caseById.get(id)?.result.status);
-    // A red pinned test comes first: it's the cue that the bug looks fixed.
+    // A red pinned test comes first: the bug looks fixed.
     if (statuses.some((s) => s === 'fail')) return '<span class="rs fail">не воспроизвелось — проверить</span>';
     if (f.id === 'S1' && !stagingTrace) return '<span class="rs ok">на этом хосте нет</span>';
     if (statuses.every((s) => s === 'gap')) return '<span class="rs gap">не автоматизирован</span>';
-    // One case that reproduced it is enough, even if another case of the finding
-    // didn't run or skipped itself.
+    // One reproducing case is enough, even if another didn't run or skipped.
     if (statuses.some((s) => s === 'bug')) return '<span class="rs bugrep">воспроизводится</span>';
     if (statuses.some((s) => s === 'notrun')) return '<span class="rs notrun">не проверено: тест не запускался</span>';
     if (statuses.some((s) => s === 'skip')) return '<span class="rs skip">не проверено</span>';
@@ -364,7 +360,7 @@ x-api-error-code: 11
 
   const { stats, tally } = cases;
   const runTotal = stats.expected + stats.flaky + stats.skipped + stats.notRun + stats.unexpected;
-  /** The run's counts in words, the same in the summary and in the cases section. */
+  /** The run's counts in words, shared by the summary and the cases section. */
   const runCounts = [
     `${stats.expected} прошли`,
     stats.flaky ? `${stats.flaky} прошли со второй попытки` : '',

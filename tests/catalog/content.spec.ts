@@ -60,10 +60,9 @@ test.describe('GET /content/{service}/{id}', () => {
     api,
     dashboardBlocks,
   }) => {
-    // The `service` path parameter of GET /content/{service}/{id} enumerates the
-    // services it serves, but the dashboard links to (working) details of others
-    // too, e.g. startru and iviru. Pinned: once the enum lists them this fails, and
-    // the test can go.
+    // The `service` enum of GET /content/{service}/{id} leaves out services the
+    // dashboard links to working details of (startru, iviru). Pinned: once the enum
+    // lists them this fails, and the test can go.
     const outside = findCards(dashboardBlocks, (c) => !DETAILS_SERVICES.includes(c.service));
     expect(outside.length, 'cards of services outside the documented enum').toBeGreaterThan(0);
     const card = outside[0];
@@ -140,13 +139,11 @@ test.describe('playback', () => {
   });
 
   test('an unknown trailer id is not answered with the documented 404 (known API bug)', { tag: ['@CNT-11', '@pinned'] }, async ({ api, dashboardBlocks }) => {
-    // Documented: 404 E_WRONG_ID ("No such content, episode or trailer"). Live, one
-    // title per service (a movie where there is one): most answer an undocumented
-    // 503, and some answer 200, for some movies with
-    // the stream of the title itself, the very file GET .../play hands out. So the
-    // trailer endpoint ignores the trailer id; whether it also skips the checks of
-    // GET .../play is worth a look on the API side. Pinned: once no service answers
-    // 200 for a made-up trailer this fails.
+    // Documented: 404 E_WRONG_ID. Live (one title per service, a movie where there is
+    // one): most answer an undocumented 503, and some movies 200 with the title's own
+    // stream, the very file GET .../play hands out. So the trailer id is ignored;
+    // whether .../play's checks are skipped too is worth a look on the API side.
+    // Pinned: once no service answers 200 for a made-up trailer this fails.
     const cards = new Map<string, ContentCard>();
     const playable = findCards(dashboardBlocks, (c) => c.playable);
     for (const card of [...playable.filter((c) => c.kind === 'movie'), ...playable]) {

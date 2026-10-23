@@ -5,8 +5,8 @@ import type { V4ApiClient } from '../../src/client';
 import { operation, parameterEnum } from '../../src/spec';
 import type { CardList, ChannelCard, ChannelListCard, ChannelsList, ContentDetails, FavoritesList } from '../../src/types';
 
-// Services each favorites operation documents (GET by service has no startru / iviru,
-// PUT has; they're the spec's own enums, not guesses).
+// Services each favorites operation documents, from the spec's own enums (GET by
+// service lacks startru / iviru, PUT has them).
 const LISTABLE_SERVICES = parameterEnum('getFavoritesByService', 'service');
 const FAVORABLE_SERVICES = parameterEnum('addContentFavorite', 'service');
 
@@ -19,9 +19,8 @@ const contains = (list: FavoritesList, id: string, service?: string) =>
 
 /**
  * Sends the PUT that adds a favorite, its removal registered with `undo` first. A 200
- * means the item was a favorite already (the subscriber's own, missing from what the
- * test checked), and then it stays; otherwise it's removed after the test, 404 included
- * (the test may have removed it itself).
+ * means the subscriber already had it, so it stays; otherwise it's removed after the
+ * test (a 404 then is fine: the test may have removed it itself).
  */
 async function addFavorite(undo: Undo, what: string, put: () => Promise<APIResponse>, remove: () => Promise<APIResponse>): Promise<APIResponse> {
   let wasFavorite = false;
@@ -43,13 +42,10 @@ async function nonFavoriteChannel(api: V4ApiClient, channels: ChannelsList): Pro
   return [...channels.items].reverse().find((c) => !c.favorite && c.playable && !c.access.protected && !contains(live, c.id));
 }
 
-// Favorites are the account's own list: these tests run in the api-v4-mutating
-// project, and every test takes back exactly what it added. It only adds a title or
-// channel that isn't a favorite (neither by its card nor by the live list), and its
-// first PUT goes through `addFavorite`: the removal is registered before it, so it
-// runs also when the PUT is applied but answered unexpectedly, when an assertion
-// fails halfway, or when the test times out, and is dropped when the PUT says the
-// item was a favorite already.
+// Favorites are the account's own list: these tests run in api-v4-mutating and take
+// back exactly what they add. They only add an item that isn't a favorite (by its
+// card and by the live list), through `addFavorite`, which registers the removal
+// before the PUT.
 
 test.describe('GET /favorites', { tag: '@mutates' }, () => {
   test('lists channels and titles, all marked favorite', { tag: '@FAV-01' }, async ({ api }) => {
@@ -71,8 +67,8 @@ test.describe('GET /favorites', { tag: '@mutates' }, () => {
   test('GET /favorites/{service} holds only that service\'s titles', { tag: '@FAV-03' }, async ({ api, dashboardBlocks, undo }) => {
     const listable = (service: string) => service !== 'channels' && LISTABLE_SERVICES.includes(service);
     let all = await favorites(api);
-    // With no favorite of a service this endpoint lists, the check below would hold
-    // trivially (0 == 0); a title is added for the test then, and taken back.
+    // With no favorite of a service this endpoint lists, the check would pass
+    // trivially (0 == 0), so a title is added for the test and taken back.
     if (!all.items.some((item) => item.service && listable(item.service))) {
       const card = findCards(dashboardBlocks, (c) => !c.favorite && listable(c.service) && !contains(all, c.id, c.service)).pop();
       test.skip(!card, 'No title of a service GET /favorites/{service} lists, favorite or not');
@@ -143,10 +139,10 @@ test.describe('channel favorites', { tag: '@mutates' }, () => {
   });
 
   test('the "favorite-channels" block does not follow the favorites (known docs bug)', { tag: ['@BLK-22', '@pinned'] }, async ({ api, channels, undo }) => {
-    // GET /blocks/client-channels is summarized as "the client's favorite-channels
-    // block" (titled «Любимые телеканалы»), but its description, and the server, make
-    // it the most-watched channels: a channel just added to the favorites isn't in it.
-    // Pinned on the summary: once the docs stop calling it favorites this fails.
+    // The summary calls GET /blocks/client-channels the favorite-channels block
+    // («Любимые телеканалы»), but its description and the server make it the
+    // most-watched channels: a fresh favorite isn't in it. Pinned on the summary:
+    // fails once the docs stop calling it favorites.
     expect(operation('getClientChannelsBlock').summary).toContain('favorite-channels');
     const channel = await nonFavoriteChannel(api, channels);
     test.skip(!channel, 'Every channel is a favorite already');

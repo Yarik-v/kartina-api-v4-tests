@@ -21,16 +21,10 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Single self-contained HTML file, overwritten every run on purpose: this is a
- * quick at-a-glance view of the MOST RECENT run only, not a history — if you need
- * to compare against an earlier failure, that's what terminal scrollback (or
- * re-running) is for. A big status banner with the run time (green, amber when
- * nothing passed, red on failures or a broken run, see `runVerdict`), any errors
- * raised outside tests, then one
- * card per FAILED test with its full error, code-frame snippet, captured stdout
- * and trace path. Passing tests are only a number in the banner — unlike
- * Playwright's own `html` reporter, this never lists a test that didn't fail,
- * except one that recorded a `known-issue` annotation (see runSummary.ts).
+ * One self-contained HTML page for the latest run only, overwritten each time. A
+ * status banner (see `runVerdict`), errors outside tests, then one card per failed
+ * test: error, snippet, stdout, trace path. Passing tests are just a count, except
+ * those with a `known-issue` annotation.
  */
 export default class HtmlReporter implements Reporter {
   private startedAt = new Date();

@@ -4,12 +4,11 @@ import type { LoginBody } from '../../src/client';
 import { v4AuxSerial, v4Device, v4Login, v4Password } from '../../src/config';
 import type { Account } from '../../src/types';
 
-// Every session here is opened on the aux serial, never the shared session's: a
-// login ends the previous session of its serial. For the same reason the whole file
-// runs in one worker, in order (mode 'default' below; 'serial' would also skip the
-// rest after a failure). Each one logs out again, so the suite gives the account's
-// session slot back. Wrong-credential cases use a login that can't exist rather than
-// a wrong password for the real account, so the run can't trip a lockout.
+// Sessions here use the aux serial, never the shared one: a login ends the previous
+// session of its serial. For the same reason the file runs in one worker, in order
+// ('serial' mode would skip the rest after a failure). Each session logs out again.
+// Wrong credentials use a login that can't exist, never a wrong password for the
+// real account, so the run can't trip a lockout.
 const auxCredentials = (): LoginBody => ({ login: v4Login, password: v4Password, device: v4Device, serial: v4AuxSerial });
 // Non-numeric on purpose: a long number can belong to some other real account
 // (99999999999 answers "Wrong password", not "Incorrect login").

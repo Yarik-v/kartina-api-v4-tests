@@ -147,7 +147,7 @@ export function operationForPath(method: string, concretePath: string): Operatio
   return matches.sort((a, b) => literals(b) - literals(a))[0];
 }
 
-// OpenAPI 3.1+ schemas use the JSON Schema 2020-12 dialect (see src/schema/validator.ts).
+// OpenAPI 3.1+ schemas use the JSON Schema 2020-12 dialect.
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 addFormats(ajv);
 ajv.addSchema(v4Spec, SCHEMA_ROOT_ID);
@@ -181,10 +181,8 @@ export function checkResponse(operationId: string, status: number, contentType: 
   }
   const mediaTypes = Object.keys(documented.response.content ?? {});
   if (mediaTypes.length === 0) {
-    // A redirect may carry a short "Redirecting to …" page (Symfony's RedirectResponse
-    // always does); clients follow the Location, the body is informational. Any other
-    // status documented without content must come without one, 304 included (HTTP
-    // forbids it a body).
+    // A redirect may carry a "Redirecting to …" page (Symfony always adds one) that
+    // clients ignore. Any other status documented without content must have none.
     if (body === null || REDIRECT_STATUSES.has(status)) return { errors: [] };
     return { problem: `status ${status} documents no body, got one`, errors: [] };
   }

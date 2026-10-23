@@ -22,9 +22,8 @@ export interface LoadedBlock extends Cached<Block> {
 // out ~30 requests together, the staging gateway starts answering 503.
 const BLOCK_FETCH_CONCURRENCY = 4;
 
-// The dashboard crawl (~30 blocks) and the sample-title lookups take many seconds on
-// staging. With their own timeout that time isn't charged to the first test that
-// happens to need them, so it can't push that test past its 30 s mid-change.
+// The dashboard crawl (~30 blocks) and sample-title lookups are slow on staging. Their
+// own timeout keeps that time off the 30 s of the first test that needs them.
 const FIXTURE_TIMEOUT = 120_000;
 
 export interface DiscoveredTitle {
@@ -64,18 +63,16 @@ interface Fixtures {
   /** Client on the shared session. */
   api: V4ApiClient;
   /**
-   * Client on a context of its own with no cookies: for the documented answers to an
-   * anonymous caller, and for login/logout tests, whose Set-Cookie must never reach
-   * the shared session.
+   * Cookie-less client of its own: for anonymous answers, and for login/logout tests
+   * whose Set-Cookie must never reach the shared session.
    */
   anonApi: V4ApiClient;
   /** Another cookie-less client per call, for tests that juggle several sessions. */
   newAnonApi: () => Promise<V4ApiClient>;
   /**
-   * Registers a step that puts the account back. Register it BEFORE the change it
-   * undoes (so a change the server applied but answered unexpectedly is still taken
-   * back); every step runs after the test, in reverse order, also when the test failed
-   * or timed out, and a step that throws fails the test.
+   * Registers a step that puts the account back. Register it BEFORE the change, so a
+   * change applied but answered unexpectedly is still undone. Steps run after the test
+   * in reverse order, also on failure or timeout; a throwing step fails the test.
    */
   undo: Undo;
 }
@@ -99,10 +96,7 @@ interface WorkerFixtures {
   dashboardBlocks: LoadedBlock[];
   /** Ids of the services this account is subscribed to. */
   subscribedServices: Set<string>;
-  /**
-   * A playable movie of a subscribed service, with its details, or `null` when the
-   * dashboard has none right now (tests depending on it skip in that case).
-   */
+  /** A playable movie of a subscribed service with its details, or `null` if the dashboard has none (dependent tests skip). */
   sampleMovie: DiscoveredTitle | null;
   /** Like `sampleMovie`, for a series whose first season lists episodes. */
   sampleSeries: DiscoveredTitle | null;
@@ -136,9 +130,8 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
     await use(new V4ApiClient(request));
   },
 
-  // Depends on `api` so it is torn down first, while the shared session's context is
-  // still open; a `finally` in the test body would instead run against a disposed
-  // context after a timeout.
+  // Depends on `api` so it's torn down first, while the session's context is still
+  // open; a `finally` in the test body would run against a disposed context after a timeout.
   undo: async ({ api }, use) => {
     void api;
     const steps: (() => Promise<unknown>)[] = [];
@@ -153,8 +146,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
         errors.push(error);
       }
     }
-    // Every failed step is reported, not only the first: each names what was left on
-    // the account.
+    // Report every failed step: each names what was left on the account.
     if (errors.length === 1) throw errors[0];
     if (errors.length > 1) {
       const messages = errors.map((error) => (error instanceof Error ? error.message : String(error)));
@@ -173,8 +165,8 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
       contexts.push(context);
       return new V4ApiClient(context);
     });
-    // A test that logged in and failed before its own logout would leave that session
-    // holding one of the account's few slots for the cookie's three days.
+    // A test that failed before its own logout would hold one of the account's few
+    // session slots for the cookie's three days.
     await Promise.all(
       contexts.map(async (context) => {
         const { cookies } = await context.storageState();
@@ -186,8 +178,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
 
   workerRequest: [
     async ({ playwright, hasSession }, use, workerInfo) => {
-      // The request-level options of the project's `use`, the shared session's
-      // storage state included, so worker fixtures send what `request` does.
+      // The project's request options (storage state included), so worker fixtures send what `request` does.
       const { baseURL, extraHTTPHeaders, ignoreHTTPSErrors, proxy, storageState } = workerInfo.project.use;
       const context = await playwright.request.newContext({
         baseURL,
@@ -239,8 +230,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
 
   dashboardBlocks: [
     async ({ workerApi, dashboard }, use) => {
-      // Every listed block is expected to load: a failing one fails the fixture
-      // instead of quietly shrinking what the tests get to see.
+      // A block that fails to load fails the fixture rather than silently shrinking the data.
       const blocks: LoadedBlock[] = new Array(dashboard.items.length);
       let next = 0;
       const worker = async () => {

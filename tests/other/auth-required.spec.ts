@@ -11,10 +11,9 @@ function examplePath(op: Operation): string {
   });
 }
 
-// Every operation that needs a session, called without one, must answer the
-// documented 403 E_AUTH_ERROR. Safe for the operations the suite otherwise never
-// calls (sending sharing codes, changing the protect code, clearing the history...):
-// without a session the server must refuse before doing anything, and no body is sent.
+// Every operation that needs a session must answer 403 E_AUTH_ERROR without one. Safe
+// for the operations the suite otherwise never calls (sharing codes, protect code,
+// history...): the server must refuse before doing anything, and no body is sent.
 test.describe('every operation that needs a session refuses an anonymous caller', { tag: '@no-session' }, () => {
   for (const op of allOperations().filter((candidate) => candidate.requiresSession)) {
     test(`${op.method.toUpperCase()} ${op.path} (${op.id}) answers 403 E_AUTH_ERROR`, { tag: '@GEN-03' }, async ({ anonApi }) => {

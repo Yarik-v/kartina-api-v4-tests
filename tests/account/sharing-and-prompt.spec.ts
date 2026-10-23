@@ -2,10 +2,9 @@ import { test, expect } from '../fixtures';
 import { expectError, expectResponse } from '../../src/assertions';
 import type { Account } from '../../src/types';
 
-// Only what can't change the account: reads, and requests the server must reject.
-// Sending a verification code, creating friend credentials, revoking a friend and
-// answering the registration prompt are real, outward or one-way actions, so the
-// suite never makes them (they're still covered by the anonymous 403 sweep).
+// Only reads and requests the server must reject. Sending a code, creating friend
+// credentials, revoking a friend and answering the prompt are outward or one-way, so
+// the suite never makes them (the anonymous 403 sweep still covers them).
 
 test.describe('Sharing (Mobile Friend)', () => {
   test('GET /sharing/link from a TV device answers 400: mobile devices only', { tag: '@SHR-01' }, async ({ api }) => {

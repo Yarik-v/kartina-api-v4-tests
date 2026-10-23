@@ -33,9 +33,8 @@ test.describe('GET /account', () => {
   });
 
   test('an account created in the admin panel has a personal cabinet and no prompt', { tag: '@CLI-16' }, async ({ api }) => {
-    // The dev team's rule, not the spec's: admin-panel accounts (developers', testers')
-    // always have a personal cabinet. Until a staging deploy on 20.10.2026 this account
-    // answered false and was shown the prompt.
+    // The dev team's rule, not the spec's: admin-panel accounts always have a personal
+    // cabinet. Until the staging deploy of 20.10.2026 this account answered false.
     test.skip(!v4AdminCreatedAccount, 'V4_ADMIN_CREATED_ACCOUNT is not set: the account may not come from the admin panel');
     const body = await expectResponse<Account>(await api.getAccount(), 'getAccount', 200);
     expect(body.has_personal_account).toBe(true);
@@ -43,10 +42,9 @@ test.describe('GET /account', () => {
   });
 });
 
-// Settings belong to the device of the shared session (the suite's own serial), not
-// to the account, so changing them can't reach the account's real devices. Every test
-// here, the rejected changes included (should the server accept one after all),
-// registers the restore with `undo` before it sends anything.
+// Settings belong to the shared session's device (the suite's own serial), not the
+// account, so they can't reach real devices. Every test, rejected changes included,
+// registers the restore with `undo` before sending anything.
 test.describe('client settings', { tag: '@mutates' }, () => {
   test.describe.configure({ mode: 'default' });
 
@@ -123,17 +121,16 @@ test.describe('client settings', { tag: '@mutates' }, () => {
 });
 
 /**
- * For a change request that must be rejected: registers, before it is sent, a step
- * that checks the protect code still works and, should the server have changed it
- * anyway, puts it back from each code the request could have set.
+ * For a change request that must be rejected: registers, before it's sent, a check
+ * that the protect code still works and, if the server changed it anyway, a restore
+ * from each code the request could have set.
  */
 function guardProtectCode(api: V4ApiClient, undo: Undo, possibleCodes: string[]): void {
   undo(async () => {
     const check = await api.checkProtectCode({ code: v4ProtectCode });
     if (check.status() === 200) return;
-    // Only on a definite "wrong code": a transient error must not trigger change
-    // attempts with guessed old codes against the account's parental code, so it
-    // fails the test instead and leaves the check to a person.
+    // Restore only on a definite "wrong code": a transient error must not trigger
+    // change attempts with guessed codes, so it fails the test for a person to check.
     const type = ((await check.json().catch(() => null)) as ApiError | null)?.error?.type;
     expect(`${check.status()} ${type}`, 'protect code check after the change request').toBe('403 E_CURRENT_PASS_BAD');
     for (const code of possibleCodes) {
@@ -143,9 +140,8 @@ function guardProtectCode(api: V4ApiClient, undo: Undo, possibleCodes: string[])
   });
 }
 
-// The protect (parental) code is never changed by the suite, and without
-// V4_PROTECT_CODE it never sends a code at all, wrong or right. Checking without a
-// code or with the right one changes nothing, so those run with the read-only tests.
+// The suite never changes the protect code, and without V4_PROTECT_CODE never sends
+// one. Checks without a code or with the right one change nothing: read-only project.
 test.describe('protect code check', () => {
   test('POST /protect-code/check without a code answers 400', { tag: '@CLI-09' }, async ({ api }) => {
     await expectError(await api.checkProtectCode({}), 'checkProtectCode', 400);
@@ -162,9 +158,9 @@ test.describe('protect code check', () => {
   });
 });
 
-// A wrong code runs with the account-changing tests, one at a time and never next to
-// the hidden-channel ones that send the right code: should the server count wrong
-// attempts towards a lockout, the suite sends just this one.
+// The wrong code runs in the mutating project, one test at a time and apart from the
+// hidden-channel tests: should the server count wrong attempts towards a lockout,
+// the suite sends just this one.
 test.describe('protect code', { tag: '@mutates' }, () => {
   test('POST /protect-code/check rejects a wrong code with 403 E_CURRENT_PASS_BAD', { tag: '@CLI-11' }, async ({ api }) => {
     test.skip(!v4ProtectCode, NO_PROTECT_CODE);

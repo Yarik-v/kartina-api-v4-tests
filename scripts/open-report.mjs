@@ -1,5 +1,4 @@
-// Cross-platform `npm run report`: opens test-results/latest.html with whatever
-// the OS uses to open a file by default (macOS `open`, Windows `start`, else `xdg-open`).
+// `npm run report`: opens test-results/latest.html with the OS default opener.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 

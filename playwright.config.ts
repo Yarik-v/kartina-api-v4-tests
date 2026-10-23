@@ -14,15 +14,13 @@ const readOnlyProjects = [
     name: 'api-v4',
     dependencies: ['api-v4-setup'],
     grepInvert: new RegExp(`${MUTATES_TAG}|${PINNED_TAG}`),
-    // A Playwright dependency is a pass/fail gate: one failure here leaves
-    // api-v4-mutating unrun. A retry keeps a single transient staging 503 from
-    // doing that (a test that passes on retry counts as flaky, not failed).
+    // A failure here leaves api-v4-mutating unrun (a dependency is a pass/fail gate);
+    // one retry keeps a transient staging 503 from doing that.
     retries: 1,
     use: v4Use,
   },
-  // The read-only tests that pin a known API bug: they turn red on purpose once the
-  // bug is fixed, so they're kept out of api-v4 and that gate. Same phase as api-v4
-  // (both depend only on the setup), so they finish before api-v4-mutating starts.
+  // Known-bug tests turn red on purpose once a bug is fixed, so they stay outside the
+  // api-v4 gate. Same phase as api-v4, so they still finish before api-v4-mutating.
   {
     name: 'api-v4-pinned',
     dependencies: ['api-v4-setup'],
@@ -36,8 +34,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  // Every worker shares the one session the setup opens (see tests/auth.setup.ts), so
-  // this caps concurrent requests, not sessions.
+  // All workers share one session, so this caps concurrent requests, not sessions.
   workers: process.env.CI ? 4 : 5,
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]]
@@ -47,9 +44,8 @@ export default defineConfig({
   use: {
     trace: 'retain-on-failure',
   },
-  // One login for the whole run (setup), shared by every test through the storage
-  // state, and a logout at the end (teardown). Neither of the two records a trace:
-  // the setup's request carries the password.
+  // One login per run (setup), shared through the storage state, and a logout at the
+  // end (teardown). No traces there: the login request carries the password.
   projects: [
     {
       name: 'api-v4-setup',
@@ -62,16 +58,12 @@ export default defineConfig({
       testMatch: /auth\.teardown\.ts/,
       use: { baseURL: v4BaseURL, storageState: V4_SESSION_FILE, trace: 'off' },
     },
-    // With V4_MUTATING_ONLY=1 the read-only projects aren't defined at all:
-    // api-v4-mutating then follows the setup directly, and nothing reads the account
-    // in the same phase while it's being changed.
+    // With V4_MUTATING_ONLY=1 the read-only projects don't exist, so nothing reads the
+    // account while it's being changed.
     ...(v4MutatingOnly ? [] : readOnlyProjects),
-    // Tests that change the account (settings, profiles, favorites, hidden channels,
-    // the search history) run after the read-only ones, one at a time: in parallel
-    // they would race every read of the same state (a hidden channel missing from
-    // a count, a recalculated setting under a playback test). As with any dependency,
-    // a failure in api-v4 leaves this project unrun. To run only some of them without
-    // the whole read-only suite first: V4_MUTATING_ONLY=1 (see README).
+    // Tests that change the account run after the read-only ones, one at a time: in
+    // parallel they would race reads of the same state (e.g. a hidden channel missing
+    // from a count). A failure in api-v4 leaves them unrun.
     {
       name: 'api-v4-mutating',
       dependencies: [v4MutatingOnly ? 'api-v4-setup' : 'api-v4'],

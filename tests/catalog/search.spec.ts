@@ -90,9 +90,8 @@ test.describe('search facets', () => {
   });
 
   test('GET /search/services/countries answers an undocumented 503 E_SYSTEM_ERROR (known API bug)', { tag: ['@SRCH-12', '@pinned'] }, async ({ api }) => {
-    // Documented: 200 with the production countries. On staging and production
-    // alike it answers 503, which the operation doesn't document at all. When it
-    // starts answering 200 this fails; then check it like the genres above.
+    // Documented: 200 with the production countries. Staging and production answer an
+    // undocumented 503. When it answers 200 this fails; then check it like the genres.
     const res = await api.searchServicesCountries();
     expect(res.status()).toBe(503);
     expect((await res.json()).error.type).toBe('E_SYSTEM_ERROR');
@@ -100,10 +99,10 @@ test.describe('search facets', () => {
   });
 });
 
-// The history is the account's own: the suite never clears it and never adds a new
-// query. It only re-records the query already on top, which by the docs ("a repeat
-// moves to the top") leaves the list as it was. Not even a blank query is sent: if
-// the server stored it by mistake, only clearing the whole history would undo that.
+// The history is the account's own: the suite never clears it or adds a query. It
+// only repeats the top query, which by the docs ("a repeat moves to the top") changes
+// nothing. Not even a blank query: if stored by mistake, only wiping the history
+// would undo it.
 test.describe('search history', { tag: '@mutates' }, () => {
   test.describe.configure({ mode: 'default' });
 

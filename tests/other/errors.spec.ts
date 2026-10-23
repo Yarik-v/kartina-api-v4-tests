@@ -10,10 +10,10 @@ test.describe('error envelope', { tag: '@no-session' }, () => {
 
   test('error bodies carry no debug trace, except on staging (known API bug)', { tag: ['@GEN-07', '@pinned'] }, async ({ anonApi }) => {
     // The envelope allows `error` only. Staging adds `exception` with the Symfony
-    // trace: class names, server paths, internal hosts (collections-dev...), plus
-    // X-Debug-Token(-Link) headers on every response. The profiler they link to
-    // isn't reachable from outside, but the trace is in every error body.
-    // expectResponse tolerates it everywhere else (see `staging-debug-trace`).
+    // trace (class names, server paths, internal hosts like collections-dev) and
+    // X-Debug-Token(-Link) headers on every response; the profiler isn't reachable
+    // from outside, but the trace is. expectResponse tolerates it elsewhere
+    // (`staging-debug-trace`).
     const res = await anonApi.getAccount();
     const body = (await readBody(res)) as Record<string, unknown>;
     if (!isStaging) {

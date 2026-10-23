@@ -1,5 +1,4 @@
-// Refreshes spec/openapi.yaml from the published docs, so schema-driven tests stay
-// in sync with the contract without hand-editing the spec.
+// `npm run spec:refresh`: re-downloads spec/openapi.yaml from the published docs.
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,8 +12,8 @@ if (!res.ok) {
   throw new Error(`Failed to fetch ${SPEC_URL}: ${res.status} ${res.statusText}`);
 }
 const text = await res.text();
-// A CDN challenge or maintenance page can come back as 200 too; overwriting the
-// spec with it would break every schema check on the next run.
+// A CDN challenge or maintenance page can also answer 200; saving it would break
+// every schema check.
 const doc = /** @type {{ openapi?: unknown; components?: { schemas?: unknown } } | null} */ (load(text));
 if (!doc?.openapi || !doc?.components?.schemas) {
   throw new Error(`${SPEC_URL} didn't return an OpenAPI document with components.schemas; ${OUT_PATH} left unchanged`);

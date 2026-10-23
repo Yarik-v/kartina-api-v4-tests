@@ -28,11 +28,10 @@ export function apiPath(url: string): string {
 }
 
 /**
- * Thin typed wrapper over API v4, one method per operation of spec/openapi.yaml,
- * named after its `operationId`. Methods return the raw `APIResponse` (never throw
- * on non-2xx) so tests can assert on documented errors as well as successes.
- * Operations the suite deliberately never calls (sending sharing codes, changing
- * the protect code, clearing the search history...) are reachable only via `raw`.
+ * Thin typed wrapper over API v4: one method per operation, named after its
+ * `operationId`. Methods return the raw `APIResponse`, so tests assert on errors too.
+ * Operations the suite never calls (sharing codes, protect-code change, clearing the
+ * search history) have no method and are reachable only via `raw`.
  */
 export class V4ApiClient {
   constructor(private readonly request: APIRequestContext) {}

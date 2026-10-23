@@ -12,8 +12,8 @@ export const md = (/** @type {string} */ s) =>
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
 
 /**
- * The file a stream URL points at, so two answers can be compared although they come
- * from different streamer hosts. Copes with the API's non-WHATWG schemes (`http/ts://`).
+ * The path of a stream URL, to compare answers from different streamer hosts. Copes
+ * with the API's non-WHATWG schemes (`http/ts://`).
  * @param {unknown} url
  */
 export const streamFile = (url) => {

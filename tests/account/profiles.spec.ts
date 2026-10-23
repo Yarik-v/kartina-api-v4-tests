@@ -9,8 +9,8 @@ interface ProfileList {
   items: Profile[];
 }
 
-// Profiles the suite creates carry this prefix, so a run can clean up what an
-// earlier, interrupted run left behind without touching the account's own profiles.
+// The suite's profiles carry this prefix, so a run can remove an interrupted run's
+// leftovers without touching the account's own profiles.
 const PREFIX = 'pw-';
 const MAX_PROFILES = 5;
 
@@ -41,10 +41,9 @@ const backToMainProfile = (api: V4ApiClient, mainId: number) => async () => {
   if (current.id !== mainId) await expectResponse(await api.switchCurrentProfile({ profile_id: mainId }), 'switchCurrentProfile', 200);
 };
 
-// The account's profile list is shared state: these tests run in the api-v4-mutating
-// project (one at a time, after the read-only ones). Every test that creates or
-// switches registers its clean-up with `undo` first, so it runs also after a failure
-// or a timeout; the beforeAll catches what an interrupted earlier run left behind.
+// The profile list is shared state: these tests run in api-v4-mutating. Every test
+// that creates or switches registers its clean-up with `undo` first; the beforeAll
+// removes what an interrupted earlier run left behind.
 test.describe.configure({ mode: 'default' });
 
 test.beforeAll(async ({ playwright, hasSession }) => {
@@ -156,8 +155,8 @@ test.describe('invalid profile requests', { tag: '@mutates' }, () => {
   });
 
   test('POST /profiles without a name answers 400', { tag: '@PRF-10' }, async ({ api, undo }) => {
-    // A profile created without a name wouldn't carry the suite's prefix, so
-    // noSuiteProfilesLeft can't find it: it's deleted by the id the response gives.
+    // A nameless profile has no suite prefix, so noSuiteProfilesLeft can't find it:
+    // it's deleted by the id from the response.
     let createdId: number | undefined;
     undo(async () => {
       if (createdId !== undefined) await expectResponse(await api.deleteProfile(createdId), 'deleteProfile', 204);
@@ -172,8 +171,8 @@ test.describe('invalid profile requests', { tag: '@mutates' }, () => {
   });
 
   test('PUT /profiles/current to a profile of another subscription answers 404', { tag: '@PRF-12' }, async ({ api, undo }) => {
-    // Should the server let the session act as another subscriber's profile after all,
-    // it's switched back before the next test.
+    // Should the server allow switching to another subscriber's profile, it's
+    // switched back before the next test.
     const main = (await listProfiles(api)).items.find((profile) => profile.is_main)!;
     undo(backToMainProfile(api, main.id));
     await expectError(await api.switchCurrentProfile({ profile_id: 1 }), 'switchCurrentProfile', 404);

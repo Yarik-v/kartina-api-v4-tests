@@ -48,10 +48,9 @@ export function expectDocumentedHeaders(res: APIResponse, operationId: string): 
 }
 
 /**
- * Asserts `res` has `status` and matches what `operationId` documents for it: the
- * status itself, its headers, the media type and the schema. Schema errors a known API bug
- * explains (src/knownIssues.ts) are tolerated and listed in the report.
- * Returns the parsed body (`null` when there's none).
+ * Asserts `res` has `status` and matches what `operationId` documents for it: headers,
+ * media type, schema. Schema errors a known bug explains (src/knownIssues.ts) are
+ * tolerated and reported. Returns the parsed body (`null` when there's none).
  */
 export async function expectResponse<T = unknown>(res: APIResponse, operationId: string, status: number): Promise<T> {
   const body = await readBody(res);
@@ -74,9 +73,8 @@ export async function expectResponse<T = unknown>(res: APIResponse, operationId:
 }
 
 /**
- * `expectResponse` for an error, plus what every v4 error carries: the `error`
- * envelope mirrored in `X-Api-Error-Code` / `X-Api-Error-Message` and a UUID v7
- * `request_id`. Pass `type` (e.g. `E_AUTH_ERROR`) to pin the exact error.
+ * `expectResponse` for an error, plus the `X-Api-Error-*` headers mirroring the body
+ * and a UUID v7 `request_id`. `type` (e.g. `E_AUTH_ERROR`) pins the exact error.
  */
 export async function expectError(res: APIResponse, operationId: string, status: number, type?: string): Promise<ApiError> {
   const body = await expectResponse<ApiError>(res, operationId, status);
@@ -89,9 +87,8 @@ export async function expectError(res: APIResponse, operationId: string, status:
 }
 
 /**
- * The test of a known schema bug: asserts it still reproduces in `res`. Once the API
- * is fixed this fails, and the issue should go from src/knownIssues.ts together
- * with the test.
+ * Asserts a known schema bug still reproduces in `res`. Once it's fixed this fails:
+ * then drop the src/knownIssues.ts entry and flip the test.
  */
 export async function expectKnownIssue(res: APIResponse, operationId: string, status: number, issueId: string): Promise<void> {
   const issue = knownIssue(issueId);

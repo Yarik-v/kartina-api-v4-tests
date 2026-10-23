@@ -2,10 +2,8 @@ import { stripVTControlCharacters } from 'node:util';
 import type { FullResult, Suite, TestCase, TestError } from '@playwright/test/reporter';
 
 /**
- * Annotation type a test pushes onto `test.info().annotations` when it passes but
- * observed a real, documented product problem it deliberately tolerates. Both
- * reporters list these even on an all-green run, since they otherwise only show
- * failures and the problem would be invisible.
+ * Annotation a passing test adds when it tolerated a known product bug. Both reporters
+ * list these even on a green run, where they would otherwise be invisible.
  */
 export const KNOWN_ISSUE_ANNOTATION = 'known-issue';
 
@@ -23,15 +21,11 @@ export interface SkippedTest {
 export interface RunSummary {
   tests: TestCase[];
   passed: number;
-  /**
-   * Tests that ran and skipped themselves (no matching live data, no session, ...),
-   * with the reason each one gave, so the report can say why.
-   */
+  /** Tests that skipped themselves, with the reason each gave. */
   skippedTests: SkippedTest[];
   /**
-   * Tests that never started (the run was interrupted, timed out or stopped by
-   * --max-failures). Playwright reports these as 'skipped' too, but unlike a real
-   * skip they have no result at all, so they're counted apart.
+   * Tests that never started (interrupted, timed out, --max-failures). Playwright
+   * calls them 'skipped' too, but they have no result, so they're counted apart.
    */
   notRun: number;
   flaky: number;
@@ -41,10 +35,9 @@ export interface RunSummary {
 }
 
 /**
- * The setup and teardown projects: a project that names a `teardown`, and that
- * teardown. Their tests open and close the session and check nothing, so they never
- * count as passed or skipped (a run whose only real test skipped must not read as
- * green). Their failures still count.
+ * The setup and teardown projects. They only open and close the session, so they never
+ * count as passed or skipped (an all-skipped run must not read as green); their
+ * failures still count.
  */
 function infrastructureProjects(rootSuite: Suite): Set<string> {
   const names = new Set<string>();
@@ -55,11 +48,7 @@ function infrastructureProjects(rootSuite: Suite): Set<string> {
   return names;
 }
 
-/**
- * Buckets every test in `rootSuite` by outcome, relative to `startedAt`. Shared by
- * every reporter in this directory so they can never disagree on counts or on which
- * tests count as failures.
- */
+/** Buckets every test by outcome. Shared by the reporters here, so their counts agree. */
 export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary {
   const infrastructure = infrastructureProjects(rootSuite);
   const tests = rootSuite
@@ -77,10 +66,8 @@ export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary
   for (const test of tests) {
     switch (test.outcome()) {
       case 'skipped':
-        // Only a test that skipped itself (test.skip / fixme) expects 'skipped'. Any
-        // other skipped outcome never got to run: its project's dependency failed (no
-        // results), a beforeAll or the worker failed (a 'skipped' result), or the run
-        // was cut short (an 'interrupted' result).
+        // Only a self-skip (test.skip / fixme) expects 'skipped'. Any other skip never
+        // ran: a failed dependency, beforeAll or worker, or a cut-short run.
         if (test.expectedStatus !== 'skipped') {
           notRun++;
         } else {
@@ -107,9 +94,8 @@ export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary
 }
 
 /**
- * Skipped tests grouped by their reason, in first-seen order: a mass skip with
- * one cause (e.g. every test that needs a session, with no credentials) reads as that one cause
- * followed by its tests, not 17 copies of the same line.
+ * Skipped tests grouped by reason, in first-seen order: a mass skip (e.g. no
+ * credentials) reads as one cause, not dozens of identical lines.
  */
 export function skippedByReason(skippedTests: SkippedTest[]): Array<{ reason: string; tests: TestCase[] }> {
   const groups = new Map<string, TestCase[]>();
@@ -126,11 +112,9 @@ export interface RunVerdict {
 }
 
 /**
- * The one-line verdict both reporters lead with. "No test failed" isn't enough:
- * a spec file that fails to load stops Playwright from running anything
- * (confirmed: 0 tests, exit code 1), an interrupted or timed-out run leaves
- * tests unrun, and an all-skipped run verifies nothing. None of those may read
- * as green.
+ * The verdict both reporters lead with. "No failures" isn't enough: a spec that fails
+ * to load runs nothing (0 tests, exit code 1), a cut-short run leaves tests unrun, and
+ * an all-skipped run checks nothing. None of these may read as green.
  */
 export function runVerdict(summary: RunSummary, status: FullResult['status'], errorCount: number): RunVerdict {
   const cutShort = status === 'interrupted' ? 'RUN INTERRUPTED' : status === 'timedout' ? 'RUN TIMED OUT' : '';
@@ -174,27 +158,22 @@ export function lastAttemptTracePath(test: TestCase): string | undefined {
 }
 
 /**
- * Whether the test's project runs with a saved login (`use.storageState`). Its
- * traces then record that session's MW_SSID cookie in the network log, on every
- * request. Playwright can't leave the network log out of a trace, so reporters
- * warn next to the trace path instead.
+ * Whether the project uses a saved login (`use.storageState`): its traces then record
+ * the MW_SSID cookie on every request. Playwright can't leave the network log out of a
+ * trace, so reporters warn next to the trace path.
  */
 export function traceHasSessionCookies(test: TestCase): boolean {
   return Boolean(test.parent.project()?.use.storageState);
 }
 
-/**
- * "api-v4-setup: rustvt.kartina.tv · api-v4: rustvt.kartina.tv": one
- * entry per project that actually has tests in this run, from its own `baseURL`.
- */
+/** "api-v4: rustvt.kartina.tv · …": one entry per project with tests in this run. */
 export function describeTargets(rootSuite: Suite): string {
   const targets = rootSuite.suites
     .filter((projectSuite) => projectSuite.allTests().length > 0)
     .map((projectSuite) => {
       const project = projectSuite.project();
       const baseURL = project?.use.baseURL;
-      // A malformed V4_API_HOST is reported by the project's own
-      // fixtures; here it's just shown as-is rather than crashing the reporter.
+      // A malformed V4_API_HOST is reported by the fixtures; here it's shown as is.
       const target = !baseURL ? 'no baseURL' : URL.canParse(baseURL) ? new URL(baseURL).host : baseURL;
       return `${project?.name}: ${target}`;
     });

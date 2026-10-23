@@ -1,12 +1,11 @@
-// Maps a Playwright JSON results file onto the TEST_CASES.md catalog, case by case,
-// through the case-id tags every test carries (`{ tag: '@CNT-11' }`).
+// Maps Playwright JSON results onto the TEST_CASES.md catalog via each test's case-id
+// tag (`@CNT-11`).
 import { readFileSync } from 'node:fs';
 import { esc, md } from './util.mjs';
 
 /**
- * The setup and teardown projects of playwright.config.ts: they open and close the
- * session, check nothing and carry no case tags. Every other project's tests count, so
- * a project added later is in the report without a change here.
+ * Setup and teardown check nothing and carry no case tags. Every other project counts,
+ * including ones added later.
  */
 const INFRASTRUCTURE_PROJECTS = ['api-v4-setup', 'api-v4-teardown'];
 
@@ -29,8 +28,8 @@ const FINDING = /** @type {[RegExp, string][]} */ ([
 const findingOf = (/** @type {string} */ description) => FINDING.find(([re]) => re.test(description))?.[1] ?? '?';
 
 /**
- * `skip`: the test ran and skipped itself (no matching live data). `notrun`: it never
- * got to run (its project's dependency failed, a beforeAll failed, the run was cut).
+ * `skip`: the test skipped itself (no live data). `notrun`: it never ran (failed
+ * dependency or beforeAll, or the run was cut).
  * @typedef {'pass' | 'pass-known' | 'bug' | 'skip' | 'notrun' | 'gap' | 'fail'} CaseStatus
  * @typedef {{ status: CaseStatus, tests: string, note: string }} CaseResult
  * @typedef {Record<string, string> & { result: CaseResult }} CaseRow  catalog columns (ID, Title, Prio, …) plus the result
@@ -41,10 +40,9 @@ const findingOf = (/** @type {string} */ description) => FINDING.find(([re]) => 
  * @typedef {{ startTime: string, duration: number, expected: number, skipped: number, notRun: number, unexpected: number, flaky: number }} RunStats
  */
 
-// A test that skipped itself has expectedStatus 'skipped'; any other 'skipped' outcome
-// is a test that never got to run (Playwright 1.63 reports a project left unrun by a
-// failed dependency with no results, one skipped after a failed beforeAll or a worker
-// crash with a 'skipped' result, a run cut short with 'interrupted').
+// A test that skipped itself has expectedStatus 'skipped'; any other 'skipped' never
+// ran. Playwright 1.63 gives no results after a failed dependency, a 'skipped' result
+// after a failed beforeAll or worker crash, and 'interrupted' for a cut run.
 const neverRan = (/** @type {{ status: string, expectedStatus: string }} */ test) => test.status === 'skipped' && test.expectedStatus !== 'skipped';
 
 /** Why a test that didn't skip itself never ran. @param {TaggedTest} test */
@@ -63,8 +61,8 @@ export function caseResults(resultsPath, catalogPath) {
   const results = JSON.parse(readFileSync(resultsPath, 'utf8'));
   /** @type {Map<string, TaggedTest[]>} */
   const byCase = new Map();
-  // Like the reporters (src/reporters/runSummary.ts): setup and teardown count only
-  // when they fail, since a failed login leaves every test unrun.
+  // As in src/reporters/runSummary.ts, setup and teardown count only when they fail
+  // (a failed login leaves every test unrun).
   /** @type {Record<string, number>} */
   const counts = { expected: 0, skipped: 0, notRun: 0, unexpected: 0, flaky: 0 };
   /** @param {any} suite */
@@ -154,8 +152,7 @@ export function caseResults(resultsPath, catalogPath) {
       const reason = row.Automated.replace(/^—\s*/, '').replace(/^\((.*)\)$/, '$1');
       return { status: 'gap', tests: '—', note: md(reason || 'не автоматизирован') };
     }
-    // A flaky test passed on its retry (api-v4 retries once): it counts as passed, as
-    // in the run's own report, with a note.
+    // A flaky test passed on retry: it counts as passed, with a note.
     const passed = tests.filter((t) => t.status === 'expected' || t.status === 'flaky').length;
     const count = `${passed}/${tests.length}`;
     if (tests.some((t) => t.status === 'unexpected')) {
@@ -182,8 +179,8 @@ export function caseResults(resultsPath, catalogPath) {
     if (/\*\*(BUG|DOCS BUG)/.test(row.Title)) {
       const finding = row.Title.match(/\*\*\[([A-Z]\d)\]\*\*/)?.[1] ?? findings[0];
       const link = finding ? ` — <a href="#${finding}">${finding}</a>` : '';
-      // Every pinned test records its known issue when the bug shows; a green one
-      // without it saw no bug here (e.g. the staging-only debug trace on production).
+      // A pinned test records its known issue when the bug shows; green without it means
+      // no bug on this host (e.g. the staging-only debug trace on production).
       if (!findings.length) return result('pass', `баг на этом хосте не наблюдался${link}`);
       return result('bug', `баг воспроизводится${link}`);
     }

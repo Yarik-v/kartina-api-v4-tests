@@ -1,5 +1,4 @@
-// Settings from .env. They live in src/env.mjs, plain JS, so the bug-report scripts
-// (scripts/bug-report.mjs) read the same values and run the same host check.
+// Settings from .env; they live in src/env.mjs so the bug-report scripts share them.
 export {
   assertValidV4Host,
   isStaging,

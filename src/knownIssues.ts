@@ -2,10 +2,8 @@ import type { ErrorObject } from 'ajv';
 
 /**
  * A schema mismatch the live API is known to have. `expectResponse` tolerates the
- * errors an issue explains (and lists the issue in the report), so one known bug
- * doesn't fail every test that happens to touch the same response. Each issue also
- * has its own test, marked "(known API bug)", that asserts the bug still reproduces:
- * a fix turns that test red, and that's the cue to delete the entry here.
+ * errors it explains and reports them, so one bug doesn't fail every test touching that
+ * response. Its own "(known API bug)" test turns red once it's fixed: then delete it here.
  */
 export interface KnownSchemaIssue {
   id: string;
@@ -14,10 +12,7 @@ export interface KnownSchemaIssue {
   /** Operations it shows up in; omitted for "any operation". */
   operations?: string[];
   explains(error: ErrorObject): boolean;
-  /**
-   * Leave the issue out of the report's "Known issues" list when it shows up in
-   * almost every test (its own test still pins it), so it doesn't bury the rest.
-   */
+  /** Left out of the report's "Known issues" when it hits almost every test, so it doesn't bury the rest. */
   quiet?: boolean;
 }
 
@@ -58,10 +53,9 @@ export const KNOWN_SCHEMA_ISSUES: KnownSchemaIssue[] = [
 ];
 
 /**
- * Documented response headers the server never sends. `ETag` is documented on 19
- * responses (with `304` for `If-None-Match`), but no response carries it, on
- * staging or production; pinned by tests/other/caching.spec.ts. Kept out of the
- * report like `staging-debug-trace`: almost every 200 would list it.
+ * Documented response headers the server never sends: `ETag` (19 responses, staging
+ * and production; pinned by tests/other/caching.spec.ts). Kept out of the report, since
+ * almost every 200 would list it.
  */
 export const KNOWN_MISSING_HEADERS = ['etag'];
 

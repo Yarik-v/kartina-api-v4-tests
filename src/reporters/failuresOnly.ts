@@ -12,15 +12,10 @@ import {
 } from './runSummary';
 
 /**
- * Minimal reporter for local runs: prints the run's start time and a pass/fail/skip
- * summary, then full detail ONLY for tests that actually failed — no per-passing-test
- * noise, apart from one line per passing test that recorded a `known-issue`
- * annotation. Errors outside any test (a spec file that fails to load, a crashed
- * worker) are printed too, and a run that was interrupted, timed out or had every
- * test skipped never ends with "No failures." (see `runVerdict`). Pairs with
- * `./htmlReport.ts` (same failure data, rendered as a static page);
- * neither replaces `use.trace` — a failed test's trace.zip is still written, and its
- * path is printed below so it stays inspectable via `playwright show-trace`.
+ * Terminal reporter for local runs: a summary, then full detail only for failed tests
+ * and one line per `known-issue`. Errors outside tests are printed too, and a cut-short
+ * or all-skipped run never reads as passed (see `runVerdict`). The HTML twin is
+ * `./htmlReport.ts`; a failed test's trace path is printed for `playwright show-trace`.
  */
 export default class FailuresOnlyReporter implements Reporter {
   private startedAt = new Date();

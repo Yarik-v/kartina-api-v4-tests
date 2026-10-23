@@ -161,16 +161,14 @@ test.describe('archive and teleteka', () => {
     api,
     channels,
   }) => {
-    // Documented: 403 E_ARCHIVE_NOT_AVAILABLE ("nothing recorded this moment"). Until
-    // the staging deploy of 21.10.2026 every such programme got 200 with a placeholder
-    // clip (`.../zaglushka/...`); since then some answer the documented 403 and some
-    // still the stub, even on the same channel. So this looks at the programmes the EPG
-    // marks `teleteka: false` (the sample in src/teleteka.mjs, shared with the bug
-    // report): a 403 must be the documented one, and the test stays green while any of
-    // them still plays the stub. Once none does, it fails: then assert the 403 for all
-    // of them instead.
-    // Up to 52 requests one after another (12.9 s on a good day): on a slow staging the
-    // default 30 s would time it out, and a red pinned test reads as "fixed".
+    // Documented: 403 E_ARCHIVE_NOT_AVAILABLE. Until the staging deploy of 21.10.2026
+    // every such programme got 200 with a stub clip (`.../zaglushka/...`); since then
+    // some get the 403 and some still the stub, even on one channel. The test checks
+    // the sample from src/teleteka.mjs (shared with the bug report): a 403 must be the
+    // documented one, and it stays green while any programme gets the stub. Once none
+    // does it fails: then assert the 403 for all of them.
+    // Up to 52 sequential requests (12.9 s on a good day): on a slow staging the
+    // default 30 s would time out, and a red pinned test reads as "fixed".
     test.setTimeout(90_000);
     const outcomes: { channel: string; startsAt: number; stub: boolean }[] = [];
     for (const channel of teletekaChannels(channels.items)) {
@@ -208,11 +206,10 @@ test.describe('archive and teleteka', () => {
   });
 });
 
-// Hiding needs the protect code, and DELETE /channels/hidden clears every rule the
-// account has. So every test here, the negative ones included, runs only with the
-// protect code and only while the account hides nothing: should the server wrongly
-// accept a request without the code, nothing of the account's is lost, and `undo`
-// unhides whatever a test may have hidden, also when it fails or times out.
+// Hiding needs the protect code, and DELETE /channels/hidden clears every rule of the
+// account. So every test here, negative ones included, runs only with the code and
+// only while nothing is hidden: if the server wrongly accepts a request without the
+// code, nothing of the account's is lost. `undo` unhides what a test may have hidden.
 test.describe('hidden channels', { tag: '@mutates' }, () => {
   async function skipUnlessNothingHidden(api: V4ApiClient): Promise<void> {
     test.skip(!v4ProtectCode, "V4_PROTECT_CODE is not set in .env: the account's hidden channels can't be checked first");

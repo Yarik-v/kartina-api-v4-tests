@@ -3,9 +3,9 @@ import { expectKnownIssue, expectResponse } from '../../src/assertions';
 import { apiPath } from '../../src/client';
 import type { RadioStation } from '../../src/types';
 
-// GET /radio is the deprecated station list (the radio page and its channel group
-// replace it), still served for older clients. Its two operations are the only ones
-// the spec gives no operationId, hence the `GET /radio` ids.
+// GET /radio is the deprecated station list (replaced by the radio page and its
+// channel group), still served for older clients. Its two operations have no
+// operationId in the spec, hence the `GET /radio` ids.
 test.describe('GET /radio (deprecated)', () => {
   test('lists stations, each with a play link to its own GET /radio/{id}', { tag: '@RAD-01' }, async ({ api }) => {
     const body = await expectResponse<{ data: RadioStation[] }>(await api.getRadio(), 'GET /radio', 200);

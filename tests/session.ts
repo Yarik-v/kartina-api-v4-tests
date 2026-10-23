@@ -1,9 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 /**
- * Storage state with the MW_SSID cookie of the session every api-v4 test shares.
- * Written by auth.setup.ts on each run, ended by auth.teardown.ts. Never committed
- * (.gitignore): it's a live session of a real account.
+ * Storage state with the MW_SSID cookie of the shared session. Written by auth.setup.ts,
+ * ended by auth.teardown.ts; gitignored: it's a live session of a real account.
  */
 export const V4_SESSION_FILE = 'tests/.auth/session.json';
 
