@@ -56,16 +56,42 @@ export const test = base.extend<UiFixtures>({
 export const WATCH_BUTTON_NAME = /^(Смотреть|Продолжить)/;
 
 /**
- * Opens the dashboard and waits until it has data, not just its shell. The client
- * re-logs in on every page load; if it lands on the login form instead, the saved
- * session wasn't accepted, which fails the test rather than skipping it.
+ * Loads a page of the client (`/home`, `/settings/account`) and waits for the login it
+ * makes on every page load: until it's done, the browser's cookie is the previous
+ * session's, which the page load has just ended, so `uiApi` must not be used before.
+ */
+export async function openPage(page: Page, path: string): Promise<void> {
+  const login = page.waitForResponse((res) => res.url().endsWith('/api/v4/login') && res.request().method() === 'POST');
+  await page.goto(`${v4UiOrigin}${path}`);
+  expect((await login).status(), `the client's login on loading ${path}`).toBe(200);
+}
+
+/**
+ * Opens the dashboard and waits until it has data, not just its shell. If the client
+ * lands on the login form instead, the saved session wasn't accepted, which fails the
+ * test rather than skipping it.
  */
 export async function openHome(page: Page): Promise<void> {
-  await page.goto(`${v4UiOrigin}/home`);
+  await openPage(page, '/home');
   const loginField = page.getByPlaceholder('Номер абонемента');
   const watchButton = page.getByRole('button', { name: WATCH_BUTTON_NAME }).first();
   await loginField.or(watchButton).first().waitFor();
   expect(await loginField.isVisible(), 'the client asked to log in again: the saved browser session was not accepted').toBe(false);
+}
+
+/**
+ * Hovers a top-nav dropdown (Телевидение, Видеотека, Радио) open. Scoped to the header
+ * and matched exactly: hidden popovers elsewhere carry the same labels, and the real
+ * text has surrounding spaces.
+ */
+export async function hoverNavDropdown(page: Page, label: string): Promise<void> {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await page.locator('header .item.dropdown-icon', { hasText: new RegExp(`^\\s*${escaped}\\s*$`) }).hover();
+}
+
+/** Seconds played by the page's video: it has more than one <video> (one stays hidden), any playing counts. */
+export function secondsPlayed(page: Page): Promise<number> {
+  return page.evaluate(() => Math.max(0, ...Array.from(document.querySelectorAll('video'), (v) => v.currentTime)));
 }
 
 /** The title-details banner (/home/itm, /favorites/itm): heading, tags, description, buttons. */

@@ -1,6 +1,6 @@
 import { expectResponse } from '../src/assertions';
 import type { ContentDetails } from '../src/types';
-import { test, expect, openFirstTitleDetails, openHome, titleBanner, titleHeading, WATCH_BUTTON_NAME } from './fixtures';
+import { test, expect, openFirstTitleDetails, openHome, secondsPlayed, titleBanner, titleHeading, WATCH_BUTTON_NAME } from './fixtures';
 
 test.describe('title page', () => {
   test('shows the title, year and genres GET /content/{service}/{id} returns', { tag: '@UI-03' }, async ({ page, uiApi }) => {
@@ -25,8 +25,6 @@ test.describe('player', () => {
     await page.getByRole('button', { name: WATCH_BUTTON_NAME }).click();
     expect((await play).status(), `GET /content/${service}/${id}/play`).toBe(200);
     await page.waitForURL(/\/watch\//);
-    // The page has more than one <video> (a hidden one too): any of them playing counts.
-    const played = () => page.evaluate(() => Math.max(0, ...Array.from(document.querySelectorAll('video'), (v) => v.currentTime)));
-    await expect.poll(played, { message: 'seconds of video played', timeout: 30_000 }).toBeGreaterThan(2);
+    await expect.poll(() => secondsPlayed(page), { message: 'seconds of video played', timeout: 30_000 }).toBeGreaterThan(2);
   });
 });

@@ -15,7 +15,7 @@ the case pins the current behavior so that a fix turns its test red (see README,
 and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
 not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
-**181 cases total, 156 automated, 25 gaps** (`—` in Automated); see "Remaining gaps"
+**189 cases total, 163 automated, 26 gaps** (`—` in Automated); see "Remaining gaps"
 at the end for the breakdown. Of the automated ones, 11 run only when their
 precondition holds: 8 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
@@ -299,6 +299,14 @@ own session. `npm run test:browser` runs these alone.
 | UI-03 | Title page shows the API's details | P0 | none | Open the first title card; GET `/content/{service}/{id}` | Heading = `title.display`; year and every genre shown | `ui-tests/content.spec.ts` |
 | UI-04 | Watch button starts playback | P0 | the title is playable | On the title page press «Смотреть» / «Продолжить» | GET `…/play` 200; `/watch/…`; the video plays (> 2 s) | `ui-tests/content.spec.ts` |
 | UI-05 | Add to / remove from favorites on the title page | P1 | the title isn't a favorite | Press «Добавить в избранное», then press it again | PUT `…/favorite` 201, title marked favorite in the API; DELETE 204, not a favorite | `ui-tests/favorites.spec.ts` |
+| UI-06 | A channel group lists its channels | P1 | none | «Телевидение» → the first group | Channel names = GET `/pages/tv/channel-groups/{id}`, in order | `ui-tests/tv.spec.ts` |
+| UI-07 | A channel plays live | P0 | none | Click the group's first channel | `/tv/channel/{id}/live`; GET `/channels/{id}/play` 200; the video plays (> 2 s) | `ui-tests/tv.spec.ts` |
+| UI-08 | The channel page shows what's on air | P1 | a programme on air | Open a channel; GET `/channels/{id}/epg` | The programme on air by the EPG is shown | `ui-tests/tv.spec.ts` |
+| UI-09 | A radio station plays | P1 | none | «Радио» → the first station | GET `/channels/{id}/play` 200; the banner shows the station's name; it plays (> 2 s) | `ui-tests/radio.spec.ts` |
+| UI-10 | Search shows results and keeps the history | P1 | non-empty search history | Open `/search?q=` with the history's top query (the client POSTs every search to the history; a repeat of the top one changes nothing) | «Результаты поиска "…"»; the first result of GET `/search/services` shown; the history is exactly as before | `ui-tests/search.spec.ts` |
+| UI-11 | Subscription info in the settings | P1 | none | Open `/settings/account`; GET `/account` | Login, packet title and end date shown | `ui-tests/settings.spec.ts` |
+| UI-12 | A recorded programme plays from the teleteka | P1 | a recorded programme whose title and hours are unique on the list | On the channel page click it | `/tv/channel/{id}/teleteka/{starts_at}`; GET `…/teleteka/{starts_at}` 200; the video plays (> 2 s) | `ui-tests/tv.spec.ts` |
+| UI-13 | Profiles in the web client | P2 | none | — | — | — (the client has no profile UI: no `/profiles` calls, the account button opens the settings) |
 
 ## Remaining gaps
 
@@ -320,5 +328,6 @@ doesn't have, or would cost the account something it can't get back:
 - **Real viewing** (CNT-18, BLK-14): progress and the continue-watching rules need
   actual playback over time.
 - **Rate limits** (SHR-10): not hit on purpose; the limit is shared per IP.
+- **Not in the web client** (UI-13): it has no profiles UI.
 - **Not automated yet** (SEC-14, FAV-07, CH-09, CH-21, SRCH-08): plain additions with no
   blocker, low priority.

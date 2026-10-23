@@ -88,6 +88,9 @@ issues* (passed, but hit a known API bug) and skips grouped by reason.
   a run (gitignored; the teardown empties it), and the browser projects record no
   traces: every page load also sends it in `POST /login`. Failures get a screenshot.
 - With a wrong login the form shows no message at all: it just stays on `/login`.
+- Every search in the client is POSTed to the account's search history, which can only
+  be cleaned up by wiping it. UI-10 searches for the history's top query only.
+- The client has no profiles UI, so profiles are covered by the API tests only.
 - Only on staging: the client picks its API host from its own address.
 
 ## The account is real
