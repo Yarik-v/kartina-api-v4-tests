@@ -172,6 +172,9 @@ export interface ContentDetails {
   id: string;
   service: string;
   kind: 'movie' | 'series';
+  title: { original: string; display: string; short: string };
+  year: string | null;
+  genres: string[];
   playable: boolean;
   favorite: boolean;
   progress: Progress;

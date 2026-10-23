@@ -26,7 +26,8 @@ Without credentials only the `@no-session` tests run; the rest skip.
 ## Commands
 
 ```bash
-npm test               # the whole suite
+npm test               # the whole suite, browser tests included
+npm run test:browser   # only the browser tests (web client on playtest.kartina.tv)
 npm run test:ui        # Playwright UI mode
 npm run report         # open the last report (test-results/latest.html)
 npm run report:bugs    # bug report for the API developers: reports/<date>-api-v4-<env>.html
@@ -56,6 +57,9 @@ issues* (passed, but hit a known API bug) and skips grouped by reason.
 - `tests/` — `account/`, `catalog/`, `interface/`, `other/`, as grouped in the docs.
   `tests/fixtures.ts` provides the clients and live data: ids are discovered, never
   hardcoded, and a test skips if the data it needs isn't live.
+- `ui-tests/` — browser tests of the web client at `playtest.kartina.tv`, which talks to
+  this API on staging; `ui-tests/fixtures.ts` gives each test `uiApi`, API v4 on the
+  browser's own session, to compare the UI with.
 - `TEST_CASES.md` — the case catalog: ID, priority, expected result, the automating
   spec or why it's a gap.
 - `scripts/bug-report/` — builds `reports/`: each finding with its raw requests and
@@ -71,6 +75,20 @@ issues* (passed, but hit a known API bug) and skips grouped by reason.
    parallel.
 3. **`api-v4-mutating`** (`@mutates`) runs next, one test at a time, and only if
    `api-v4` passed; otherwise the report shows its cases as "не запускался".
+4. **`browser-setup`** logs in to the web client through its form, then **`browser-ui`**
+   runs one test at a time (UI-05 changes the favorites, so it comes after
+   `api-v4-mutating`) and **`browser-teardown`** logs out. The client can't reuse the API
+   session: it re-logs in with the stored password on every page load, on its own serial,
+   so the browser holds one session of its own (two with the API session, never more).
+
+### Browser tests: what to know
+
+- The client keeps the account's **password in plain text in localStorage**
+  (`___kartina.tv.account`, field `pass`). So `tests/.auth/browser.json` holds it during
+  a run (gitignored; the teardown empties it), and the browser projects record no
+  traces: every page load also sends it in `POST /login`. Failures get a screenshot.
+- With a wrong login the form shows no message at all: it just stays on `/login`.
+- Only on staging: the client picks its API host from its own address.
 
 ## The account is real
 

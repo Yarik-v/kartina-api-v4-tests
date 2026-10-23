@@ -49,6 +49,15 @@ export const isStaging = v4Host === 'rustvt.kartina.tv';
  */
 export const v4MutatingOnly = process.env.V4_MUTATING_ONLY === '1';
 
+/**
+ * The web client the browser tests drive. It picks its API host from its own address
+ * (playtest.kartina.tv talks to rustvt.kartina.tv), so it's tied to staging.
+ */
+export const v4UiOrigin = 'https://playtest.kartina.tv';
+
+/** `V4_BROWSER_ONLY=1`: the run has only the browser projects (`npm run test:browser`). */
+export const v4BrowserOnly = process.env.V4_BROWSER_ONLY === '1';
+
 /** Throws a clear error unless V4_API_HOST / V4_API_SCHEME are values the spec allows. */
 export function assertValidV4Host() {
   if (!ALLOWED_HOSTS.includes(v4Host)) {

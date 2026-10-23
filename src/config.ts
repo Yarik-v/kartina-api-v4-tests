@@ -5,6 +5,7 @@ export {
   v4AdminCreatedAccount,
   v4AuxSerial,
   v4BaseURL,
+  v4BrowserOnly,
   v4Device,
   v4Host,
   v4Login,
@@ -12,4 +13,5 @@ export {
   v4Password,
   v4ProtectCode,
   v4Serial,
+  v4UiOrigin,
 } from './env.mjs';

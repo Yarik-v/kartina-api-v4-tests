@@ -2,6 +2,7 @@ import { test as base, expect, type APIRequestContext, type APIResponse } from '
 import { V4ApiClient, apiPath } from '../src/client';
 import { assertValidV4Host } from '../src/config';
 import { operationForPath } from '../src/spec';
+import { runUndo, type Undo } from '../src/undo';
 import type { Account, Block, BlockSummary, ChannelsList, ContentCard, ContentDetails, Page, Service } from '../src/types';
 import { EMPTY_STORAGE_STATE, NO_SESSION_REASON, NO_SESSION_TAG, hasV4Session } from './session';
 
@@ -54,8 +55,7 @@ async function okJson<T>(res: APIResponse, what: string): Promise<T> {
   return res.json();
 }
 
-/** The `undo` fixture: registers a step that puts the account back after the test. */
-export type Undo = (step: () => Promise<unknown>) => void;
+export type { Undo } from '../src/undo';
 
 interface Fixtures {
   /** Skips the test without a session, unless it's tagged `@no-session`. */
@@ -134,24 +134,7 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
   // open; a `finally` in the test body would run against a disposed context after a timeout.
   undo: async ({ api }, use) => {
     void api;
-    const steps: (() => Promise<unknown>)[] = [];
-    await use((step) => {
-      steps.push(step);
-    });
-    const errors: unknown[] = [];
-    for (const step of steps.reverse()) {
-      try {
-        await step();
-      } catch (error) {
-        errors.push(error);
-      }
-    }
-    // Report every failed step: each names what was left on the account.
-    if (errors.length === 1) throw errors[0];
-    if (errors.length > 1) {
-      const messages = errors.map((error) => (error instanceof Error ? error.message : String(error)));
-      throw new Error(`${errors.length} undo steps failed:\n\n${messages.join('\n\n')}`);
-    }
+    await runUndo(use);
   },
 
   anonApi: async ({ newAnonApi }, use) => {

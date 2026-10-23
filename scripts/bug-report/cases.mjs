@@ -7,7 +7,7 @@ import { esc, md } from './util.mjs';
  * Setup and teardown check nothing and carry no case tags. Every other project counts,
  * including ones added later.
  */
-const INFRASTRUCTURE_PROJECTS = ['api-v4-setup', 'api-v4-teardown'];
+const INFRASTRUCTURE_PROJECTS = ['api-v4-setup', 'api-v4-teardown', 'browser-setup', 'browser-teardown'];
 
 /** Known-issue annotation (see src/knownIssues.ts and the pinned tests) → finding of the report. */
 const FINDING = /** @type {[RegExp, string][]} */ ([

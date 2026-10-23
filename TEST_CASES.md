@@ -15,7 +15,7 @@ the case pins the current behavior so that a fix turns its test red (see README,
 and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
 not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
-**176 cases total, 151 automated, 25 gaps** (`—` in Automated); see "Remaining gaps"
+**181 cases total, 156 automated, 25 gaps** (`—` in Automated); see "Remaining gaps"
 at the end for the breakdown. Of the automated ones, 11 run only when their
 precondition holds: 8 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
@@ -284,6 +284,21 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | GEN-08 | Documented examples match their schemas (×235) | P1 | Validate every `example` / `examples` entry against the schema it illustrates | All valid | `tests/other/spec-examples.spec.ts` |
 | GEN-09 | **DOCS BUG:** four examples break their own schema **[D1]** | P2 | Same as GEN-08 | `next_url` with unencoded Cyrillic (`searchServices`), `search_url` templates (countries, genres, history) aren't `format: uri-reference` | `tests/other/spec-examples.spec.ts` (pinned) |
 | GEN-10 | **DOCS BUG:** operations without an `operationId` **[D4]** | P2 | Inspect the spec | Every other operation has one; `GET /radio` and `GET /radio/{id}` don't | `tests/other/spec-examples.spec.ts` (pinned) |
+
+## 6. Web client — playtest.kartina.tv (browser)
+
+The web client on staging (it calls `rustvt.kartina.tv/api/v4`), driven in a browser by
+the `browser-ui` project (`ui-tests/`). It logs in once through its own form
+(`browser-setup`); each test then checks the UI against API v4 read on the browser's
+own session. `npm run test:browser` runs these alone.
+
+| ID | Title | Prio | Preconditions | Steps | Expected result | Automated |
+|----|-------|------|---------------|-------|-----------------|-----------|
+| UI-01 | Unknown login on the form | P1 | no session | Enter `not-a-login` / `x`, press Enter | POST `/login` 403 `E_INCORRECT_LOGIN`; still on `/login`; no account stored | `ui-tests/login.spec.ts` |
+| UI-02 | Hero slider = the dashboard's first block | P0 | none | Open `/home`; GET `/pages/dashboard` and its first block | The active slide shows the block's first title; the counter reads `1 из {items}` | `ui-tests/dashboard.spec.ts` |
+| UI-03 | Title page shows the API's details | P0 | none | Open the first title card; GET `/content/{service}/{id}` | Heading = `title.display`; year and every genre shown | `ui-tests/content.spec.ts` |
+| UI-04 | Watch button starts playback | P0 | the title is playable | On the title page press «Смотреть» / «Продолжить» | GET `…/play` 200; `/watch/…`; the video plays (> 2 s) | `ui-tests/content.spec.ts` |
+| UI-05 | Add to / remove from favorites on the title page | P1 | the title isn't a favorite | Press «Добавить в избранное», then press it again | PUT `…/favorite` 201, title marked favorite in the API; DELETE 204, not a favorite | `ui-tests/favorites.spec.ts` |
 
 ## Remaining gaps
 
