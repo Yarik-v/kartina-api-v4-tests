@@ -6,3 +6,5 @@ blob-report/
 playwright/.cache/
 *.log
 tests/.auth/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
