@@ -8,3 +8,5 @@ playwright/.cache/
 tests/.auth/
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+# Bug reports: generated on demand (npm run report:bugs), they hold account and session data
+reports/
