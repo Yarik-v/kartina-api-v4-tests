@@ -2,6 +2,7 @@ import { test, expect } from '../fixtures';
 import { expectError, expectResponse, recordKnownIssue } from '../../src/assertions';
 import { apiPath, type V4ApiClient } from '../../src/client';
 import { v4ProtectCode } from '../../src/config';
+import { TELETEKA_EPG_SPAN, TELETEKA_SAMPLE, isTeletekaStub, programmesWithoutRecording, teletekaChannels } from '../../src/teleteka.mjs';
 import type { ChannelEpg, ChannelListCard, ChannelsList, Page, PlaybackStream } from '../../src/types';
 
 const DAY = 24 * 60 * 60;
@@ -163,32 +164,33 @@ test.describe('archive and teleteka', () => {
     // Documented: 403 E_ARCHIVE_NOT_AVAILABLE ("nothing recorded this moment"). Until
     // the staging deploy of 21.10.2026 every such programme got 200 with a placeholder
     // clip (`.../zaglushka/...`); since then some answer the documented 403 and some
-    // still the stub, even on the same channel. So this looks at up to 12 programmes
-    // the EPG marks `teleteka: false`: a 403 must be the documented one, and the test
-    // stays green while any of them still plays the stub. Once none does, it fails:
-    // then assert the 403 for all of them instead.
+    // still the stub, even on the same channel. So this looks at the programmes the EPG
+    // marks `teleteka: false` (the sample in src/teleteka.mjs, shared with the bug
+    // report): a 403 must be the documented one, and the test stays green while any of
+    // them still plays the stub. Once none does, it fails: then assert the 403 for all
+    // of them instead.
     // Up to 52 requests one after another (12.9 s on a good day): on a slow staging the
     // default 30 s would time it out, and a red pinned test reads as "fixed".
     test.setTimeout(90_000);
     const outcomes: { channel: string; startsAt: number; stub: boolean }[] = [];
-    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 40)) {
+    for (const channel of teletekaChannels(channels.items)) {
       const epg = await expectResponse<ChannelEpg>(
-        await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }),
+        await api.getChannelEpg(channel.id, { from: now() - TELETEKA_EPG_SPAN, to: now() }),
         'getChannelEpg',
         200,
       );
-      for (const programme of epg.items.filter((p) => !p.teleteka && p.ends_at < now()).slice(0, 2)) {
+      for (const programme of programmesWithoutRecording(epg.items, now())) {
         const res = await api.playChannelTeleteka(channel.id, programme.starts_at);
         if (res.status() === 403) {
           await expectError(res, 'playChannelTeleteka', 403, 'E_ARCHIVE_NOT_AVAILABLE');
           outcomes.push({ channel: channel.title, startsAt: programme.starts_at, stub: false });
         } else {
           const body = await expectResponse<PlaybackStream>(res, 'playChannelTeleteka', 200);
-          expect(body.url, `a 200 for ${channel.title} ${programme.starts_at} is the stub`).toContain('/zaglushka/');
+          expect(isTeletekaStub(body.url), `a 200 for ${channel.title} ${programme.starts_at} is the stub: ${body.url}`).toBe(true);
           outcomes.push({ channel: channel.title, startsAt: programme.starts_at, stub: true });
         }
       }
-      if (outcomes.length >= 12) break;
+      if (outcomes.length >= TELETEKA_SAMPLE.total) break;
     }
     test.skip(outcomes.length === 0, 'No past programme without a recording on the first channels');
 

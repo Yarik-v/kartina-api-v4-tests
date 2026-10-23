@@ -1,6 +1,7 @@
 // Replays the requests behind every finding of the bug report on a session of its
 // own and records each exchange exactly as sent and received. Changes nothing for
 // good: the one write (a channel favorite, for D3) is taken back right away.
+import { TELETEKA_EPG_SPAN, TELETEKA_SAMPLE, isTeletekaStub, programmesWithoutRecording, teletekaChannels } from '../../src/teleteka.mjs';
 import { streamFile } from './util.mjs';
 
 /**
@@ -113,6 +114,7 @@ export async function capture({ base, login, password, device, serial }) {
     /** @type {Map<string, any>} one title per service, a movie where there is one */
     const perService = new Map();
     for (const card of [...cards.filter((c) => c.kind === 'movie'), ...cards]) if (!perService.has(card.service)) perService.set(card.service, card);
+    /** @type {any[]} */
     const channels = required(await call('GET', '/channels', { keep: false }), 'GET /channels').items.filter(
       /** @param {any} c */ (c) => c.playable && !c.access.protected,
     );
@@ -136,14 +138,14 @@ export async function capture({ base, login, password, device, serial }) {
       });
     }
 
-    // A2: the teleteka of past programmes the EPG marks `teleteka: false`, up to 12 of
-    // them (two per channel): since 21.10.2026 some answer the documented 403, some
-    // still the stub.
+    // A2: the teleteka of past programmes the EPG marks `teleteka: false`, the same
+    // sample as CH-19 (src/teleteka.mjs): since 21.10.2026 some answer the documented
+    // 403, some still the stub.
     out.teleteka = { epg: null, programmes: [] };
-    for (const channel of channels.slice(0, 40)) {
-      const epg = await call('GET', `/channels/${channel.id}/epg?from=${now - 86400}&to=${now}`, { keep: false });
+    for (const channel of teletekaChannels(channels)) {
+      const epg = await call('GET', `/channels/${channel.id}/epg?from=${now - TELETEKA_EPG_SPAN}&to=${now}`, { keep: false });
       if (!ok(epg) || !Array.isArray(epg.json.items)) continue;
-      const programmes = epg.json.items.filter(/** @param {any} p */ (p) => !p.teleteka && p.ends_at < now).slice(0, 2);
+      const programmes = programmesWithoutRecording(/** @type {any[]} */ (epg.json.items), now);
       if (!programmes.length) continue;
       if (out.teleteka.epg === null) {
         out.teleteka.epg = record(epg.exchange, {
@@ -160,11 +162,11 @@ export async function capture({ base, login, password, device, serial }) {
           startsAt: programme.starts_at,
           call: teleteka.exchange.n,
           status: teleteka.exchange.status,
-          stub: String(teleteka.json?.url ?? '').includes('/zaglushka/'),
+          stub: isTeletekaStub(teleteka.json?.url),
           errorType: teleteka.json?.error?.type ?? null,
         });
       }
-      if (out.teleteka.programmes.length >= 12) break;
+      if (out.teleteka.programmes.length >= TELETEKA_SAMPLE.total) break;
     }
 
     // A3, A4
