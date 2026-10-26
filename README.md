@@ -88,7 +88,8 @@ issues* (passed, but hit a known API bug) and skips grouped by reason.
   (`___kartina.tv.account`, field `pass`). So `tests/.auth/browser.json` holds it during
   a run (gitignored; the teardown empties it), and the browser projects record no
   traces: every page load also sends it in `POST /login`. Failures get a screenshot.
-- With a wrong login the form shows no message at all: it just stays on `/login`.
+- A wrong login shows its message as a banner at the top of the page, outside the form
+  («Ошибка 4: Неправильный абонемент или пароль…»).
 - Every search in the client is POSTed to the account's search history, which can only
   be cleaned up by wiping it. UI-10 searches for the history's top query only.
 - The client has no profiles UI, so profiles are covered by the API tests only. Of the

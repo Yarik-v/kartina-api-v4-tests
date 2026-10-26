@@ -347,16 +347,6 @@ x-api-error-code: 11
       exchanges: [],
     },
     {
-      id: 'W3', sev: 'low', cases: [],
-      area: 'веб-клиент, форма входа',
-      short: 'Неверный логин: форма не показывает никакого сообщения',
-      title: 'При неверном логине форма входа ничего не сообщает',
-      body: `<dt>Фактически</dt><dd><code>POST /login</code> отвечает <code>403 E_INCORRECT_LOGIN</code> («Incorrect login»), а форма просто остаётся на <code>/login</code> без текста ошибки.</dd>
-    <dt>Ожидается</dt><dd>Понятное сообщение («Неверный номер абонемента или пароль»).</dd>
-    <dt>Автотест</dt><dd><code>ui-tests/login.spec.ts</code> проверяет ответ API и что вход не произошёл; отсутствие сообщения замечено вручную.</dd>`,
-      exchanges: [],
-    },
-    {
       id: 'W4', sev: 'low', cases: [],
       area: 'веб-клиент, страница канала',
       short: 'Передача, выбранная до старта эфира, загружается, но стоит на паузе',
@@ -400,7 +390,7 @@ x-api-error-code: 11
   const byId = new Map(findings.map((f) => [f.id, f]));
   /** @param {string[]} ids */
   const cards = (ids) => ids.map((id) => card(/** @type {Finding} */ (byId.get(id)))).join('\n');
-  const order = ['A1', 'S1', 'A2', 'A3', 'A4', 'U1', 'A5', 'A6', 'A7', 'A8', 'D1', 'D2', 'D3', 'D4', 'W1', 'W2', 'W3', 'W4'];
+  const order = ['A1', 'S1', 'A2', 'A3', 'A4', 'U1', 'A5', 'A6', 'A7', 'A8', 'D1', 'D2', 'D3', 'D4', 'W1', 'W2', 'W4'];
   const summaryRows = order
     .map((id) => /** @type {Finding} */ (byId.get(id)))
     .map((f) => `<tr><td><a href="#${f.id}">${f.id}</a></td><td><span class="sev ${f.sev}">${SEV_NAME[f.sev]}</span></td><td>${f.area}</td><td>${f.short}</td><td>${reproduces(f)}</td></tr>`)
@@ -465,7 +455,7 @@ ${CSS}</style>
 </div>
 
 <p>Находки по API закреплены автотестами: тест проверяет текущее (неверное) поведение и упадёт,
-когда его исправят (по веб-клиенту — W1 и W2; W3 и W4 замечены вручную). Ниже у каждой находки — <b>все запросы ровно в том виде, в каком они
+когда его исправят (по веб-клиенту — W1 и W2; W4 замечен вручную). Ниже у каждой находки — <b>все запросы ровно в том виде, в каком они
 отправлялись</b> (готовые <code>curl</code>; пароль в отчёт не включён), и полные ответы сервера с
 заголовками; по <code>request_id</code> и времени их можно найти в логах. Все запросы шли в одной
 сессии (№${out.login}), закрытой в конце: logout №${out.logout}, после него сервер её уже не принимает (№${out.after}).</p>
@@ -499,7 +489,7 @@ ${cards(['D1', 'D2', 'D3', 'D4'])}
 
 <h2>Веб-клиент playtest.kartina.tv</h2>
 <p class="meta">Найдено браузерными тестами (<code>ui-tests/</code>): клиент на staging работает с этим же API.</p>
-${cards(['W1', 'W2', 'W3', 'W4'])}
+${cards(['W1', 'W2', 'W4'])}
 
 <h2 id="cases">Результаты прогона тест-кейсов</h2>
 <p class="meta">Прогон ${esc(utc(stats.startTime))}, ${Math.round(stats.duration / 1000)} с, ${esc(base)}.
