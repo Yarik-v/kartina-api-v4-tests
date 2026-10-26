@@ -175,6 +175,8 @@ export interface ContentDetails {
   title: { original: string; display: string; short: string };
   year: string | null;
   genres: string[];
+  description: { short: string; full: string };
+  actors: string[];
   playable: boolean;
   favorite: boolean;
   progress: Progress;

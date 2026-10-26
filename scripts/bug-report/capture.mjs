@@ -138,7 +138,7 @@ export async function capture({ base, login, password, device, serial }) {
     }
 
     // A2: teleteka of past programmes without a recording, same sample as CH-19. Since
-    // 21.10.2026 some get the documented 403, some still the stub.
+    // 21.10.2026 some get the documented 403, some still the stub, a few a recording.
     out.teleteka = { epg: null, programmes: [] };
     for (const channel of teletekaChannels(channels)) {
       const epg = await call('GET', `/channels/${channel.id}/epg?from=${now - TELETEKA_EPG_SPAN}&to=${now}`, { keep: false });
@@ -161,6 +161,8 @@ export async function capture({ base, login, password, device, serial }) {
           call: teleteka.exchange.n,
           status: teleteka.exchange.status,
           stub: isTeletekaStub(teleteka.json?.url),
+          // A real stream although the EPG says there is no recording.
+          recording: teleteka.exchange.status === 200 && Boolean(teleteka.json?.url) && !isTeletekaStub(teleteka.json?.url),
           errorType: teleteka.json?.error?.type ?? null,
         });
       }

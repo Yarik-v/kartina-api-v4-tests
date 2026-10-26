@@ -18,4 +18,22 @@ test.describe('/home — dashboard', () => {
     await expect(page.locator('.swiper-slide-active h2')).toHaveText(block.items[0].title);
     await expect(page.getByText(/^\s*\d+ из \d+\s*$/).first()).toHaveText(new RegExp(`^\\s*1 из ${block.items.length}\\s*$`));
   });
+
+  // Known playtest bug (also in the Free API repo's ui-tests): clicked right after the
+  // page loads, "Next slide" can leave the counter out of step with the slide, so this
+  // can fail now and then. It's left as it is on purpose.
+  test('"Next slide" shows the block\'s second title and moves the counter to 2', { tag: '@UI-18' }, async ({ page, uiApi }) => {
+    await openHome(page);
+    const dashboard = await expectResponse<Page>(await uiApi.getPage('dashboard'), 'getPage', 200);
+    const block = await expectResponse<CardList<{ title: string }>>(
+      await uiApi.raw('GET', apiPath(dashboard.items[0].block_url)),
+      'getPageBlock',
+      200,
+    );
+    test.skip(block.items.length < 2, 'The slider has a single slide');
+
+    await page.getByRole('button', { name: 'Next slide' }).click();
+    await expect(page.locator('.swiper-slide-active h2')).toHaveText(block.items[1].title);
+    await expect(page.getByText(/^\s*\d+ из \d+\s*$/).first()).toHaveText(new RegExp(`^\\s*2 из ${block.items.length}\\s*$`));
+  });
 });

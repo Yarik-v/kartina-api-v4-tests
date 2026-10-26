@@ -15,7 +15,7 @@ the case pins the current behavior so that a fix turns its test red (see README,
 and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
 not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
-**193 cases total, 165 automated, 28 gaps** (`—` in Automated); see "Remaining gaps"
+**201 cases total, 173 automated, 28 gaps** (`—` in Automated); see "Remaining gaps"
 at the end for the breakdown. Of the automated ones, 11 run only when their
 precondition holds: 8 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
@@ -309,6 +309,14 @@ own session. `npm run test:browser` runs these alone.
 | UI-13 | Profiles in the web client | P2 | none | — | — | — (the client has no profile UI: no `/profiles` calls, the account button opens the settings) |
 | UI-14 | Streaming settings | P2 | none | Open `/settings/streaming-settings`; GET `/settings` on the browser's session (settings belong to its device) | «Сервер вещания» and «Задержка вещания в часах» show the labels of the current `server` / `timeshift` values | `ui-tests/settings.spec.ts` |
 | UI-15 | A past programme without a teleteka recording plays from the archive | P1 | such a programme in the last day on one of the first channels | On the channel page, once live is playing, click it | `/tv/channel/{id}/archive/{starts_at}`; GET `…/archive/{starts_at}` 200; the video advances. (The client doesn't ask the teleteka here, so the API's stub, A2, never reaches it.) | `ui-tests/tv.spec.ts` |
+| UI-18 | «Next slide» on the hero slider | P2 | the slider has 2+ slides | Open `/home`, click «Next slide» | The active slide shows the block's second title; the counter reads `2 из {items}`. Known playtest bug: clicked right after load, the counter can fall out of step (fails now and then, left as it is) | `ui-tests/dashboard.spec.ts` |
+| UI-19 | «Описание» tab: description and cast | P2 | none | On the first title's page click «Описание» | The description and the first actors of GET `/content/{service}/{id}` shown | `ui-tests/content.spec.ts` |
+| UI-20 | «Трейлеры» tab | P2 | none | Open the first title's page | The tab is there exactly when the title has trailers; it opens in place (same URL) | `ui-tests/content.spec.ts` |
+| UI-21 | Back button on the title page | P2 | none | Open a title, press back | Back on `/home` | `ui-tests/content.spec.ts` |
+| UI-22 | «Избранное» page | P1 | the account has favorite titles | Open «Избранное»; GET `/favorites` | A tile for every favorite title; opening one shows its title | `ui-tests/favorites.spec.ts` |
+| UI-23 | Service catalogs (START, Wink, PREMIER) | P1 | none | «Видеотека» → the service; GET `/services/{service}/pages`, then its page | The page's first `list` rows are shown by title | `ui-tests/catalog.spec.ts` |
+| UI-24 | Stop a radio station | P2 | none | On a playing station press the play button | Its icon changes and playback stops. Its tooltip still says «Остановить воспроизведение» **[W2]** (recorded as a known issue) | `ui-tests/radio.spec.ts` |
+| UI-25 | **BUG:** the client keeps the password in plain text **[W1]** | P0 | a browser session | Open `/home`; read whether `___kartina.tv.account` in localStorage has a non-empty `pass` (never its value) | It should not. Actually it does: the client stores the password and logs in again with it on every page load; the test stays green while it does | `ui-tests/client-security.spec.ts` (pinned) |
 | UI-16 | Change the parental password in the settings | P2 | `V4_PROTECT_CODE` | `/settings/parent-control` form | — | — (excluded: the protect code could stay changed, as CLI-14) |
 | UI-17 | «Очистить историю поиска» in the settings | P2 | none | `/settings/additional-settings` | — | — (excluded: wipes the account's search history, as SRCH-17) |
 

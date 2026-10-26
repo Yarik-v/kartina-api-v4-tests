@@ -1,6 +1,6 @@
 import { expectResponse } from '../src/assertions';
-import type { ContentDetails } from '../src/types';
-import { test, expect, openFirstTitleDetails, openHome, titleBanner } from './fixtures';
+import type { ContentDetails, FavoritesList } from '../src/types';
+import { test, expect, openFirstTitleDetails, openHome, titleBanner, titleHeading } from './fixtures';
 
 // Changes the account's favorites, so the browser projects run after api-v4-mutating;
 // the title is taken back through the API also when the test fails halfway.
@@ -31,5 +31,23 @@ test.describe('favorites', { tag: '@mutates' }, () => {
     expect((await del).status(), `DELETE ${favoritePath}`).toBe(204);
     await expect(toggle).toHaveAttribute('title', 'Добавить в избранное');
     expect(await favorite(), 'favorite by GET /content after removing').toBe(false);
+  });
+});
+
+test.describe('favorites page', () => {
+  test('«Избранное» shows the titles GET /favorites lists, and opens one', { tag: '@UI-22' }, async ({ page, uiApi }) => {
+    await openHome(page);
+    const favorites = await expectResponse<FavoritesList>(await uiApi.getFavorites(), 'getFavorites', 200);
+    const titles = favorites.items.filter((item) => item.kind === 'movie' || item.kind === 'series').map((item) => item.title);
+    test.skip(titles.length === 0, 'The account has no favorite titles right now');
+
+    await page.getByRole('link', { name: 'Избранное' }).first().click();
+    await page.waitForURL('**/favorites');
+    const tiles = page.locator('.video-grid__item');
+    for (const title of titles) await expect(tiles.filter({ hasText: title }), `tile «${title}»`).toHaveCount(1);
+
+    await tiles.filter({ hasText: titles[0] }).click();
+    await page.waitForURL(/\/favorites\/itm/);
+    await expect(titleHeading(page)).toHaveText(titles[0]);
   });
 });

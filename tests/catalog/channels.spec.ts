@@ -166,11 +166,13 @@ test.describe('archive and teleteka', () => {
     // some get the 403 and some still the stub, even on one channel. The test checks
     // the sample from src/teleteka.mjs (shared with the bug report): a 403 must be the
     // documented one, and it stays green while any programme gets the stub. Once none
-    // does it fails: then assert the 403 for all of them.
+    // does it fails: then assert the 403 for all of them. Some get a real recording
+    // instead (an earlier showing, as reruns with `teleteka: true` do), although the EPG
+    // says there is none: counted apart, neither the stub nor the fix.
     // Up to 52 sequential requests (12.9 s on a good day): on a slow staging the
     // default 30 s would time out, and a red pinned test reads as "fixed".
     test.setTimeout(90_000);
-    const outcomes: { channel: string; startsAt: number; stub: boolean }[] = [];
+    const outcomes: { channel: string; startsAt: number; outcome: 'documented' | 'stub' | 'recording' }[] = [];
     for (const channel of teletekaChannels(channels.items)) {
       const epg = await expectResponse<ChannelEpg>(
         await api.getChannelEpg(channel.id, { from: now() - TELETEKA_EPG_SPAN, to: now() }),
@@ -181,21 +183,23 @@ test.describe('archive and teleteka', () => {
         const res = await api.playChannelTeleteka(channel.id, programme.starts_at);
         if (res.status() === 403) {
           await expectError(res, 'playChannelTeleteka', 403, 'E_ARCHIVE_NOT_AVAILABLE');
-          outcomes.push({ channel: channel.title, startsAt: programme.starts_at, stub: false });
+          outcomes.push({ channel: channel.title, startsAt: programme.starts_at, outcome: 'documented' });
         } else {
           const body = await expectResponse<PlaybackStream>(res, 'playChannelTeleteka', 200);
-          expect(isTeletekaStub(body.url), `a 200 for ${channel.title} ${programme.starts_at} is the stub: ${body.url}`).toBe(true);
-          outcomes.push({ channel: channel.title, startsAt: programme.starts_at, stub: true });
+          outcomes.push({ channel: channel.title, startsAt: programme.starts_at, outcome: isTeletekaStub(body.url) ? 'stub' : 'recording' });
         }
       }
       if (outcomes.length >= TELETEKA_SAMPLE.total) break;
     }
     test.skip(outcomes.length === 0, 'No past programme without a recording on the first channels');
 
-    const stubs = outcomes.filter((o) => o.stub);
+    const stubs = outcomes.filter((o) => o.outcome === 'stub');
+    const recordings = outcomes.filter((o) => o.outcome === 'recording');
     expect(stubs.length, `the stub is gone for all ${outcomes.length} programmes: the bug is fixed`).toBeGreaterThan(0);
+    const channelsOf = (list: typeof outcomes) => [...new Set(list.map((o) => o.channel))].join(', ');
     recordKnownIssue(
-      `teleteka-stub: ${stubs.length} of ${outcomes.length} programmes without a recording still get a 200 stub clip instead of 403 E_ARCHIVE_NOT_AVAILABLE (${[...new Set(stubs.map((o) => o.channel))].join(', ')})`,
+      `teleteka-stub: ${stubs.length} of ${outcomes.length} programmes without a recording still get a 200 stub clip instead of 403 E_ARCHIVE_NOT_AVAILABLE (${channelsOf(stubs)})` +
+        (recordings.length ? `; ${recordings.length} get a recording although the EPG marks them teleteka: false (${channelsOf(recordings)})` : ''),
     );
   });
 

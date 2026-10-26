@@ -123,12 +123,14 @@ export function render({ capture, cases, hostLabel }) {
   /** Whether this host's error bodies carry the debug trace (S1). */
   const stagingTrace = Boolean(bodyOf(out.debugAnon)?.exception);
   const tele = out.teleteka;
-  /** @type {{ channel: string, channelTitle: string, title: string, startsAt: number, call: number, status: number, stub: boolean, errorType: string | null }[]} */
+  /** @type {{ channel: string, channelTitle: string, title: string, startsAt: number, call: number, status: number, stub: boolean, recording?: boolean, errorType: string | null }[]} */
   const teleProgrammes = tele.programmes;
   const teleStubs = teleProgrammes.filter((p) => p.stub);
   /** The documented answer; other non-stub outcomes are counted apart. */
   const teleDocumented = teleProgrammes.filter((p) => !p.stub && p.status === 403 && p.errorType === 'E_ARCHIVE_NOT_AVAILABLE');
-  const teleOther = teleProgrammes.filter((p) => !p.stub && !teleDocumented.includes(p));
+  /** A real stream although the EPG marks the programme `teleteka: false`. */
+  const teleRecordings = teleProgrammes.filter((p) => p.recording);
+  const teleOther = teleProgrammes.filter((p) => !p.stub && !p.recording && !teleDocumented.includes(p));
   /** Channels where some programmes get the stub and others the documented 403. */
   const teleMixed = [...new Set(teleProgrammes.map((p) => p.channelTitle))].filter(
     (title) => teleStubs.some((p) => p.channelTitle === title) && teleDocumented.some((p) => p.channelTitle === title),
@@ -176,13 +178,13 @@ export function render({ capture, cases, hostLabel }) {
       title: 'Телетека программы без записи отдаёт ролик-заглушку (исправлено частично)',
       body: `<dt>Эндпоинт</dt><dd><code>GET /channels/{id}/teleteka/{timestamp}</code></dd>
     <dt>По документации</dt><dd>Нет записи: <code>403 E_ARCHIVE_NOT_AVAILABLE</code> («nothing recorded this moment»). Заглушка с извинением описана только для провайдера в режиме сбоя.</dd>
-    <dt>Фактически</dt><dd>До деплоя staging 21.10.2026 любая прошедшая программа, которую EPG помечает <code>teleteka: false</code>, получала 200 с роликом-заглушкой (<code>…/zaglushka/index.m3u8</code>). После деплоя поведение разное${teleProgrammes.length ? `: из ${teleProgrammes.length} проверенных программ ${teleStubs.length} по-прежнему получают заглушку, ${teleDocumented.length} — документированный <code>403 E_ARCHIVE_NOT_AVAILABLE</code>${teleOther.length ? `, ${teleOther.length} — другой ответ (${teleOther.map((p) => `${p.status}${p.errorType ? ` ${esc(p.errorType)}` : ''}`).join(', ')})` : ''}${teleMixed.length ? `; на ${teleMixed.map((c) => `«${esc(c)}»`).join(', ')} — и то и другое в пределах одного канала` : ''}. Программы взяты из EPG (пример — №${tele.epg})` : ''}:
-      ${teleProgrammes.length ? `<div class="table-wrap"><table><thead><tr><th>Канал</th><th>Программа</th><th><code>starts_at</code></th><th>Запрос</th><th>Ответ</th></tr></thead><tbody>${teleProgrammes.map((p) => `<tr><td>${esc(p.channel)} «${esc(p.channelTitle)}»</td><td>${esc(p.title)}</td><td>${p.startsAt}</td><td>№${p.call}</td><td>${p.stub ? '<b>200, заглушка</b>' : `${p.status} <code>${esc(p.errorType ?? '')}</code>`}</td></tr>`).join('')}</tbody></table></div>` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
-    <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения; теперь ещё и по-разному для разных программ.</dd>
+    <dt>Фактически</dt><dd>До деплоя staging 21.10.2026 любая прошедшая программа, которую EPG помечает <code>teleteka: false</code>, получала 200 с роликом-заглушкой (<code>…/zaglushka/index.m3u8</code>). После деплоя поведение разное${teleProgrammes.length ? `: из ${teleProgrammes.length} проверенных программ ${teleStubs.length} по-прежнему получают заглушку, ${teleDocumented.length} — документированный <code>403 E_ARCHIVE_NOT_AVAILABLE</code>${teleRecordings.length ? `, ${teleRecordings.length} — 200 с настоящей записью (запись более раннего показа, как у повторов с <code>teleteka: true</code>), хотя EPG говорит, что записи нет` : ''}${teleOther.length ? `, ${teleOther.length} — другой ответ (${teleOther.map((p) => `${p.status}${p.errorType ? ` ${esc(p.errorType)}` : ''}`).join(', ')})` : ''}${teleMixed.length ? `; на ${teleMixed.map((c) => `«${esc(c)}»`).join(', ')} — и то и другое в пределах одного канала` : ''}. Программы взяты из EPG (пример — №${tele.epg})` : ''}:
+      ${teleProgrammes.length ? `<div class="table-wrap"><table><thead><tr><th>Канал</th><th>Программа</th><th><code>starts_at</code></th><th>Запрос</th><th>Ответ</th></tr></thead><tbody>${teleProgrammes.map((p) => `<tr><td>${esc(p.channel)} «${esc(p.channelTitle)}»</td><td>${esc(p.title)}</td><td>${p.startsAt}</td><td>№${p.call}</td><td>${p.stub ? '<b>200, заглушка</b>' : p.recording ? '<b>200, запись</b> вопреки EPG' : `${p.status} <code>${esc(p.errorType ?? '')}</code>`}</td></tr>`).join('')}</tbody></table></div>` : 'В EPG первых каналов не нашлось прошедшей программы без записи.'}</dd>
+    <dt>Почему важно</dt><dd>Клиент не может отличить «записи нет» от реального потока и проигрывает заглушку вместо понятного сообщения; теперь ещё и по-разному для разных программ. А когда запись всё же есть, флаг <code>teleteka</code> в EPG врёт: клиент, который ему верит, не предложит её посмотреть.</dd>
     <dt>Автотест</dt><dd><code>catalog/channels.spec.ts</code> › «teleteka of a programme without a recording still plays a stub for some programmes (known API bug, partly fixed)»: зелёный, пока заглушку получает хоть одна программа; упадёт, когда исправят полностью.</dd>`,
       exchanges: [
         ...(tele.epg ? [tele.epg] : []),
-        ...teleProgrammes.map((p, i) => /** @type {ExchangeRef} */ ([p.call, { open: i === teleProgrammes.findIndex((q) => q.stub), label: `${p.channelTitle}: ${p.stub ? 'заглушка' : p.status}` }])),
+        ...teleProgrammes.map((p, i) => /** @type {ExchangeRef} */ ([p.call, { open: i === teleProgrammes.findIndex((q) => q.stub), label: `${p.channelTitle}: ${p.stub ? 'заглушка' : p.recording ? 'запись вопреки EPG' : p.status}` }])),
       ],
     },
     {
@@ -321,6 +323,47 @@ x-api-error-code: 11
     <dt>Автотест</dt><dd><code>other/spec-examples.spec.ts</code> › «only the deprecated radio operations have no operationId (known docs gap)»</dd>`,
       exchanges: [],
     },
+    {
+      id: 'W1', sev: 'high', cases: ['UI-25'],
+      area: 'веб-клиент, localStorage',
+      short: 'Пароль абонемента хранится в localStorage открытым текстом',
+      title: 'Веб-клиент хранит пароль открытым текстом и входит с ним заново на каждой загрузке',
+      body: `<dt>Где</dt><dd><code>playtest.kartina.tv</code> (ver. 2.71.2), запись localStorage <code>___kartina.tv.account</code>.</dd>
+    <dt>Фактически</dt><dd>После входа клиент сохраняет в эту запись ответ <code>POST /login</code> вместе с полем <code>pass</code> — введённым паролем, открытым текстом (в бандле: <code>o.pass=a, o.ts=Date.now(), Qj(o)</code>). Вход клиент определяет по этой записи, а не по cookie, и на <b>каждой</b> загрузке страницы делает <code>POST /logout</code> и снова <code>POST /login</code> с сохранённым паролем (тот же serial, так что предыдущая сессия завершается).</dd>
+    <dt>Почему важно</dt><dd>Любой скрипт на странице (XSS, расширение браузера, чужой компьютер) читает пароль абонемента — не временный токен, а постоянный пароль от всех устройств. Кроме того, каждая перезагрузка страницы — лишняя пара logout/login.</dd>
+    <dt>Как исправить</dt><dd>Не хранить пароль: восстанавливать сессию по cookie <code>MW_SSID</code> (<code>GET /account</code>), а при её истечении просить войти заново.</dd>
+    <dt>Автотест</dt><dd><code>ui-tests/client-security.spec.ts</code> › «the client keeps the account password in plain text in localStorage»: проверяет только наличие непустого <code>pass</code>, значение не читает; упадёт, когда исправят.</dd>`,
+      exchanges: [],
+    },
+    {
+      id: 'W2', sev: 'low', cases: ['UI-24'],
+      area: 'веб-клиент, радио',
+      short: 'Остановленная станция: подсказка кнопки всё ещё «Остановить воспроизведение»',
+      title: 'Кнопка остановленной радиостанции подписана «Остановить воспроизведение»',
+      body: `<dt>Фактически</dt><dd>На странице станции (<code>/radio/{id}</code>) кнопка воспроизведения останавливает поток и меняет иконку, но её <code>title</code> остаётся «Остановить воспроизведение».</dd>
+    <dt>Ожидается</dt><dd>«Начать воспроизведение» (или аналог) у остановленной станции.</dd>
+    <dt>Автотест</dt><dd><code>ui-tests/radio.spec.ts</code> › «the play button stops the station» (проверяет остановку; подсказку отмечает как известную проблему).</dd>`,
+      exchanges: [],
+    },
+    {
+      id: 'W3', sev: 'low', cases: [],
+      area: 'веб-клиент, форма входа',
+      short: 'Неверный логин: форма не показывает никакого сообщения',
+      title: 'При неверном логине форма входа ничего не сообщает',
+      body: `<dt>Фактически</dt><dd><code>POST /login</code> отвечает <code>403 E_INCORRECT_LOGIN</code> («Incorrect login»), а форма просто остаётся на <code>/login</code> без текста ошибки.</dd>
+    <dt>Ожидается</dt><dd>Понятное сообщение («Неверный номер абонемента или пароль»).</dd>
+    <dt>Автотест</dt><dd><code>ui-tests/login.spec.ts</code> проверяет ответ API и что вход не произошёл; отсутствие сообщения замечено вручную.</dd>`,
+      exchanges: [],
+    },
+    {
+      id: 'W4', sev: 'low', cases: [],
+      area: 'веб-клиент, страница канала',
+      short: 'Передача, выбранная до старта эфира, загружается, но стоит на паузе',
+      title: 'Запись, выбранная до старта прямого эфира, не начинает воспроизведение',
+      body: `<dt>Фактически</dt><dd>Если на странице канала (<code>/tv/channel/{id}/live</code>) выбрать прошедшую передачу, пока прямой эфир ещё не запустился, клиент запрашивает её (<code>…/archive/…</code> или <code>…/teleteka/…</code>, 200), поток загружается полностью, но видео остаётся на паузе. Выбранная после старта эфира — играет сразу.</dd>
+    <dt>Автотест</dt><dd>Замечено при разработке <code>ui-tests/tv.spec.ts</code>; тесты ждут старта эфира, как сделал бы зритель.</dd>`,
+      exchanges: [],
+    },
   ];
 
   // Whether each finding's pinned case still reproduces it in this run.
@@ -350,7 +393,7 @@ x-api-error-code: 11
   const byId = new Map(findings.map((f) => [f.id, f]));
   /** @param {string[]} ids */
   const cards = (ids) => ids.map((id) => card(/** @type {Finding} */ (byId.get(id)))).join('\n');
-  const order = ['A1', 'S1', 'A2', 'A3', 'A4', 'U1', 'A5', 'A6', 'A7', 'A8', 'D1', 'D2', 'D3', 'D4'];
+  const order = ['A1', 'S1', 'A2', 'A3', 'A4', 'U1', 'A5', 'A6', 'A7', 'A8', 'D1', 'D2', 'D3', 'D4', 'W1', 'W2', 'W3', 'W4'];
   const summaryRows = order
     .map((id) => /** @type {Finding} */ (byId.get(id)))
     .map((f) => `<tr><td><a href="#${f.id}">${f.id}</a></td><td><span class="sev ${f.sev}">${SEV_NAME[f.sev]}</span></td><td>${f.area}</td><td>${f.short}</td><td>${reproduces(f)}</td></tr>`)
@@ -391,14 +434,14 @@ ${section.rows.map((row) => `    <tr><td class="cid">${esc(row.ID)}</td><td>${md
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>API v4: расхождения с документацией</title>
+<title>API v4 и веб-клиент: баги</title>
 <style>
 ${CSS}</style>
 </head>
 <body>
 <main>
 
-<h1>API v4: расхождения с документацией</h1>
+<h1>API v4 и веб-клиент: расхождения с документацией и баги</h1>
 <p class="meta">
   ${esc(hostLabel)} <code>${esc(base)}</code> · запросы ${esc(utc(out.meta.at))} – ${esc(utc(out.meta.until).slice(11))} ·
   прогон тестов ${esc(utc(stats.startTime))} ·
@@ -414,8 +457,8 @@ ${CSS}</style>
   <div class="fact"><b>${runTotal}</b><span>автотестов: ${runCounts}</span></div>
 </div>
 
-<p>Каждая находка закреплена автотестом: тест проверяет текущее (неверное) поведение и упадёт,
-когда его исправят. Ниже у каждой находки — <b>все запросы ровно в том виде, в каком они
+<p>Находки по API закреплены автотестами: тест проверяет текущее (неверное) поведение и упадёт,
+когда его исправят (по веб-клиенту — W1 и W2; W3 и W4 замечены вручную). Ниже у каждой находки — <b>все запросы ровно в том виде, в каком они
 отправлялись</b> (готовые <code>curl</code>; пароль в отчёт не включён), и полные ответы сервера с
 заголовками; по <code>request_id</code> и времени их можно найти в логах. Все запросы шли в одной
 сессии (№${out.login}), закрытой в конце: logout №${out.logout}, после него сервер её уже не принимает (№${out.after}).</p>
@@ -447,6 +490,10 @@ ${cards(['S1', 'U1'])}
 <h2>Ошибки в документации</h2>
 ${cards(['D1', 'D2', 'D3', 'D4'])}
 
+<h2>Веб-клиент playtest.kartina.tv</h2>
+<p class="meta">Найдено браузерными тестами (<code>ui-tests/</code>): клиент на staging работает с этим же API.</p>
+${cards(['W1', 'W2', 'W3', 'W4'])}
+
 <h2 id="cases">Результаты прогона тест-кейсов</h2>
 <p class="meta">Прогон ${esc(utc(stats.startTime))}, ${Math.round(stats.duration / 1000)} с, ${esc(base)}.
 ${runTotal} автотестов: ${runCounts}.
@@ -466,7 +513,7 @@ ${caseTables}
 
 <h2>Что проверено и что нет</h2>
 <ul>
-  <li><b>Покрытие:</b> все 70 операций спецификации; ${runTotal} автотестов по ${cases.all.length} тест-кейсам (<a href="#cases">результаты</a>), каталог — <code>TEST_CASES.md</code> в репозитории тестов.</li>
+  <li><b>Покрытие:</b> все 70 операций спецификации и веб-клиент <code>playtest.kartina.tv</code> в браузере (кейсы UI-…); ${runTotal} автотестов по ${cases.all.length} тест-кейсам (<a href="#cases">результаты</a>), каталог — <code>TEST_CASES.md</code> в репозитории тестов.</li>
   <li><b>Production</b> (<code>iptv.kartina.tv</code>), разовая проверка 20.10.2026, не из этого прогона: только чтение; A3, A5, A7, A8, D1 воспроизводились там же, S1 — нет. A1 и A2 на production не проверялись.</li>
   <li><b>Не проверено:</b> пропускает ли эндпоинт трейлера (A1) проверки подписки и гео — у тестового аккаунта всё оплачено.</li>
   <li><b>Сознательно не тестировалось</b> (меняет реальный аккаунт или затрагивает других): отправка кодов и создание аккаунтов sharing, смена protect-кода, очистка истории поиска, ответ на registration prompt, вытеснение сессий, неверный пароль реального аккаунта.</li>
