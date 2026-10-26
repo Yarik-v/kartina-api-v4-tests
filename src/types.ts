@@ -84,6 +84,7 @@ export interface EpgProgramme {
   starts_at: number;
   ends_at: number;
   title: string;
+  title_id: number;
   teleteka: boolean;
   playable: boolean;
   play_url: string;

@@ -3,6 +3,11 @@ import { expectError, expectKnownIssue, expectResponse, recordKnownIssue } from 
 import { apiPath } from '../../src/client';
 import type { SearchFacets, SearchHistory, SearchResults } from '../../src/types';
 
+/** Search results with the card fields the filters act on. */
+type FilterResults = Omit<SearchResults, 'items'> & {
+  items: { id: string; title: string; year: string | null; ratings: { imdb: number | null; kinopoisk: number | null }; details_url: string }[];
+};
+
 const QUERY = 'маша';
 
 test.describe('GET /search/services', () => {
@@ -87,6 +92,38 @@ test.describe('search facets', () => {
     const titles = body.items.filter((item): item is SearchResults['items'][number] & { genres: string[] } => 'genres' in item);
     expect(titles.length, 'titles on the first page').toBeGreaterThan(0);
     for (const item of titles) expect(item.genres.map((g) => g.toLowerCase()), `${item.service}/${item.id} «${item.title}»`).toContain(genre.toLowerCase());
+  });
+
+  // SRCH-08. `director` and `actor` aren't checked: the details of the subscribed
+  // services' titles list no directors or actors to search for.
+  test('from_year / to_year keep the results within those years', { tag: '@SRCH-08' }, async ({ api }) => {
+    const body = await expectResponse<FilterResults>(await api.searchServices({ from_year: 2020, to_year: 2021, limit: 20 }), 'searchServices', 200);
+    expect(body.count, 'titles of 2020–2021').toBeGreaterThan(0);
+    for (const item of body.items) {
+      expect(Number(item.year), `year of «${item.title}»`).toBeGreaterThanOrEqual(2020);
+      expect(Number(item.year), `year of «${item.title}»`).toBeLessThanOrEqual(2021);
+    }
+  });
+
+  for (const [param, rating] of [['imdb_rating_from', 'imdb'], ['kinopoisk_rating_from', 'kinopoisk']] as const) {
+    test(`${param} keeps only titles rated that high`, { tag: '@SRCH-08' }, async ({ api }) => {
+      const body = await expectResponse<FilterResults>(await api.searchServices({ [param]: 8, limit: 20 }), 'searchServices', 200);
+      expect(body.count, `titles rated 8+ on ${rating}`).toBeGreaterThan(0);
+      for (const item of body.items) expect(item.ratings[rating], `${rating} rating of «${item.title}»`).toBeGreaterThanOrEqual(8);
+    });
+  }
+
+  test('country keeps only titles produced there', { tag: '@SRCH-08' }, async ({ api }) => {
+    // Cards carry no countries: they're checked in the details.
+    const countriesOf = async (item: FilterResults['items'][number]) =>
+      (await expectResponse<{ countries: string[] }>(await api.raw('GET', apiPath(item.details_url)), 'getContentDetails', 200)).countries;
+    const sample = await expectResponse<FilterResults>(await api.searchServices({ limit: 5 }), 'searchServices', 200);
+    let country: string | undefined;
+    for (const item of sample.items) if (!country) country = (await countriesOf(item))[0];
+    test.skip(!country, 'None of the first titles lists a country');
+    const body = await expectResponse<FilterResults>(await api.searchServices({ country: country!, limit: 5 }), 'searchServices', 200);
+    expect(body.count, `titles of ${country}`).toBeGreaterThan(0);
+    for (const item of body.items) expect(await countriesOf(item), `countries of «${item.title}»`).toContain(country);
   });
 
   test('search_url breaks its own documented format (known docs bug)', { tag: ['@SRCH-11', '@pinned'] }, async ({ api }) => {

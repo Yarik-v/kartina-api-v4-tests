@@ -9,6 +9,8 @@ import type { CardList, ChannelCard, ChannelListCard, ChannelsList, ContentDetai
 // service lacks startru / iviru, PUT has them).
 const LISTABLE_SERVICES = parameterEnum('getFavoritesByService', 'service');
 const FAVORABLE_SERVICES = parameterEnum('addContentFavorite', 'service');
+/** The aliases PUT / DELETE `/content/{service}/{id}/favorite` document, and their services. */
+const SERVICE_ALIASES: Record<string, string> = { ivi: 'iviru', start_film: 'startru', tntpremier: 'premierone', 'film-ua': 'filmua', 'more-tv': 'moretv' };
 
 async function favorites(api: V4ApiClient): Promise<FavoritesList> {
   return expectResponse<FavoritesList>(await api.getFavorites(), 'getFavorites', 200);
@@ -112,6 +114,28 @@ test.describe('VOD title favorites', { tag: '@mutates' }, () => {
     await expectResponse(await api.removeContentFavorite(service, id), 'removeContentFavorite', 204);
     await expectError(await api.removeContentFavorite(service, id), 'removeContentFavorite', 404);
     expect(contains(await favorites(api), id, service), 'gone from GET /favorites').toBe(false);
+  });
+});
+
+test.describe('service aliases', { tag: '@mutates' }, () => {
+  test('an alias adds, shows and removes a title as its own service', { tag: '@FAV-07' }, async ({ api, dashboardBlocks, undo }) => {
+    const before = await favorites(api);
+    const checked: string[] = [];
+    for (const [alias, service] of Object.entries(SERVICE_ALIASES)) {
+      const card = findCards(dashboardBlocks, (c) => c.service === service && !c.favorite && !contains(before, c.id, service)).pop();
+      if (!card) continue;
+      const { id } = card;
+      const put = await addFavorite(undo, `${service}/${id}`, () => api.addContentFavorite(alias, id), () => api.removeContentFavorite(service, id));
+      await expectResponse(put, 'addContentFavorite', 201);
+      expect(contains(await favorites(api), id, service), `${alias}/${id} listed as ${service}`).toBe(true);
+      const details = await expectResponse<ContentDetails>(await api.getContentDetails(alias, id), 'getContentDetails', 200);
+      expect(details.service, `service of GET /content/${alias}/${id}`).toBe(service);
+      expect(details.favorite, `favorite of GET /content/${alias}/${id}`).toBe(true);
+      await expectResponse(await api.removeContentFavorite(alias, id), 'removeContentFavorite', 204);
+      expect(contains(await favorites(api), id, service), `${alias}/${id} gone from GET /favorites`).toBe(false);
+      checked.push(alias);
+    }
+    test.skip(checked.length === 0, 'No non-favorite title of an aliased service on the dashboard');
   });
 });
 

@@ -64,6 +64,19 @@ test.describe('POST /login with valid credentials', () => {
     await expectResponse(await anonApi.logout(), 'logout', 204);
   });
 
+  test('X-Client-Version does not change the answer', { tag: '@SEC-14' }, async ({ anonApi }) => {
+    const plain = await expectResponse<Account>(await anonApi.login(auxCredentials()), 'login', 200);
+    await expectResponse(await anonApi.logout(), 'logout', 204);
+    const versioned = await expectResponse<Account>(
+      await anonApi.raw('POST', 'login', { data: auxCredentials(), headers: { 'X-Client-Version': '20260517' } }),
+      'login',
+      200,
+    );
+    await expectResponse(await anonApi.logout(), 'logout', 204);
+    // Each login opens a session of its own; the rest must be the same.
+    expect({ ...versioned, security: plain.security }).toEqual(plain);
+  });
+
   test('a second login of the same device and serial ends the first session', { tag: '@SEC-04' }, async ({ newAnonApi }) => {
     // Not in the spec, but every client depends on it: one session per device.
     const first = await newAnonApi();

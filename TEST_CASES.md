@@ -15,9 +15,9 @@ the case pins the current behavior so that a fix turns its test red (see README,
 and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
 not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
-**201 cases total, 173 automated, 28 gaps** (`—` in Automated); see "Remaining gaps"
-at the end for the breakdown. Of the automated ones, 11 run only when their
-precondition holds: 8 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
+**201 cases total, 178 automated, 23 gaps** (`—` in Automated); see "Remaining gaps"
+at the end for the breakdown. Of the automated ones, 12 run only when their
+precondition holds: 9 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
 20.10.2026 the dashboard has no non-playable title and no ivi / start_film block).
 
@@ -47,7 +47,7 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | SEC-11 | Unknown login | P0 | no session | POST `/login` with login `not-a-login` | 403 `E_INCORRECT_LOGIN`, `Incorrect login`; no session opened (GET `/account` 403) | `tests/account/security.spec.ts` |
 | SEC-12 | Wrong password for an existing login | P1 | no session | POST `/login` with the real login and a wrong password | 403 `E_INCORRECT_LOGIN`, `Wrong password` | — (excluded: repeated runs could lock the real account) |
 | SEC-13 | **Undocumented:** a 4th session evicts the oldest **[U1]** | P1 | 3 sessions of the account open | Log in from a 4th serial; call GET `/account` on the oldest session twice | First call 409 `E_ANOTHER_CLIENT_IN` ("Абонемент используется на другом устройстве"), then 403. The spec documents neither the limit nor the 409 | — (excluded: would knock the account's real devices out) |
-| SEC-14 | `X-Client-Version` doesn't change the answer | P2 | no session | SEC-01 with `X-Client-Version: 20260517` | Same response as without it | — (not automated: trivial) |
+| SEC-14 | `X-Client-Version` doesn't change the answer | P2 | no session | SEC-01 with `X-Client-Version: 20260517` | Same response as without it | `tests/account/security.spec.ts` |
 | SEC-15 | `mirror` with geo-routing | P2 | a deployment with geo-routing | POST `/login` | Body carries `mirror` (alternative server) | — (needs a geo-routed deployment) |
 | SEC-16 | The login body shows the prompt only without a personal cabinet | P1 | no session | SEC-01 | `registration_prompt.show == true` only together with `has_personal_account == false` (the `hasPersonalAccount` schema: "The prompt is shown only when false") | `tests/account/security.spec.ts` |
 
@@ -100,7 +100,7 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | FAV-04 | Service outside the documented list | P2 | none | GET `/favorites/playwright-no-such-service` | 404 | `tests/account/favorites.spec.ts` |
 | FAV-05 | Add and remove a VOD title | P0 | a dashboard title that isn't a favorite | PUT, PUT again, GET `/favorites`, GET details, DELETE, DELETE again | 201, then 200 (idempotent); listed; `details.favorite == true`; 204, then 404; gone from the list. Always removed again | `tests/account/favorites.spec.ts` |
 | FAV-06 | Add and remove a channel | P0 | a channel that isn't a favorite | Same as FAV-05 for `/channels/{id}/favorite` | 201, 200, listed in `/favorites/channels` with `favorite: true`; 204, 404, gone | `tests/account/favorites.spec.ts` |
-| FAV-07 | Service aliases | P2 | none | PUT/GET with `ivi`, `start_film`, `tntpremier`, `film-ua`, `more-tv` | Same as the canonical id | — (not automated) |
+| FAV-07 | Service aliases | P2 | none | PUT/GET with `ivi`, `start_film`, `tntpremier`, `film-ua`, `more-tv` | Same as the canonical id: listed and detailed under it, removed by the alias too | `tests/account/favorites.spec.ts` |
 
 ### 1.5 Sharing (Mobile Friend) — `/sharing/*`
 
@@ -140,7 +140,7 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | CH-06 | EPG `from` / `to` | P1 | none | GET `…/epg?from=now−6h&to=now` | Only programmes overlapping that window | `tests/catalog/channels.spec.ts` |
 | CH-07 | EPG of a non-numeric id | P2 | none | GET `/channels/playwright/epg` | 404 | `tests/catalog/channels.spec.ts` |
 | CH-08 | EPG of a channel outside the packet | P1 | none | GET `/channels/999999999/epg` | 403 | `tests/catalog/channels.spec.ts` |
-| CH-09 | EPG `timeshift` / `title_id` | P2 | none | GET `…/epg?timeshift=…` / `?title_id=…` | Times shifted / only that title's airings | — (not automated yet) |
+| CH-09 | EPG `timeshift` / `title_id` | P2 | none | GET `…/epg?timeshift=…` / `?title_id=…` | `title_id`: only that title's airings. `timeshift`: times stay real broadcast times (docs), only the window's edges move | `tests/catalog/channels.spec.ts` |
 | CH-10 | Play a live channel | P0 | none | GET `/channels/{id}/play` | 200; `playbackStream` schema; `url` set | `tests/catalog/channels.spec.ts` |
 | CH-11 | Protected channel without the code | P1 | a protected channel in the packet | GET `…/play` | 403 `E_CURRENT_PASS_BAD` | `tests/catalog/channels.spec.ts` |
 | CH-12 | Protected channel with the code | P1 | `V4_PROTECT_CODE` | GET `…/play?protect=<code>` | 200 | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
@@ -152,7 +152,7 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | CH-18 | Play a teleteka recording | P0 | a programme with `teleteka: true` | GET its `play_url` | 200; stream | `tests/catalog/channels.spec.ts` |
 | CH-19 | **BUG:** teleteka of a programme without a recording **[A2]** | P1 | past programmes with `teleteka: false` | GET `…/teleteka/{starts_at}` for up to 12 of them | Docs: 403 `E_ARCHIVE_NOT_AVAILABLE`. Until the staging deploy of 21.10.2026 every one got 200 with a stub clip (`…/zaglushka/…`); since then some get the documented 403 and some still the stub, even on one channel. Each 403 must be the documented one; the test stays green while any programme gets the stub | `tests/catalog/channels.spec.ts` (pinned) |
 | CH-20 | Teleteka at a timestamp no programme starts at | P2 | none | GET `…/teleteka/1` | 404 `E_WRONG_ID`, `Program not found` | `tests/catalog/channels.spec.ts` |
-| CH-21 | Archive / teleteka of a protected channel | P2 | `V4_PROTECT_CODE`, a protected archive channel | Without and with `protect` | 403 `E_CURRENT_PASS_BAD`, then 200 | — (not automated yet) |
+| CH-21 | Archive / teleteka of a protected channel | P2 | `V4_PROTECT_CODE`, a protected archive channel | Without and with `protect` | 403 `E_CURRENT_PASS_BAD`, then 200 | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`; teleteka only when the channel has a recording) |
 | CH-22 | Hide without the protect code | P1 | `V4_PROTECT_CODE`; the account hides nothing yet | PUT `/channels/{id}/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CH-23 | Reset without the protect code | P1 | `V4_PROTECT_CODE`; the account hides nothing yet | DELETE `/channels/hidden` `{}` | 400 | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
 | CH-24 | Hide, list, unhide, reset | P1 | `V4_PROTECT_CODE`; the account hides nothing yet | PUT hidden (twice), GET `/channels`, GET `?show=1&protect=`, DELETE `…/hidden`, hide again, DELETE `/channels/hidden` | 204 each (idempotent); gone from the plain list; listed with `access.hidden` under `show=1`; back after unhide and after the reset | `tests/catalog/channels.spec.ts` (needs `V4_PROTECT_CODE`) |
@@ -200,7 +200,7 @@ table). The ~15 cases that pin a known bug are also tagged `@pinned`.
 | SRCH-05 | `sort=-year` | P1 | none | `?sort=-year` | Years in non-increasing order | `tests/catalog/search.spec.ts` |
 | SRCH-06 | Unknown service | P1 | none | `?service=playwright-no-such-service` | 400 naming the service | `tests/catalog/search.spec.ts` |
 | SRCH-07 | `limit` below 1 / above 100 | P2 | none | `?limit=0`, `?limit=101` | 400 each | `tests/catalog/search.spec.ts` |
-| SRCH-08 | Other filters | P2 | none | `genre`, `country`, `director`, `actor`, `from_year`/`to_year`, rating thresholds | Results match each filter | — (only `genre` is automated, SRCH-10) |
+| SRCH-08 | Other filters | P2 | none | `genre`, `country`, `director`, `actor`, `from_year`/`to_year`, rating thresholds | Results match each filter | `tests/catalog/search.spec.ts` (`country`, years, both ratings; not `director` / `actor`: the subscribed services' details list no people to search for; `genre` is SRCH-10) |
 | SRCH-09 | Genre facets | P1 | none | GET `/search/services/genres` | 200; `count == items.length`; every `count > 0`; `search_url` has `{genre}` | `tests/catalog/search.spec.ts` |
 | SRCH-10 | A facet's `search_url` filters the search | P1 | SRCH-09 | Fill `{genre}` with a listed genre, follow it | 200; `total > 0` | `tests/catalog/search.spec.ts` |
 | SRCH-11 | **DOCS BUG:** `search_url` vs its declared format **[D1]** | P2 | none | Validate `search_url` | A URI template (`{genre}`, `{query}`), as the spec's examples show, but declared `format: uri-reference`, which braces break | `tests/catalog/search.spec.ts` (pinned) |
@@ -341,5 +341,3 @@ doesn't have, or would cost the account something it can't get back:
   actual playback over time.
 - **Rate limits** (SHR-10): not hit on purpose; the limit is shared per IP.
 - **Not in the web client** (UI-13): it has no profiles UI.
-- **Not automated yet** (SEC-14, FAV-07, CH-09, CH-21, SRCH-08): plain additions with no
-  blocker, low priority.

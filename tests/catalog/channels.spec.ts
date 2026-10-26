@@ -3,7 +3,7 @@ import { expectError, expectResponse, recordKnownIssue } from '../../src/asserti
 import { apiPath, type V4ApiClient } from '../../src/client';
 import { v4ProtectCode } from '../../src/config';
 import { TELETEKA_EPG_SPAN, TELETEKA_SAMPLE, isTeletekaStub, programmesWithoutRecording, teletekaChannels } from '../../src/teleteka.mjs';
-import type { ChannelEpg, ChannelListCard, ChannelsList, Page, PlaybackStream } from '../../src/types';
+import type { ChannelEpg, ChannelListCard, ChannelsList, EpgProgramme, Page, PlaybackStream } from '../../src/types';
 
 const DAY = 24 * 60 * 60;
 const now = () => Math.floor(Date.now() / 1000);
@@ -75,6 +75,31 @@ test.describe('GET /channels/{id}/epg', () => {
     }
   });
 
+  test('title_id narrows the guide to the airings of that title', { tag: '@CH-09' }, async ({ api, channels }) => {
+    const channel = playableChannel(channels)!;
+    const epg = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, { from: now() - DAY, to: now() }), 'getChannelEpg', 200);
+    const programme = epg.items[0];
+    test.skip(!programme, `Channel ${channel.id} has no programme in the last day`);
+    const body = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, { title_id: programme.title_id }), 'getChannelEpg', 200);
+    expect(body.items.map((p) => p.starts_at), `airings of title ${programme.title_id}`).toContain(programme.starts_at);
+    for (const p of body.items) expect(p.title_id, `${p.title} at ${p.starts_at}`).toBe(programme.title_id);
+  });
+
+  test('timeshift keeps the real broadcast times', { tag: '@CH-09' }, async ({ api, channels }) => {
+    // Documented: "Times are real broadcast times", whatever the variant; with a
+    // timeshift only the edges of the window move.
+    const channel = playableChannel(channels)!;
+    const at = now();
+    const window = { from: at - DAY, to: at + DAY };
+    const plain = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, window), 'getChannelEpg', 200);
+    const shifted = await expectResponse<ChannelEpg>(await api.getChannelEpg(channel.id, { ...window, timeshift: 3 }), 'getChannelEpg', 200);
+    const key = (p: EpgProgramme) => `${p.starts_at} ${p.title}`;
+    const middle = plain.items.filter((p) => p.starts_at > window.from + DAY / 2 && p.ends_at < window.to - DAY / 2);
+    expect(middle.length, 'programmes in the middle of the window').toBeGreaterThan(0);
+    const shiftedKeys = new Set(shifted.items.map(key));
+    expect(middle.map(key).filter((k) => !shiftedKeys.has(k)), 'programmes moved or missing with timeshift=3').toEqual([]);
+  });
+
   test('a non-numeric id answers 404', { tag: '@CH-07' }, async ({ api }) => {
     await expectError(await api.getChannelEpg('playwright'), 'getChannelEpg', 404);
   });
@@ -137,6 +162,28 @@ test.describe('archive and teleteka', () => {
     const programme = epg.items.find((p) => p.ends_at < now() - 3 * 60 * 60);
     test.skip(!programme, 'No programme in the archive window');
     await expectResponse<PlaybackStream>(await api.playChannelArchive(channel!.id, programme!.starts_at), 'playChannelArchive', 200);
+  });
+
+  test('a protected channel\'s recordings need the protect code: 403 E_CURRENT_PASS_BAD without it, a stream with it', { tag: '@CH-21' }, async ({
+    api,
+    channels,
+  }) => {
+    test.skip(!v4ProtectCode, 'V4_PROTECT_CODE is not set in .env');
+    const channel = channels.items.find((c) => c.access.protected && c.playable && c.capabilities.archive);
+    test.skip(!channel, 'No playable protected channel with an archive');
+    const { id } = channel!;
+    const epg = await expectResponse<ChannelEpg>(await api.getChannelEpg(id, { from: now() - DAY, to: now() }), 'getChannelEpg', 200);
+    // Hours ago, as in CH-16: a programme enters the archive only after `catchup.delay`.
+    const archived = epg.items.find((p) => p.ends_at < now() - 3 * 60 * 60);
+    test.skip(!archived, `Channel ${id} has no programme in the archive window`);
+    await expectError(await api.playChannelArchive(id, archived!.starts_at), 'playChannelArchive', 403, 'E_CURRENT_PASS_BAD');
+    await expectResponse<PlaybackStream>(await api.playChannelArchive(id, archived!.starts_at, { protect: v4ProtectCode }), 'playChannelArchive', 200);
+    // The teleteka too, where the channel has a recording.
+    const recorded = epg.items.find((p) => p.teleteka && p.playable && p.ends_at < now());
+    if (recorded) {
+      await expectError(await api.playChannelTeleteka(id, recorded.starts_at), 'playChannelTeleteka', 403, 'E_CURRENT_PASS_BAD');
+      await expectResponse<PlaybackStream>(await api.playChannelTeleteka(id, recorded.starts_at, { protect: v4ProtectCode }), 'playChannelTeleteka', 200);
+    }
   });
 
   test('archive of a channel without archive answers 400', { tag: '@CH-17' }, async ({ api, channels }) => {
