@@ -10,6 +10,7 @@
     "test:browser": "V4_BROWSER_ONLY=1 playwright test",
     "report": "node scripts/open-report.mjs",
     "report:bugs": "node scripts/bug-report.mjs",
+    "seed:playback": "node scripts/seed-playback.mjs",
     "spec:refresh": "node scripts/fetch-openapi.mjs",
     "typecheck": "tsc --noEmit"
   },

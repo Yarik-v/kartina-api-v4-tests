@@ -31,6 +31,7 @@ npm run test:browser   # only the browser tests (web client on playtest.kartina.
 npm run test:ui        # Playwright UI mode
 npm run report         # open the last report (test-results/latest.html)
 npm run report:bugs    # bug report for the API developers: reports/<date>-api-v4-<env>.html
+npm run seed:playback  # fill "continue watching" for BLK-11/12 (real playback, ~5 min)
 npm run typecheck      # the only check CI runs
 npm run spec:refresh   # re-download spec/openapi.yaml
 ```
@@ -112,6 +113,10 @@ issues* (passed, but hit a known API bug) and skips grouped by reason.
   clearing the search history, answering the registration prompt.
 - Wrong-credential tests use a login that can't exist, never a wrong password for the
   real account.
+- "Continue watching" (BLK-11, BLK-12) fills only through real playback: the API has
+  no call that records progress. `npm run seed:playback` watches a premierone episode
+  and an archived TV programme for 2 minutes each in the web client. The block keeps
+  14 days, so when those tests skip with "Nothing … is in progress", run it again.
 
 ## Known API bugs
 
