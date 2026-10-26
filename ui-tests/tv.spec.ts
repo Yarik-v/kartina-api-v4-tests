@@ -1,6 +1,6 @@
 import { expectResponse } from '../src/assertions';
-import type { CardList, ChannelCard, ChannelEpg } from '../src/types';
-import { test, expect, hoverNavDropdown, openHome, secondsPlayed } from './fixtures';
+import type { CardList, ChannelCard, ChannelEpg, ChannelsList, EpgProgramme } from '../src/types';
+import { test, expect, hoverNavDropdown, openHome, openPage, secondsPlayed } from './fixtures';
 import type { Page } from '@playwright/test';
 
 /** Opens the first channel group of the "Телевидение" menu; returns its id. */
@@ -15,6 +15,45 @@ async function openFirstChannelGroup(page: Page): Promise<string> {
 }
 
 const channelRows = (page: Page) => page.locator('.video-list__item');
+
+/** A time as the channel page writes it: "8:05", hours without a leading zero. */
+const time = (ts: number) => new Date(ts * 1000).toLocaleTimeString('ru-RU', { hour: 'numeric', minute: '2-digit' });
+const timeRange = (p: EpgProgramme) => `${time(p.starts_at)} - ${time(p.ends_at)}`;
+
+/**
+ * Programmes whose row on the channel page can be told apart: the page lists every day
+ * of the EPG in one list, so a daily show is on it several times with the same title
+ * and hours.
+ */
+function distinctProgrammes(epg: ChannelEpg): EpgProgramme[] {
+  const key = (p: EpgProgramme) => `${p.title} ${timeRange(p)}`;
+  const keys = epg.items.map(key);
+  return epg.items.filter((p) => keys.filter((k) => k === key(p)).length === 1);
+}
+
+/**
+ * Clicks a past programme's row on the open channel page and checks that the client
+ * plays it through `GET /channels/{id}/{source}/{starts_at}`: the request answers 200,
+ * the URL follows, and the video advances.
+ */
+async function playPastProgramme(page: Page, channelId: string, programme: EpgProgramme, source: 'teleteka' | 'archive'): Promise<void> {
+  // As a viewer would: the channel's live stream is playing before a programme is
+  // picked (clicked earlier, the client loads the recording but leaves it paused).
+  await expect.poll(() => secondsPlayed(page), { message: 'the live stream started', timeout: 30_000 }).toBeGreaterThan(0);
+  const row = channelRows(page).filter({ hasText: programme.title }).filter({ hasText: timeRange(programme) });
+  const path = `/api/v4/channels/${channelId}/${source}/${programme.starts_at}`;
+  const res = page.waitForResponse((r) => new URL(r.url()).pathname === path);
+  await row.first().click();
+  expect((await res).status(), `GET ${path}`).toBe(200);
+  await page.waitForURL(`**/tv/channel/${channelId}/${source}/${programme.starts_at}**`);
+  // Advancing, not just past some time: the live stream's position may still be on the element.
+  const advanced = async () => {
+    const before = await secondsPlayed(page);
+    await page.waitForTimeout(2_000);
+    return (await secondsPlayed(page)) - before;
+  };
+  await expect.poll(advanced, { message: `seconds the ${source} stream advanced in 2 s`, timeout: 30_000 }).toBeGreaterThan(1);
+}
 
 test.describe('TV', () => {
   test('a channel group lists the channels GET /pages/tv/channel-groups/{id} returns, in order', { tag: '@UI-06' }, async ({ page, uiApi }) => {
@@ -54,24 +93,33 @@ test.describe('TV', () => {
     const channelId = page.url().match(/\/tv\/channel\/([^/]+)\/live/)![1];
     const epg = await expectResponse<ChannelEpg>(await uiApi.getChannelEpg(channelId), 'getChannelEpg', 200);
     const now = Date.now() / 1000;
-    // The page lists every day of the EPG in one list, so a daily show is on it several
-    // times with the same title and hours: the programme is one whose title and time
-    // range are unique, so that its row can be told apart.
-    // As the page writes it: "8:05", hours without a leading zero.
-    const time = (ts: number) => new Date(ts * 1000).toLocaleTimeString('ru-RU', { hour: 'numeric', minute: '2-digit' });
-    const rowKey = (p: { title: string; starts_at: number; ends_at: number }) => `${p.title} ${time(p.starts_at)} - ${time(p.ends_at)}`;
-    const keys = epg.items.map(rowKey);
-    const recorded = epg.items
-      .filter((p) => p.teleteka && p.ends_at < now && keys.filter((key) => key === rowKey(p)).length === 1)
-      .at(-1);
+    const recorded = distinctProgrammes(epg).filter((p) => p.teleteka && p.ends_at < now).at(-1);
     test.skip(!recorded, `Channel ${channelId} has no recorded programme that can be told apart on the list`);
+    await playPastProgramme(page, channelId, recorded!, 'teleteka');
+  });
 
-    const row = channelRows(page).filter({ hasText: recorded!.title }).filter({ hasText: `${time(recorded!.starts_at)} - ${time(recorded!.ends_at)}` });
-    const teletekaPath = `/api/v4/channels/${channelId}/teleteka/${recorded!.starts_at}`;
-    const teleteka = page.waitForResponse((res) => new URL(res.url()).pathname === teletekaPath);
-    await row.first().click();
-    expect((await teleteka).status(), `GET ${teletekaPath}`).toBe(200);
-    await page.waitForURL(`**/tv/channel/${channelId}/teleteka/${recorded!.starts_at}**`);
-    await expect.poll(() => secondsPlayed(page), { message: 'seconds of the recording played', timeout: 30_000 }).toBeGreaterThan(2);
+  test('a past programme without a teleteka recording plays from the channel archive', { tag: '@UI-15' }, async ({ page, uiApi }) => {
+    // Unlike the API's teleteka of such a programme (a stub clip, bug A2), the client
+    // asks for the channel's archive instead. Finding one reads whole EPGs, which takes
+    // a while on staging.
+    test.slow();
+    await openHome(page);
+    const channels = await expectResponse<ChannelsList>(await uiApi.getChannels(), 'getChannels', 200);
+    const now = Date.now() / 1000;
+    let found: { channelId: string; programme: EpgProgramme } | undefined;
+    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 10)) {
+      const epg = await expectResponse<ChannelEpg>(await uiApi.getChannelEpg(channel.id), 'getChannelEpg', 200);
+      const programme = distinctProgrammes(epg)
+        .filter((p) => !p.teleteka && p.playable && p.ends_at < now && p.starts_at > now - 24 * 60 * 60)
+        .at(-1);
+      if (programme) {
+        found = { channelId: channel.id, programme };
+        break;
+      }
+    }
+    test.skip(!found, 'None of the first channels has a past programme of the last day without a teleteka recording');
+
+    await openPage(page, `/tv/channel/${found!.channelId}/live`);
+    await playPastProgramme(page, found!.channelId, found!.programme, 'archive');
   });
 });

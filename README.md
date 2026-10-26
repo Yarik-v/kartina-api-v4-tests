@@ -90,7 +90,13 @@ issues* (passed, but hit a known API bug) and skips grouped by reason.
 - With a wrong login the form shows no message at all: it just stays on `/login`.
 - Every search in the client is POSTed to the account's search history, which can only
   be cleaned up by wiping it. UI-10 searches for the history's top query only.
-- The client has no profiles UI, so profiles are covered by the API tests only.
+- The client has no profiles UI, so profiles are covered by the API tests only. Of the
+  settings, only the subscription info and the streaming settings come from the API;
+  the channel and playback settings are the client's own (no requests), and the
+  parental password and «Очистить историю поиска» are never touched.
+- A past programme is opened from the teleteka when the EPG marks it recorded, from the
+  channel archive otherwise. Picked before the live stream has started, the recording
+  loads but stays paused, so the tests wait for live playback first.
 - Only on staging: the client picks its API host from its own address.
 
 ## The account is real

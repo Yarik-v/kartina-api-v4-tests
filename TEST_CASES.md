@@ -15,7 +15,7 @@ the case pins the current behavior so that a fix turns its test red (see README,
 and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
 not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
-**189 cases total, 163 automated, 26 gaps** (`—` in Automated); see "Remaining gaps"
+**193 cases total, 165 automated, 28 gaps** (`—` in Automated); see "Remaining gaps"
 at the end for the breakdown. Of the automated ones, 11 run only when their
 precondition holds: 8 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
@@ -307,6 +307,10 @@ own session. `npm run test:browser` runs these alone.
 | UI-11 | Subscription info in the settings | P1 | none | Open `/settings/account`; GET `/account` | Login, packet title and end date shown | `ui-tests/settings.spec.ts` |
 | UI-12 | A recorded programme plays from the teleteka | P1 | a recorded programme whose title and hours are unique on the list | On the channel page click it | `/tv/channel/{id}/teleteka/{starts_at}`; GET `…/teleteka/{starts_at}` 200; the video plays (> 2 s) | `ui-tests/tv.spec.ts` |
 | UI-13 | Profiles in the web client | P2 | none | — | — | — (the client has no profile UI: no `/profiles` calls, the account button opens the settings) |
+| UI-14 | Streaming settings | P2 | none | Open `/settings/streaming-settings`; GET `/settings` on the browser's session (settings belong to its device) | «Сервер вещания» and «Задержка вещания в часах» show the labels of the current `server` / `timeshift` values | `ui-tests/settings.spec.ts` |
+| UI-15 | A past programme without a teleteka recording plays from the archive | P1 | such a programme in the last day on one of the first channels | On the channel page, once live is playing, click it | `/tv/channel/{id}/archive/{starts_at}`; GET `…/archive/{starts_at}` 200; the video advances. (The client doesn't ask the teleteka here, so the API's stub, A2, never reaches it.) | `ui-tests/tv.spec.ts` |
+| UI-16 | Change the parental password in the settings | P2 | `V4_PROTECT_CODE` | `/settings/parent-control` form | — | — (excluded: the protect code could stay changed, as CLI-14) |
+| UI-17 | «Очистить историю поиска» in the settings | P2 | none | `/settings/additional-settings` | — | — (excluded: wipes the account's search history, as SRCH-17) |
 
 ## Remaining gaps
 
@@ -314,7 +318,7 @@ Not gaps in effort; each needs something this black-box position on a real accou
 doesn't have, or would cost the account something it can't get back:
 
 - **Changes the suite won't make to the real account** (SEC-12, SEC-13, CLI-14, SHR-06,
-  SHR-07, SHR-08, SHR-09, REG-04, SRCH-15, SRCH-16, SRCH-17): a wrong password risks a lockout,
+  SHR-07, SHR-08, SHR-09, REG-04, SRCH-15, SRCH-16, SRCH-17, UI-16, UI-17): a wrong password risks a lockout,
   a 4th session evicts real devices, a changed protect code could stay changed, the
   sharing calls send real codes or alter the friend subscription, the prompt answer
   is one-way, the search history can only be cleaned up by wiping it. A dedicated
