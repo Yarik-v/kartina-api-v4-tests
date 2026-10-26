@@ -15,6 +15,8 @@ const auxCredentials = (): LoginBody => ({ login: v4Login, password: v4Password,
 const NOT_A_LOGIN = 'not-a-login';
 
 test.describe.configure({ mode: 'default' });
+// No traces: the login requests carry the real password.
+test.use({ trace: 'off' });
 
 function sessionCookie(res: { headersArray(): { name: string; value: string }[] }): string | undefined {
   return res

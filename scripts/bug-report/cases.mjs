@@ -1,6 +1,7 @@
 // Maps Playwright JSON results onto the TEST_CASES.md catalog via each test's case-id
 // tag (`@CNT-11`).
 import { readFileSync } from 'node:fs';
+import { isStaging } from '../../src/env.mjs';
 import { esc, md } from './util.mjs';
 
 /**
@@ -67,6 +68,9 @@ export function caseResults(resultsPath, catalogPath) {
   // (a failed login leaves every test unrun).
   /** @type {Record<string, number>} */
   const counts = { expected: 0, skipped: 0, notRun: 0, unexpected: 0, flaky: 0 };
+  // GEN-01's failures: a pinned test goes red when the API starts to conform, and a
+  // failed setup or teardown checks no response.
+  let contractFailures = 0;
   /** @param {any} suite */
   const walk = (suite) => {
     for (const spec of suite.specs ?? []) {
@@ -77,6 +81,7 @@ export function caseResults(resultsPath, catalogPath) {
         }
         const bucket = neverRan(test) ? 'notRun' : test.status;
         counts[bucket] = (counts[bucket] ?? 0) + 1;
+        if (test.status === 'unexpected' && !spec.tags.includes('pinned')) contractFailures++;
         for (const tag of spec.tags) {
           if (!/^[A-Z]+-\d+$/.test(tag)) continue;
           if (!byCase.has(tag)) byCase.set(tag, []);
@@ -146,7 +151,7 @@ export function caseResults(resultsPath, catalogPath) {
     if (id === 'GEN-01') {
       const ran = stats.expected + stats.unexpected + stats.flaky;
       const tests = `${stats.expected + stats.flaky}/${ran}`;
-      if (stats.unexpected) return { status: 'fail', tests, note: 'проверяется в каждом тесте прогона' };
+      if (contractFailures) return { status: 'fail', tests, note: 'проверяется в каждом тесте прогона' };
       if (!ran) return { status: 'notrun', tests, note: 'ни один тест прогона не выполнился' };
       return { status: 'pass', tests, note: 'проверяется в каждом тесте прогона' };
     }
@@ -158,6 +163,8 @@ export function caseResults(resultsPath, catalogPath) {
     const passed = tests.filter((t) => t.status === 'expected' || t.status === 'flaky').length;
     const count = `${passed}/${tests.length}`;
     if (tests.some((t) => t.status === 'unexpected')) {
+      // Off staging GEN-07 asserts there is no debug trace: red there means it appeared.
+      if (id === 'GEN-07' && !isStaging) return { status: 'fail', tests: count, note: 'отладочный трейс появился на этом хосте — проверить' };
       return { status: 'fail', tests: count, note: /\*\*(BUG|DOCS BUG)/.test(row.Title) ? 'закреплённый тест упал: баг, похоже, исправлен — проверить' : 'см. отчёт прогона' };
     }
     const notRun = tests.filter(neverRan);

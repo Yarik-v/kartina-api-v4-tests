@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import type { FullConfig, FullResult, Reporter, Suite, TestError } from '@playwright/test/reporter';
 import {
+  LIST_ONLY,
   collectRunSummary,
   describeTargets,
   formatRunError,
@@ -41,6 +42,8 @@ export default class HtmlReporter implements Reporter {
   }
 
   onEnd(result: FullResult): void {
+    // Keep the last run's report: `--list` runs nothing.
+    if (LIST_ONLY) return;
     const summary = collectRunSummary(this.rootSuite, this.startedAt);
     const { tests, passed, skippedTests, notRun, flaky, failures, knownIssues, durationSec } = summary;
     const verdict = runVerdict(summary, result.status, this.runErrors.length);

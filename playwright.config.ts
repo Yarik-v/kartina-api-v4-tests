@@ -27,6 +27,9 @@ const readOnlyProjects = [
     dependencies: ['api-v4-setup'],
     grep: new RegExp(PINNED_TAG),
     grepInvert: new RegExp(MUTATES_TAG),
+    // A red pinned test reads as "the bug is fixed": one retry keeps a transient 503
+    // from saying so. A real fix fails both attempts.
+    retries: 1,
     use: v4Use,
   },
 ];

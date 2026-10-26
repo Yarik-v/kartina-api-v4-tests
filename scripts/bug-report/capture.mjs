@@ -55,7 +55,8 @@ export async function capture({ base, login, password, device, serial }) {
     if (json !== undefined) reqHeaders['Content-Type'] = 'application/json';
     const reqBody = json === undefined ? null : JSON.stringify(json);
     const at = new Date().toISOString();
-    const res = await fetch(base + path, { method, redirect: 'manual', headers: reqHeaders, body: reqBody ?? undefined });
+    // A hung request would keep the capture from reaching its logout.
+    const res = await fetch(base + path, { method, redirect: 'manual', headers: reqHeaders, body: reqBody ?? undefined, signal: AbortSignal.timeout(60_000) });
     const body = await res.text();
     /** @type {any} */
     let parsed = null;
@@ -101,6 +102,8 @@ export async function capture({ base, login, password, device, serial }) {
 
   /** @type {Record<string, any>} */
   const out = { login: log.length };
+  /** @type {unknown} */
+  let failure;
   try {
     // Live data to pick titles and channels from (not part of the report).
     const dashboard = required(await call('GET', '/pages/dashboard', { keep: false }), 'GET /pages/dashboard');
@@ -272,10 +275,17 @@ export async function capture({ base, login, password, device, serial }) {
         subscribersOwn = put.exchange.status === 200;
         out.d3.push((await call('GET', '/favorites/channels')).exchange.n, (await call('GET', '/blocks/client-channels')).exchange.n);
       } finally {
-        if (!subscribersOwn) out.d3.push((await call('DELETE', `/channels/${channel.id}/favorite`)).exchange.n);
+        if (!subscribersOwn) {
+          const del = await call('DELETE', `/channels/${channel.id}/favorite`);
+          out.d3.push(del.exchange.n);
+          // 404: the PUT never added it. Anything else may leave it among the favorites.
+          if (del.exchange.status !== 204 && del.exchange.status !== 404) out.d3Leftover = { ...out.d3channel, status: del.exchange.status };
+        }
       }
       if (!created) out.d3 = undefined;
     }
+  } catch (error) {
+    failure = error;
   } finally {
     // Always free the session slot. The report shows the session id, so it must be
     // confirmed dead: logout (retried once), then GET /account must refuse it. A throw
@@ -292,6 +302,12 @@ export async function capture({ base, login, password, device, serial }) {
     } catch (error) {
       out.logoutError = error instanceof Error ? error.message : String(error);
     }
+  }
+  if (failure) {
+    const session = out.sessionClosed
+      ? 'its session is closed'
+      : `its session (serial ${serial}) could not be confirmed closed${out.logoutError ? ` (${out.logoutError})` : ''}: it may hold one of the account's slots until it expires`;
+    throw new Error(`The capture failed (${failure instanceof Error ? failure.message : String(failure)}) and ${session}${out.d3Leftover ? `; channel ${out.d3Leftover.id} may have stayed in the favorites` : ''}`, { cause: failure });
   }
   out.meta = { base, device, serial, login, ssid, at: log[0].at, until: log[log.length - 1].at };
   return { out, log };

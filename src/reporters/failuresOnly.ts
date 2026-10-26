@@ -1,5 +1,6 @@
 import type { FullConfig, FullResult, Reporter, Suite, TestError } from '@playwright/test/reporter';
 import {
+  LIST_ONLY,
   collectRunSummary,
   describeTargets,
   formatRunError,
@@ -25,6 +26,12 @@ export default class FailuresOnlyReporter implements Reporter {
   onBegin(_config: FullConfig, suite: Suite): void {
     this.startedAt = new Date();
     this.rootSuite = suite;
+    if (LIST_ONLY) {
+      const tests = suite.allTests();
+      for (const test of tests) console.log(`  ${test.titlePath().filter(Boolean).join(' › ')}`);
+      console.log(`Total: ${tests.length} tests`);
+      return;
+    }
     console.log(`\nRun started: ${this.startedAt.toLocaleString()} (${describeTargets(suite)})`);
   }
 
@@ -33,6 +40,10 @@ export default class FailuresOnlyReporter implements Reporter {
   }
 
   onEnd(result: FullResult): void {
+    if (LIST_ONLY) {
+      for (const error of this.runErrors) console.log(`\n${formatRunError(error)}`);
+      return;
+    }
     const summary = collectRunSummary(this.rootSuite, this.startedAt);
     const { tests, passed, skippedTests, notRun, flaky, failures, knownIssues, durationSec } = summary;
     const verdict = runVerdict(summary, result.status, this.runErrors.length);

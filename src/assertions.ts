@@ -94,7 +94,8 @@ export async function expectKnownIssue(res: APIResponse, operationId: string, st
   const issue = knownIssue(issueId);
   const body = await readBody(res);
   expect(res.status(), `${operationId}: HTTP status`).toBe(status);
-  const { errors } = checkResponse(operationId, status, res.headers()['content-type'] ?? '', body);
+  const { problem, errors } = checkResponse(operationId, status, res.headers()['content-type'] ?? '', body);
+  expect(problem, `${operationId}: response to check for ${issueId}`).toBeUndefined();
   expect(
     errors.some((error) => issue.explains(error)),
     `${issueId} no longer reproduces: remove it from src/knownIssues.ts along with this test`,

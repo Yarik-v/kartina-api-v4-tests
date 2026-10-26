@@ -7,6 +7,12 @@ import type { FullResult, Suite, TestCase, TestError } from '@playwright/test/re
  */
 export const KNOWN_ISSUE_ANNOTATION = 'known-issue';
 
+/**
+ * `playwright test --list`: nothing runs. The reporters still get onBegin/onEnd, so they
+ * print the list themselves and write no run report.
+ */
+export const LIST_ONLY = process.argv.includes('--list');
+
 export interface KnownIssue {
   test: TestCase;
   description: string;
@@ -31,6 +37,8 @@ export interface RunSummary {
   flaky: number;
   failures: TestCase[];
   knownIssues: KnownIssue[];
+  /** Setup projects that skipped themselves (no credentials): their session tests skip too. */
+  skippedSetups: SkippedTest[];
   durationSec: string;
 }
 
@@ -62,6 +70,13 @@ export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary
   const failures: TestCase[] = [];
   const knownIssues: KnownIssue[] = [];
   const skippedTests: SkippedTest[] = [];
+  const skippedSetups: SkippedTest[] = [];
+  for (const projectSuite of rootSuite.suites) {
+    if (!projectSuite.project()?.teardown) continue;
+    for (const test of projectSuite.allTests()) {
+      if (test.outcome() === 'skipped' && test.expectedStatus === 'skipped') skippedSetups.push({ test, reason: skipReason(test) });
+    }
+  }
 
   for (const test of tests) {
     switch (test.outcome()) {
@@ -71,8 +86,7 @@ export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary
         if (test.expectedStatus !== 'skipped') {
           notRun++;
         } else {
-          const skip = test.annotations.find(({ type }) => type === 'skip' || type === 'fixme');
-          skippedTests.push({ test, reason: skip?.description ?? '' });
+          skippedTests.push({ test, reason: skipReason(test) });
         }
         break;
       case 'expected':
@@ -90,7 +104,12 @@ export function collectRunSummary(rootSuite: Suite, startedAt: Date): RunSummary
     }
   }
 
-  return { tests, passed, skippedTests, notRun, flaky, failures, knownIssues, durationSec };
+  return { tests, passed, skippedTests, notRun, flaky, failures, knownIssues, skippedSetups, durationSec };
+}
+
+/** The `test.skip(condition, reason)` text, or ''. */
+function skipReason(test: TestCase): string {
+  return test.annotations.find(({ type }) => type === 'skip' || type === 'fixme')?.description ?? '';
 }
 
 /**
@@ -127,6 +146,10 @@ export function runVerdict(summary: RunSummary, status: FullResult['status'], er
   if (cutShort) return { text: summary.notRun > 0 ? `${cutShort} — ${summary.notRun} never ran` : cutShort, tone: 'bad' };
   if (status !== 'passed' || errorCount > 0) return { text: 'RUN FAILED — errors outside tests', tone: 'bad' };
   if (summary.passed + summary.flaky === 0) return { text: 'NOTHING PASSED — every test was skipped', tone: 'warn' };
+  // The tests that need no session still pass, so this would read as green.
+  if (summary.skippedSetups.length > 0) {
+    return { text: `NO SESSION — ${summary.skippedSetups.map((s) => s.reason || 'setup skipped').join('; ')}`, tone: 'warn' };
+  }
   return { text: 'ALL PASSED', tone: 'ok' };
 }
 

@@ -83,6 +83,10 @@ test.describe('search facets', () => {
       200,
     );
     expect(body.total).toBeGreaterThan(0);
+    // An unfiltered search would pass the line above too: every title must be of the genre.
+    const titles = body.items.filter((item): item is SearchResults['items'][number] & { genres: string[] } => 'genres' in item);
+    expect(titles.length, 'titles on the first page').toBeGreaterThan(0);
+    for (const item of titles) expect(item.genres.map((g) => g.toLowerCase()), `${item.service}/${item.id} «${item.title}»`).toContain(genre.toLowerCase());
   });
 
   test('search_url breaks its own documented format (known docs bug)', { tag: ['@SRCH-11', '@pinned'] }, async ({ api }) => {

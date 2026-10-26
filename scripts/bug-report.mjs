@@ -60,6 +60,11 @@ if (!captured.out.sessionClosed) {
   );
 }
 
+if (captured.out.d3Leftover) {
+  const { id, title, status } = captured.out.d3Leftover;
+  console.warn(`⚠ DELETE /channels/${id}/favorite answered ${status}: channel ${id} «${title}» may have stayed in the subscriber's favorites. Remove it by hand.`);
+}
+
 const hostLabel = HOST_LABELS[v4Host] ?? v4Host;
 const out = path.join(ROOT, 'reports', `${date}-api-v4-${hostLabel}.html`);
 mkdirSync(path.dirname(out), { recursive: true });

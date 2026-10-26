@@ -150,13 +150,21 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
     });
     // A test that failed before its own logout would hold one of the account's few
     // session slots for the cookie's three days.
-    await Promise.all(
+    // 403: the test ended that session itself (or a later login on its serial did).
+    const results = await Promise.allSettled(
       contexts.map(async (context) => {
-        const { cookies } = await context.storageState();
-        if (cookies.some((cookie) => cookie.name === 'MW_SSID')) await new V4ApiClient(context).logout();
-        await context.dispose();
+        try {
+          const { cookies } = await context.storageState();
+          if (!cookies.some((cookie) => cookie.name === 'MW_SSID')) return;
+          const status = (await new V4ApiClient(context).logout()).status();
+          if (status !== 204 && status !== 403) throw new Error(`POST /logout of a leftover session answered ${status}: it may still hold a slot`);
+        } finally {
+          await context.dispose();
+        }
       }),
     );
+    const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (failed.length) throw failed[0].reason;
   },
 
   workerRequest: [
@@ -265,9 +273,8 @@ async function firstWithDetails(
   accept: (details: ContentDetails) => boolean,
 ): Promise<DiscoveredTitle | null> {
   for (const card of candidates.slice(0, 5)) {
-    const res = await api.getContentDetails(card.service, card.id);
-    if (!res.ok()) continue;
-    const details: ContentDetails = await res.json();
+    // A failing request fails the fixture: an outage must not turn into skips.
+    const details = await okJson<ContentDetails>(await api.getContentDetails(card.service, card.id), `GET /content/${card.service}/${card.id}`);
     if (accept(details)) return { card, details };
   }
   return null;

@@ -2,6 +2,7 @@
 // behind them as sent and received, and per-case results. When a pinned test turns
 // red, its finding shows "не воспроизвелось"; then update or drop it here.
 import { readFileSync } from 'node:fs';
+import { isStaging } from '../../src/env.mjs';
 import { esc, md, streamFile } from './util.mjs';
 
 /**
@@ -309,7 +310,7 @@ x-api-error-code: 11
       area: '<code>GET /blocks/client-channels</code>',
       short: 'Summary «избранные каналы», описание «самые просматриваемые»',
       title: 'Summary и описание /blocks/client-channels противоречат друг другу',
-      body: `<dt>Проблема</dt><dd>Summary: «Retrieve the client's favorite-channels block», блок называется «Любимые телеканалы». Описание: «Up to 20 of the client's most-watched TV channels». Фактически блок не связан с избранным${out.d3 ? `: канал ${esc(out.d3channel.id)} «${esc(out.d3channel.title)}», только что добавленный в избранное (№${out.d3[0]}, №${out.d3[1]}), в блоке не появляется (№${out.d3[2]}); затем он убран из избранного (№${out.d3[3]})` : ''}.</dd>
+      body: `<dt>Проблема</dt><dd>Summary: «Retrieve the client's favorite-channels block», блок называется «Любимые телеканалы». Описание: «Up to 20 of the client's most-watched TV channels». Фактически блок не связан с избранным${out.d3 ? `: канал ${esc(out.d3channel.id)} «${esc(out.d3channel.title)}», только что добавленный в избранное (№${out.d3[0]}, №${out.d3[1]}), в блоке не появляется (№${out.d3[2]}); ${out.d3Leftover ? `убрать его из избранного не удалось: ${out.d3Leftover.status} (№${out.d3[3]})` : `затем он убран из избранного (№${out.d3[3]})`}` : ''}.</dd>
     <dt>Предложение</dt><dd>Исправить summary (и, возможно, title блока), чтобы его не путали с <code>GET /favorites/channels</code>.</dd>
     <dt>Автотест</dt><dd><code>account/favorites.spec.ts</code> › «the "favorite-channels" block does not follow the favorites (known docs bug)»</dd>`,
       exchanges: out.d3 ?? [],
@@ -373,9 +374,15 @@ x-api-error-code: 11
   /** @param {Finding} f */
   const reproduces = (f) => {
     const statuses = f.cases.map((id) => caseById.get(id)?.result.status);
+    // Off staging GEN-07 asserts there is no trace: red there means the leak appeared.
+    if (f.id === 'S1' && !isStaging) {
+      if (statuses.includes('fail')) return '<span class="rs fail">появилось на этом хосте — проверить</span>';
+      return stagingTrace ? '<span class="rs bugrep">воспроизводится</span>' : '<span class="rs ok">на этом хосте нет</span>';
+    }
     // A red pinned test comes first: the bug looks fixed.
     if (statuses.some((s) => s === 'fail')) return '<span class="rs fail">не воспроизвелось — проверить</span>';
-    if (f.id === 'S1' && !stagingTrace) return '<span class="rs ok">на этом хосте нет</span>';
+    // On staging the capture's single error body decides only when GEN-07 didn't reproduce it.
+    if (f.id === 'S1' && !stagingTrace && !statuses.includes('bug')) return '<span class="rs ok">на этом хосте нет</span>';
     if (statuses.every((s) => s === 'gap')) return '<span class="rs gap">не автоматизирован</span>';
     // One reproducing case is enough, even if another didn't run or skipped.
     if (statuses.some((s) => s === 'bug')) return '<span class="rs bugrep">воспроизводится</span>';

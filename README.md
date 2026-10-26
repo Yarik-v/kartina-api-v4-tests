@@ -46,8 +46,9 @@ V4_MUTATING_ONLY=1 npx playwright test --project=api-v4-mutating --grep @FAV-05
 The report lists only what needs attention: failures (error, code, trace), *Known
 issues* (passed, but hit a known API bug) and skips grouped by reason.
 
-> **Don't share traces** of failed tests: they contain the session cookie, and for
-> login tests the password.
+> **Don't share traces** of failed tests: they contain the session cookie. Tests that
+> send the password or the protect code record no trace (`test.use({ trace: 'off' })`),
+> but UI mode (and possibly `--trace on`) can still record them.
 
 ## Layout
 

@@ -109,6 +109,7 @@ test.describe('GET /blocks/playback', () => {
       'getPlaybackBlockByOrigin',
       200,
     );
+    test.skip(body.items.length === 0, 'Nothing on TV is in progress for the account');
     for (const item of body.items) expect(item).toMatchObject({ kind: 'program', service: 'channels' });
   });
 
@@ -118,6 +119,7 @@ test.describe('GET /blocks/playback', () => {
       'getPlaybackBlockByOrigin',
       200,
     );
+    test.skip(body.items.length === 0, 'Nothing of premierone is in progress for the account');
     for (const item of body.items) expect(item.service).toBe('premierone');
   });
 

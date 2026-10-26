@@ -61,10 +61,13 @@ test.describe('GET /content/{service}/{id}', () => {
     dashboardBlocks,
   }) => {
     // The `service` enum of GET /content/{service}/{id} leaves out services the
-    // dashboard links to working details of (startru, iviru). Pinned: once the enum
-    // lists them this fails, and the test can go.
+    // dashboard links to working details of (startru, iviru). Pinned on the spec
+    // itself, so editorial changes can't turn it red: once the enum lists them this
+    // fails, and the test can go.
+    for (const service of ['startru', 'iviru']) expect(DETAILS_SERVICES, 'the documented {service} enum').not.toContain(service);
+    // The dashboard showing the details work: only while such cards are on it.
     const outside = findCards(dashboardBlocks, (c) => !DETAILS_SERVICES.includes(c.service));
-    expect(outside.length, 'cards of services outside the documented enum').toBeGreaterThan(0);
+    test.skip(outside.length === 0, 'No card of a service outside the documented enum is on the dashboard right now');
     const card = outside[0];
     await expectResponse(await api.getContentDetails(card.service, card.id), 'getContentDetails', 200);
     recordKnownIssue(

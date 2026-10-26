@@ -25,6 +25,8 @@ setup('open the shared API v4 session', async ({ playwright }) => {
     serial: v4Serial,
   });
   expect(res.status(), `POST /login with V4_LOGIN / V4_PASSWORD: ${await res.text()}`).toBe(200);
-  await context.storageState({ path: V4_SESSION_FILE });
+  const { cookies } = await context.storageState({ path: V4_SESSION_FILE });
   await context.dispose();
+  // Without it every session test would skip and the run would still read as green.
+  expect(cookies.map((cookie) => cookie.name), 'cookies saved after POST /login').toContain('MW_SSID');
 });

@@ -12,6 +12,10 @@ const NOT_A_CHANNEL = 999999999;
 const playableChannel = (list: ChannelsList, extra: (c: ChannelListCard) => boolean = () => true) =>
   list.items.find((c) => c.playable && !c.access.protected && extra(c));
 
+// No traces in this file: some requests carry the protect code (trace can't be
+// switched off for a describe group alone).
+test.use({ trace: 'off' });
+
 test.describe('GET /channels', () => {
   test('lists every channel once, with its own play, EPG and favorite links', { tag: '@CH-01' }, async ({ api }) => {
     const body = await expectResponse<ChannelsList>(await api.getChannels(), 'getChannels', 200);

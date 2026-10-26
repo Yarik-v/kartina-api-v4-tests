@@ -13,6 +13,10 @@ function sharedSessionId(): string | undefined {
   return state.cookies.find((cookie) => cookie.name === 'MW_SSID')?.value;
 }
 
+// No traces in this file: some requests carry the protect code (trace can't be
+// switched off for a describe group alone).
+test.use({ trace: 'off' });
+
 test.describe('GET /account', () => {
   test('returns the logged-in client, its packet and this very session', { tag: '@CLI-01' }, async ({ api }) => {
     const body = await expectResponse<Account>(await api.getAccount(), 'getAccount', 200);
@@ -137,6 +141,7 @@ function guardProtectCode(api: V4ApiClient, undo: Undo, possibleCodes: string[])
       await api.raw('POST', 'protect-code/change', { data: { old: code, new: v4ProtectCode, confirm: v4ProtectCode } });
     }
     expect((await api.checkProtectCode({ code: v4ProtectCode })).status(), 'protect code restored').toBe(200);
+    throw new Error('The change request changed the protect code although it was rejected (restored afterwards)');
   });
 }
 
