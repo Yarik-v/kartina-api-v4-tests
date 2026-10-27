@@ -27,6 +27,7 @@ const FINDING = /** @type {[RegExp, string][]} */ ([
   [/^operation-ids/, 'D4'],
   [/^webclient-password-in-localstorage/, 'W1'],
   [/^webclient-radio-stop-tooltip/, 'W2'],
+  [/^webclient-recording-paused/, 'W4'],
 ]);
 const findingOf = (/** @type {string} */ description) => FINDING.find(([re]) => re.test(description))?.[1] ?? '?';
 

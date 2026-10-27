@@ -1,4 +1,5 @@
-import { expectResponse } from '../src/assertions';
+import { expectResponse, recordKnownIssue } from '../src/assertions';
+import type { V4ApiClient } from '../src/client';
 import type { CardList, ChannelCard, ChannelEpg, ChannelsList, EpgProgramme } from '../src/types';
 import { test, expect, hoverNavDropdown, openHome, openPage, secondsPlayed } from './fixtures';
 import type { Page } from '@playwright/test';
@@ -38,7 +39,7 @@ function distinctProgrammes(epg: ChannelEpg): EpgProgramme[] {
  */
 async function playPastProgramme(page: Page, channelId: string, programme: EpgProgramme, source: 'teleteka' | 'archive'): Promise<void> {
   // As a viewer would: the channel's live stream is playing before a programme is
-  // picked (clicked earlier, the client loads the recording but leaves it paused).
+  // picked (clicked earlier, the client loads the recording but leaves it paused: W4, UI-27).
   await expect.poll(() => secondsPlayed(page), { message: 'the live stream started', timeout: 30_000 }).toBeGreaterThan(0);
   const row = channelRows(page).filter({ hasText: programme.title }).filter({ hasText: timeRange(programme) });
   const path = `/api/v4/channels/${channelId}/${source}/${programme.starts_at}`;
@@ -53,6 +54,27 @@ async function playPastProgramme(page: Page, channelId: string, programme: EpgPr
     return (await secondsPlayed(page)) - before;
   };
   await expect.poll(advanced, { message: `seconds the ${source} stream advanced in 2 s`, timeout: 30_000 }).toBeGreaterThan(1);
+}
+
+/**
+ * The latest programme of the last day that `wanted` accepts and that can be told apart
+ * on the channel page, from the first playable unprotected channels. Reads whole EPGs,
+ * which takes a while on staging.
+ */
+async function findPastProgramme(
+  uiApi: V4ApiClient,
+  wanted: (p: EpgProgramme) => boolean,
+): Promise<{ channelId: string; programme: EpgProgramme } | undefined> {
+  const channels = await expectResponse<ChannelsList>(await uiApi.getChannels(), 'getChannels', 200);
+  const now = Date.now() / 1000;
+  for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 10)) {
+    const epg = await expectResponse<ChannelEpg>(await uiApi.getChannelEpg(channel.id), 'getChannelEpg', 200);
+    const programme = distinctProgrammes(epg)
+      .filter((p) => p.playable && p.ends_at < now && p.starts_at > now - 24 * 60 * 60 && wanted(p))
+      .at(-1);
+    if (programme) return { channelId: channel.id, programme };
+  }
+  return undefined;
 }
 
 test.describe('TV', () => {
@@ -87,6 +109,8 @@ test.describe('TV', () => {
   });
 
   test('a recorded programme opens from the channel page and plays from the teleteka', { tag: '@UI-12' }, async ({ page, uiApi }) => {
+    // Waiting for the live stream and then the recording can take a minute on staging.
+    test.slow();
     await openFirstChannelGroup(page);
     await channelRows(page).first().click();
     await page.waitForURL(/\/tv\/channel\/[^/]+\/live/);
@@ -100,26 +124,41 @@ test.describe('TV', () => {
 
   test('a past programme without a teleteka recording plays from the channel archive', { tag: '@UI-15' }, async ({ page, uiApi }) => {
     // Unlike the API's teleteka of such a programme (a stub clip, bug A2), the client
-    // asks for the channel's archive instead. Finding one reads whole EPGs, which takes
-    // a while on staging.
+    // asks for the channel's archive instead.
     test.slow();
     await openHome(page);
-    const channels = await expectResponse<ChannelsList>(await uiApi.getChannels(), 'getChannels', 200);
-    const now = Date.now() / 1000;
-    let found: { channelId: string; programme: EpgProgramme } | undefined;
-    for (const channel of channels.items.filter((c) => c.playable && !c.access.protected).slice(0, 10)) {
-      const epg = await expectResponse<ChannelEpg>(await uiApi.getChannelEpg(channel.id), 'getChannelEpg', 200);
-      const programme = distinctProgrammes(epg)
-        .filter((p) => !p.teleteka && p.playable && p.ends_at < now && p.starts_at > now - 24 * 60 * 60)
-        .at(-1);
-      if (programme) {
-        found = { channelId: channel.id, programme };
-        break;
-      }
-    }
+    const found = await findPastProgramme(uiApi, (p) => !p.teleteka);
     test.skip(!found, 'None of the first channels has a past programme of the last day without a teleteka recording');
 
     await openPage(page, `/tv/channel/${found!.channelId}/live`);
     await playPastProgramme(page, found!.channelId, found!.programme, 'archive');
+  });
+
+  // Pinned: once a programme picked before the live stream starts plays, this fails;
+  // then flip it to the documented behaviour.
+  test('a past programme picked before the live stream starts stays paused (known client bug)', { tag: ['@UI-27', '@pinned'] }, async ({ page, uiApi }) => {
+    test.slow();
+    await openHome(page);
+    const found = await findPastProgramme(uiApi, () => true);
+    test.skip(!found, 'None of the first channels has a past programme of the last day that can be told apart on the list');
+    const { channelId, programme } = found!;
+
+    await openPage(page, `/tv/channel/${channelId}/live`);
+    const row = channelRows(page).filter({ hasText: programme.title }).filter({ hasText: timeRange(programme) }).first();
+    await row.waitFor();
+    test.skip((await secondsPlayed(page)) > 0, 'The live stream started before the programme could be picked');
+    const path = new RegExp(`^/api/v4/channels/${channelId}/(archive|teleteka)/${programme.starts_at}$`);
+    const res = page.waitForResponse((r) => path.test(new URL(r.url()).pathname));
+    await row.click();
+    expect((await res).status(), `GET …/${programme.starts_at} of channel ${channelId}`).toBe(200);
+    await page.waitForURL(new RegExp(`/tv/channel/${channelId}/(archive|teleteka)/${programme.starts_at}`));
+
+    // The recording loads in full (HAVE_ENOUGH_DATA) ...
+    const loaded = () => page.evaluate(() => Array.from(document.querySelectorAll('video')).some((v) => v.currentSrc !== '' && v.readyState === 4));
+    await expect.poll(loaded, { message: 'the recording loaded', timeout: 30_000 }).toBe(true);
+    // ... but doesn't start.
+    await page.waitForTimeout(10_000);
+    expect(await secondsPlayed(page), 'seconds of the recording played 10 s after it loaded').toBe(0);
+    recordKnownIssue(`webclient-recording-paused: a past programme picked on the channel page before the live stream starts loads but stays paused (channel ${channelId}, ${programme.starts_at})`);
   });
 });

@@ -15,7 +15,7 @@ the case pins the current behavior so that a fix turns its test red (see README,
 and responses, in the report `npm run report:bugs` builds (`reports/<date>-api-v4-<env>.html`,
 not kept in git); the **[A1]**-style tags in this catalog are that report's IDs.
 
-**202 cases total, 179 automated, 23 gaps** (`—` in Automated); see "Remaining gaps"
+**203 cases total, 180 automated, 23 gaps** (`—` in Automated); see "Remaining gaps"
 at the end for the breakdown. Of the automated ones, 12 run only when their
 precondition holds: 9 need `V4_PROTECT_CODE` and 1 `V4_ADMIN_CREATED_ACCOUNT` (both
 set for the account in use, so they run), 2 need live data that isn't always there (they skip themselves otherwise; as of
@@ -318,6 +318,7 @@ own session. `npm run test:browser` runs these alone.
 | UI-24 | Stop a radio station | P2 | none | On a playing station press the play button | Its icon changes and playback stops. Its tooltip still says «Остановить воспроизведение» **[W2]** (recorded as a known issue) | `ui-tests/radio.spec.ts` |
 | UI-25 | **BUG:** the client keeps the password in plain text **[W1]** | P0 | a browser session | Open `/home`; read whether `___kartina.tv.account` in localStorage has a non-empty `pass` (never its value) | It should not. Actually it does: the client stores the password and logs in again with it on every page load; the test stays green while it does | `ui-tests/client-security.spec.ts` (pinned) |
 | UI-26 | A rejected login shows a message | P2 | no session | Enter `not-a-login` / `x`, press Enter | POST `/login` 403; the banner «Ошибка 4: Неправильный абонемент или пароль…» shows | `ui-tests/login.spec.ts` |
+| UI-27 | **BUG:** a programme picked before the live stream starts stays paused **[W4]** | P2 | a past programme of the last day that can be told apart on the channel page | Open `/tv/channel/{id}/live`; click the programme's row before the live stream plays | It should play. Actually GET `…/archive/{starts_at}` (or `…/teleteka/…`) 200, the recording loads in full, but the video stays at 0 s; the test stays green while it does | `ui-tests/tv.spec.ts` (pinned) |
 | UI-16 | Change the parental password in the settings | P2 | `V4_PROTECT_CODE` | `/settings/parent-control` form | — | — (excluded: the protect code could stay changed, as CLI-14) |
 | UI-17 | «Очистить историю поиска» in the settings | P2 | none | `/settings/additional-settings` | — | — (excluded: wipes the account's search history, as SRCH-17) |
 
